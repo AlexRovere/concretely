@@ -11,7 +11,7 @@ npm install
 npm run dev        # Vite dev server on http://localhost:5173
 npm run build      # type-check (vue-tsc) + production build to dist/
 npm run preview    # serve the production build
-npm test           # node --test — 87 tests on the pure models
+npm test           # node --test — 95 tests on the pure models
 ```
 
 ## What's inside
@@ -51,6 +51,18 @@ reference, so mutating through one binding changes them all.
 publisher through `map` / `filter` operators to the sink; filtered values never
 arrive.
 
+**Binary tree (BST)** — a binary search tree drawn as a diagram; step through
+in/pre/post-order traversals (in-order comes out sorted) or a search that walks a
+single path down to a hit or miss.
+
+**Dynamic programming** — the edit-distance table filling in cell by cell, each
+value reusing the diagonal/up/left neighbour — memoisation made visible, ending on
+the distance in the bottom-right corner.
+
+**Regex / automaton** — a regex shown as the finite automaton it compiles to: feed
+an input string and watch it move between states, accepting or rejecting at the
+end (includes the classic "binary divisible by 3" DFA).
+
 **Big-O & guidance** — each algorithm shows its best/average/worst time and space
 complexity, a plain-language explanation of *why*, a "💡 When to use" tip, and a
 legend for the Ω/Θ/O notation. Each mode also has a "How do I choose?" guide.
@@ -86,6 +98,7 @@ src/
   highlight.js               # zero-dep generic syntax highlighter
   distributions.js · metrics.js
   bigo.js · recursion.js · eventloop.js · datastructures.js · valueref.js · combine.js
+  bst.js · dp.js · automaton.js   # binary search tree · edit-distance DP · DFA models
   sorting/algorithms.js      # step generators + complexity/tips
   pathfinding/{grid,algorithms}.js
   render/{sortRenderer,gridRenderer}.js
@@ -98,7 +111,7 @@ Because the state is fully reconstructible by replaying steps, the models are
 unit-tested without a browser:
 
 ```bash
-npm test           # node --test — 87 tests
+npm test           # node --test — 95 tests
 ```
 
 Tests check that replaying a sort's steps yields a sorted array (and never mutates

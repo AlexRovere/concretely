@@ -9,6 +9,9 @@ import EventLoopPanel from '@/components/panels/EventLoopPanel.vue'
 import DataStructuresPanel from '@/components/panels/DataStructuresPanel.vue'
 import ValueRefPanel from '@/components/panels/ValueRefPanel.vue'
 import SwiftPanel from '@/components/panels/SwiftPanel.vue'
+import BstPanel from '@/components/panels/BstPanel.vue'
+import DpPanel from '@/components/panels/DpPanel.vue'
+import RegexPanel from '@/components/panels/RegexPanel.vue'
 
 const { t, locale, setLocale, LOCALES } = useI18n()
 
@@ -20,7 +23,10 @@ const TABS = [
   { mode: 'eventloop', key: 'tabs.eventloop' },
   { mode: 'datastructures', key: 'tabs.datastructures' },
   { mode: 'valueref', key: 'tabs.valueref' },
-  { mode: 'swift', key: 'tabs.swift' }
+  { mode: 'swift', key: 'tabs.swift' },
+  { mode: 'bst', key: 'tabs.bst' },
+  { mode: 'dp', key: 'tabs.dp' },
+  { mode: 'regex', key: 'tabs.regex' }
 ]
 
 const panels: Record<string, unknown> = {
@@ -31,7 +37,10 @@ const panels: Record<string, unknown> = {
   eventloop: EventLoopPanel,
   datastructures: DataStructuresPanel,
   valueref: ValueRefPanel,
-  swift: SwiftPanel
+  swift: SwiftPanel,
+  bst: BstPanel,
+  dp: DpPanel,
+  regex: RegexPanel
 }
 
 const mode = ref<string>('sorting')
