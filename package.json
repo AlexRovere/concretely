@@ -1,0 +1,14 @@
+{
+  "name": "concretely",
+  "version": "0.1.0",
+  "description": "Interactive visualizers that make abstract programming concepts concrete — algorithms, data structures and more. Zero dependencies, bilingual (FR/EN).",
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT"
+}
