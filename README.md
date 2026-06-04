@@ -1,27 +1,26 @@
 # Concretely
 
 Interactive visualizers that make **abstract programming concepts concrete** — to
-help developers build intuition for code they can't easily "see". Starts with
-**sorting** and **pathfinding** algorithms; built to grow with more topics.
-Zero dependencies, pure ES modules + Canvas, bilingual (FR/EN).
+help developers build intuition for code they can't easily "see". Built with
+**Vue 3 + TypeScript + Vite + Tailwind**, bilingual (FR/EN).
 
 ## Run
 
 ```bash
-npm start          # serves on http://localhost:5173
+npm install
+npm run dev        # Vite dev server on http://localhost:5173
+npm run build      # type-check (vue-tsc) + production build to dist/
+npm run preview    # serve the production build
+npm test           # node --test — 87 tests on the pure models
 ```
-
-Then open the URL in a browser. (A server is used rather than `file://` so native
-ES-module imports work in every browser.)
 
 ## What's inside
 
 **Sorting** — Bubble, Insertion, Selection, Quick, Merge, plus the deliberately
-bad ones: Gnome 🐌, Pancake 🥞, Stooge 🤪 and Bogosort 🎲 (shuffles at random until
-sorted — capped so it can't hang). Bars animate through compares (yellow), swaps
-(red) and finalized positions (green). Adjustable array size and speed, plus
-**input distributions** (random / nearly-sorted / reversed / few-unique / sorted)
-to see best- vs worst-case behaviour.
+bad ones: Gnome 🐌, Pancake 🥞, Stooge 🤪 and Bogosort 🎲 (capped so it can't
+hang). Bars animate through compares (yellow), swaps (red) and finalized
+positions (green). Adjustable size and speed, plus **input distributions**
+(random / nearly-sorted / reversed / few-unique / sorted).
 
 **Live counters** — comparisons, swaps and writes (or visited cells / path length
 for pathfinding) tick up during the run, making the Big-O concrete.
@@ -38,19 +37,19 @@ push/pop and the call count explode (2ⁿ) or stay linear with memoization.
 
 **Event loop** — step through classic async snippets and watch the call stack,
 microtask queue, macrotask queue and console — finally *see* why the output order
-is what it is (sync → all microtasks → one macrotask → repeat).
+is what it is.
 
 **Data structures** — stack (LIFO), queue (FIFO) and a hash map: type a key and
 watch it hash into a bucket, collisions chain, and the table resize when the load
-factor passes 0.75 — the intuition behind O(1) average lookup.
+factor passes 0.75.
 
 **Value vs reference** — step through tiny snippets and watch the variable
 bindings and the object heap: primitives copy the value, objects share a
-reference, so mutating through one binding changes them all (the classic bug).
+reference, so mutating through one binding changes them all.
 
 **Swift / Combine** — a reactive pipeline: values flow one at a time from a
 publisher through `map` / `filter` operators to the sink; filtered values never
-arrive. The mental model behind Combine and async streams.
+arrive.
 
 **Big-O & guidance** — each algorithm shows its best/average/worst time and space
 complexity, a plain-language explanation of *why*, a "💡 When to use" tip, and a
@@ -60,49 +59,55 @@ legend for the Ω/Θ/O notation. Each mode also has a "How do I choose?" guide.
 the selected algorithm in **JavaScript, Java, Swift, Go, PHP, Ruby and C#**, with
 lightweight built-in syntax highlighting (no dependency).
 
-**Bilingual UI** — the whole interface (labels, explanations, tips, guides) is
-available in **French and English** via the locale switch; code snippets stay in
-their own language. Default is French.
+**Bilingual UI** — the whole interface is available in **French and English** via
+the locale switch; code snippets stay in their own language. Default is French.
 
 ## Architecture
 
-The core is **pure step generators** — each algorithm yields small step objects
-(`compare`/`swap`/`set`, or `visit`/`frontier`/`path`) and is decoupled from any
-rendering:
+The heart of the app is a set of **pure step generators** — each algorithm/model
+yields small step objects (`compare`/`swap`/`set`, `visit`/`frontier`/`path`,
+`call`/`return`, `emit`/`map`/`filter`/`sink`, …) and is completely decoupled from
+rendering. These are plain framework-agnostic ES modules, unit-tested in Node with
+no browser. The Vue layer only *plays* the precomputed steps onto a Canvas/DOM.
 
 ```
 src/
-  sorting/algorithms.js      # step generators + applyStep + complexity/tips
-  pathfinding/grid.js        # grid model
-  pathfinding/algorithms.js  # BFS / Dijkstra / A* (+ MinHeap)
-  distributions.js           # input shapes (random/sorted/reversed/…)
-  metrics.js                 # live operation counters from the step stream
+  main.ts                    # Vue entry (mounts App, imports styles)
+  App.vue                    # shell: tabs, locale switch, KeepAlive panel host
+  components/panels/         # one SFC per topic (template + onMounted player logic)
+    SortingPanel.vue · PathfindingPanel.vue · BigOPanel.vue · RecursionPanel.vue
+    EventLoopPanel.vue · DataStructuresPanel.vue · ValueRefPanel.vue · SwiftPanel.vue
+  composables/
+    useI18n.ts               # bridges the JS i18n locale to a reactive Vue ref
+    useCodeLang.ts           # shared code-language selection (JS, Java, Swift, …)
+  utils/viz.js               # shared imperative helpers (complexity/status/player wiring)
+  player.js                  # plays a step array on a timer (speed/step/pause)
   i18n.js                    # FR/EN UI strings + localized algorithm text
   highlight.js               # zero-dep generic syntax highlighter
-  bigo.js · recursion.js     # Big-O growth + Fibonacci call-stack models
-  eventloop.js               # JS event-loop simulator (stack/micro/macro)
-  datastructures.js          # Stack / Queue / HashMap
-  valueref.js · combine.js   # value-vs-reference + Combine pipeline models
-  player.js                  # plays a step array on a timer (speed/step/pause)
-  render/sortRenderer.js     # draws bars, applies steps
-  render/gridRenderer.js     # draws grid, frontier, visited, path
-  snippets/                  # reference code per language (js, java, swift, go, php, ruby, csharp)
-  main.js                    # wires the DOM controls
-index.html · server.js
+  distributions.js · metrics.js
+  bigo.js · recursion.js · eventloop.js · datastructures.js · valueref.js · combine.js
+  sorting/algorithms.js      # step generators + complexity/tips
+  pathfinding/{grid,algorithms}.js
+  render/{sortRenderer,gridRenderer}.js
+  snippets/                  # reference code per language
+  assets/styles/             # main.css (Tailwind) + visualizers.css (hand-written)
+index.html · vite.config.ts · tailwind.config.js · public/.htaccess
 ```
 
-Because the state is fully reconstructible by replaying steps, the algorithms are
-unit-tested in Node with no browser:
+Because the state is fully reconstructible by replaying steps, the models are
+unit-tested without a browser:
 
 ```bash
 npm test           # node --test — 87 tests
 ```
 
 Tests check that replaying a sort's steps yields a sorted array (and never mutates
-the input), that pathfinders return contiguous shortest paths, agree on path
-length, handle walled-off goals, that the renderers replay real steps without
-errors (headless canvas stub), that every language provides a valid snippet for
-every algorithm (the JavaScript ones are executed to confirm they sort), and that
-the highlighter escapes HTML and never loses or alters source text. Input
-distributions (sorted/reversed/few-unique/nearly) and the live metric counters
-are covered too.
+the input), that pathfinders return contiguous shortest paths, that every language
+provides a valid snippet for every algorithm, that the highlighter escapes HTML
+losslessly, and that the FR/EN string tables stay in key parity — among others.
+
+## Deployment
+
+`npm run build` outputs a static `dist/` (gzip + brotli precompressed) with a
+hardened `.htaccess` (SPA fallback, security headers, long-lived immutable asset
+caching). Deployable to any static host; the included CI builds and ships it.

@@ -1,11 +1,40 @@
 {
   "name": "concretely",
   "version": "0.1.0",
-  "description": "Interactive visualizers that make abstract programming concepts concrete — algorithms, data structures and more. Zero dependencies, bilingual (FR/EN).",
+  "private": true,
   "type": "module",
+  "description": "Interactive Vue 3 visualizers that make abstract programming concepts concrete — algorithms, data structures and more. Bilingual (FR/EN).",
+  "author": "Alex Rovere",
   "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc --noEmit && vite build",
+    "preview": "vite preview",
     "test": "node --test",
-    "start": "node server.js"
+    "type-check": "vue-tsc --noEmit",
+    "lint": "eslint . --ext .vue,.js,.ts --fix",
+    "format": "prettier --write src/",
+    "clean": "rimraf dist node_modules/.vite"
+  },
+  "dependencies": {
+    "vue": "^3.4.15"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^6.20.0",
+    "@typescript-eslint/parser": "^6.20.0",
+    "@vitejs/plugin-vue": "^5.2.1",
+    "autoprefixer": "^10.4.17",
+    "eslint": "^8.56.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-vue": "^9.21.1",
+    "postcss": "^8.4.33",
+    "prettier": "^3.2.4",
+    "rimraf": "^5.0.5",
+    "tailwindcss": "^3.4.1",
+    "terser": "^5.48.0",
+    "typescript": "^5.7.0",
+    "vite": "^6.0.0",
+    "vite-plugin-compression2": "^1.3.0",
+    "vue-tsc": "^2.2.0"
   },
   "engines": {
     "node": ">=20"

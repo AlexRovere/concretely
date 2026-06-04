@@ -1,0 +1,186 @@
+# ============================================
+# Concretely - Configuration Apache
+# ============================================
+
+# Charset par défaut
+AddDefaultCharset UTF-8
+
+# Désactive le listing des répertoires
+Options -Indexes
+
+# Suit les liens symboliques (requis pour RewriteRule)
+Options +FollowSymLinks
+
+# ============================================
+# Redirection HTTPS (actif en production)
+# ============================================
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteCond %{HTTPS} off
+  RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+</IfModule>
+
+# ============================================
+# SPA fallback : sert index.html pour toute
+# route inconnue (utile si Vue Router est ajouté)
+# ============================================
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+
+  # Ne pas réécrire les fichiers et dossiers existants
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # Tout le reste → index.html (SPA)
+  RewriteRule ^ index.html [L]
+</IfModule>
+
+# ============================================
+# Types MIME modernes
+# ============================================
+<IfModule mod_mime.c>
+  # Images
+  AddType image/webp .webp
+  AddType image/avif .avif
+  AddType image/svg+xml .svg .svgz
+
+  # Fonts
+  AddType font/woff .woff
+  AddType font/woff2 .woff2
+  AddType font/otf .otf
+  AddType font/ttf .ttf
+
+  # Web manifests
+  AddType application/manifest+json .webmanifest
+  AddType application/x-web-app-manifest+json .webapp
+
+  # JS / JSON
+  AddType application/javascript .js
+  AddType application/json .json .map
+
+  # Documents
+  AddType application/pdf .pdf
+</IfModule>
+
+# ============================================
+# Compression (Gzip / Deflate)
+# ============================================
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/plain text/css text/xml
+  AddOutputFilterByType DEFLATE application/javascript application/json
+  AddOutputFilterByType DEFLATE application/xml application/xhtml+xml
+  AddOutputFilterByType DEFLATE application/rss+xml application/atom+xml
+  AddOutputFilterByType DEFLATE image/svg+xml
+  AddOutputFilterByType DEFLATE font/otf font/ttf font/woff font/woff2
+</IfModule>
+
+# ============================================
+# Cache navigateur (mod_expires)
+# ============================================
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresDefault                          "access plus 1 month"
+
+  # HTML : pas de cache (pour récupérer la dernière version)
+  ExpiresByType text/html                 "access plus 0 seconds"
+
+  # Données dynamiques : pas de cache
+  ExpiresByType application/json          "access plus 0 seconds"
+  ExpiresByType application/xml           "access plus 0 seconds"
+  ExpiresByType text/xml                  "access plus 0 seconds"
+
+  # Assets fingerprintés par Vite : cache 1 an (immutable)
+  ExpiresByType text/css                  "access plus 1 year"
+  ExpiresByType application/javascript    "access plus 1 year"
+
+  # Images : 1 mois
+  ExpiresByType image/jpeg                "access plus 1 month"
+  ExpiresByType image/png                 "access plus 1 month"
+  ExpiresByType image/webp                "access plus 1 month"
+  ExpiresByType image/avif                "access plus 1 month"
+  ExpiresByType image/svg+xml             "access plus 1 month"
+  ExpiresByType image/x-icon              "access plus 1 year"
+
+  # Fonts : 1 an
+  ExpiresByType font/woff                 "access plus 1 year"
+  ExpiresByType font/woff2                "access plus 1 year"
+  ExpiresByType font/otf                  "access plus 1 year"
+  ExpiresByType font/ttf                  "access plus 1 year"
+
+  # PDF / docs : 1 mois
+  ExpiresByType application/pdf           "access plus 1 month"
+
+  # Manifests : 1 semaine
+  ExpiresByType application/manifest+json "access plus 1 week"
+</IfModule>
+
+# ============================================
+# Cache-Control pour les assets fingerprintés
+# ============================================
+<IfModule mod_headers.c>
+  # Assets buildés par Vite (hash dans le nom) → immutable
+  <FilesMatch "\.(css|js)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+
+  <FilesMatch "\.(woff|woff2|otf|ttf)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+
+  # HTML : toujours revalider
+  <FilesMatch "\.html$">
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+    Header set Pragma "no-cache"
+    Header set Expires "0"
+  </FilesMatch>
+
+  # CORS pour les fonts (au cas où servies depuis un autre domaine)
+  <FilesMatch "\.(woff|woff2|otf|ttf|eot)$">
+    Header set Access-Control-Allow-Origin "*"
+  </FilesMatch>
+</IfModule>
+
+# ============================================
+# Headers de sécurité
+# ============================================
+<IfModule mod_headers.c>
+  # Empêche le MIME-sniffing
+  Header set X-Content-Type-Options "nosniff"
+
+  # Bloque l'embedding dans une iframe (anti-clickjacking)
+  Header set X-Frame-Options "SAMEORIGIN"
+
+  # Référence : envoie l'origine seulement en cross-origin
+  Header set Referrer-Policy "strict-origin-when-cross-origin"
+
+  # Permissions-Policy : désactive les APIs sensibles
+  Header set Permissions-Policy "geolocation=(), microphone=(), camera=(), payment=(), usb=()"
+
+  # HSTS (1 an, à activer après vérif HTTPS production)
+  # Header set Strict-Transport-Security "max-age=31536000; includeSubDomains" env=HTTPS
+
+  # Cross-Origin
+  Header set Cross-Origin-Opener-Policy "same-origin"
+  Header set Cross-Origin-Resource-Policy "same-site"
+
+  # Supprime les headers verbeux pouvant aider un attaquant
+  Header unset X-Powered-By
+  Header always unset Server
+
+  # Content-Security-Policy minimale (à durcir si besoin)
+  # Header set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; connect-src 'self' https:;"
+</IfModule>
+
+# ============================================
+# Protection des fichiers sensibles
+# ============================================
+<FilesMatch "(^\.|composer\.|package\.|\.env|\.git|\.htaccess|\.htpasswd|\.log|\.sql|\.bak)">
+  Require all denied
+</FilesMatch>
+
+# Empêche l'accès direct au fichier .htaccess
+<Files ".htaccess">
+  Require all denied
+</Files>

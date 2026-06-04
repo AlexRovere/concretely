@@ -1,250 +1,37 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Concretely</title>
-  <link rel="stylesheet" href="src/styles.css" />
-</head>
-<body>
-  <header>
-    <h1>Concretely</h1>
-    <nav class="tabs">
-      <button class="tab active" data-mode="sorting" data-i18n="tabs.sorting">Sorting</button>
-      <button class="tab" data-mode="pathfinding" data-i18n="tabs.pathfinding">Pathfinding</button>
-      <button class="tab" data-mode="bigo" data-i18n="tabs.bigo">Big-O</button>
-      <button class="tab" data-mode="recursion" data-i18n="tabs.recursion">Recursion</button>
-      <button class="tab" data-mode="eventloop" data-i18n="tabs.eventloop">Event loop</button>
-      <button class="tab" data-mode="datastructures" data-i18n="tabs.datastructures">Data structures</button>
-      <button class="tab" data-mode="valueref" data-i18n="tabs.valueref">Value vs reference</button>
-      <button class="tab" data-mode="swift" data-i18n="tabs.swift">Swift / Combine</button>
-    </nav>
-    <label class="locale-pick">
-      <select id="locale"></select>
-    </label>
-  </header>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <main>
-    <!-- Sorting -->
-    <section id="panel-sorting" class="panel">
-      <div class="controls">
-        <label><span data-i18n="ctrl.algorithm">Algorithm</span>
-          <select id="sort-algo"></select>
-        </label>
-        <label><span data-i18n="ctrl.input">Input</span>
-          <select id="sort-dist"></select>
-        </label>
-        <label><span data-i18n="ctrl.size">Size</span> <span id="sort-size-val">60</span>
-          <input id="sort-size" type="range" min="10" max="160" value="60" />
-        </label>
-        <label><span data-i18n="ctrl.speed">Speed</span>
-          <input id="sort-speed" type="range" min="1" max="100" value="55" />
-        </label>
-        <button id="sort-shuffle" data-i18n="btn.shuffle">Shuffle</button>
-        <button id="sort-play" class="primary">▶ Play</button>
-        <button id="sort-step" data-i18n="btn.step">Step</button>
-        <button id="sort-reset" data-i18n="btn.reset">Reset</button>
-      </div>
-      <div id="sort-complexity" class="complexity"></div>
-      <div id="sort-metrics" class="metrics"></div>
-      <canvas id="sort-canvas" width="960" height="420"></canvas>
-      <div class="status-row">
-        <span id="sort-status" class="status"></span>
-        <span class="legend">
-          <i class="sw" style="background:#475569"></i><span data-i18n="legend.value">value</span>
-          <i class="sw" style="background:#eab308"></i><span data-i18n="legend.compare">compare</span>
-          <i class="sw" style="background:#ef4444"></i><span data-i18n="legend.swap">swap</span>
-          <i class="sw" style="background:#22c55e"></i><span data-i18n="legend.sorted">sorted</span>
-        </span>
-      </div>
-      <div class="code-box">
-        <div class="code-head">
-          <span id="sort-code-title"></span>
-          <select id="sort-lang" class="lang-select"></select>
-        </div>
-        <pre><code id="sort-code"></code></pre>
-      </div>
-      <details class="guide">
-        <summary data-i18n="guide.sort.summary">How do I choose a sorting algorithm?</summary>
-        <div data-i18n-html="guide.sort.html"></div>
-      </details>
-    </section>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
-    <!-- Pathfinding -->
-    <section id="panel-pathfinding" class="panel" hidden>
-      <div class="controls">
-        <label><span data-i18n="ctrl.algorithm">Algorithm</span>
-          <select id="grid-algo"></select>
-        </label>
-        <label><span data-i18n="ctrl.speed">Speed</span>
-          <input id="grid-speed" type="range" min="1" max="100" value="65" />
-        </label>
-        <button id="grid-maze" data-i18n="btn.maze">Random maze</button>
-        <button id="grid-clear" data-i18n="btn.clear">Clear</button>
-        <button id="grid-play" class="primary">▶ Play</button>
-        <button id="grid-step" data-i18n="btn.step">Step</button>
-        <button id="grid-reset" data-i18n="btn.reset">Reset</button>
-      </div>
-      <div id="grid-complexity" class="complexity"></div>
-      <div id="grid-metrics" class="metrics"></div>
-      <canvas id="grid-canvas" width="960" height="600"></canvas>
-      <div class="status-row">
-        <span id="grid-status" class="status"></span>
-        <span class="legend">
-          <i class="sw" style="background:#22c55e"></i><span data-i18n="legend.start">start</span>
-          <i class="sw" style="background:#ef4444"></i><span data-i18n="legend.end">end</span>
-          <i class="sw" style="background:#0b1220"></i><span data-i18n="legend.wall">wall</span>
-          <i class="sw" style="background:#0ea5e9"></i><span data-i18n="legend.frontier">frontier</span>
-          <i class="sw" style="background:#7c3aed"></i><span data-i18n="legend.visited">visited</span>
-          <i class="sw" style="background:#eab308"></i><span data-i18n="legend.path">path</span>
-        </span>
-      </div>
-      <p class="hint" data-i18n="hint.walls">Click &amp; drag on the grid to draw or erase walls.</p>
-      <div class="code-box">
-        <div class="code-head">
-          <span id="grid-code-title"></span>
-          <select id="grid-lang" class="lang-select"></select>
-        </div>
-        <pre><code id="grid-code"></code></pre>
-      </div>
-      <details class="guide">
-        <summary data-i18n="guide.path.summary">How do I choose a pathfinding algorithm?</summary>
-        <div data-i18n-html="guide.path.html"></div>
-      </details>
-    </section>
+    <!-- SEO -->
+    <meta
+      name="description"
+      content="Concretely — visualiseurs interactifs qui rendent concrets des concepts de programmation abstraits : algorithmes de tri, recherche de chemin, Big-O, récursion, event loop, structures de données, valeur vs référence, Swift/Combine. Bilingue FR/EN."
+    />
+    <meta
+      name="keywords"
+      content="visualisation algorithmes, tri, pathfinding, big-o, récursion, event loop, structures de données, vue 3, pédagogie, développeur"
+    />
+    <meta name="author" content="Alex Rovere" />
 
-    <!-- Big-O playground -->
-    <section id="panel-bigo" class="panel" hidden>
-      <div class="controls">
-        <fieldset id="bigo-curves" class="curves">
-          <legend data-i18n="bigo.curves">Curves</legend>
-        </fieldset>
-        <label>n = <span id="bigo-n-val">20</span>
-          <input id="bigo-n" type="range" min="2" max="40" value="20" />
-        </label>
-      </div>
-      <canvas id="bigo-canvas" width="960" height="420"></canvas>
-      <div id="bigo-readout" class="readout"></div>
-      <p class="hint" data-i18n="bigo.note">Same input size, wildly different work: that's why complexity class matters.</p>
-    </section>
+    <!-- Open Graph -->
+    <meta property="og:title" content="Concretely — rendre le code abstrait concret" />
+    <meta
+      property="og:description"
+      content="Visualiseurs interactifs pour comprendre algorithmes, structures de données et concepts d'exécution. Bilingue FR/EN."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="fr_FR" />
 
-    <!-- Recursion & call stack -->
-    <section id="panel-recursion" class="panel" hidden>
-      <div class="controls">
-        <label><span data-i18n="rec.variant">Variant</span>
-          <select id="rec-variant"></select>
-        </label>
-        <label>n = <span id="rec-n-val">10</span>
-          <input id="rec-n" type="range" min="1" max="12" value="10" />
-        </label>
-        <label><span data-i18n="ctrl.speed">Speed</span>
-          <input id="rec-speed" type="range" min="1" max="100" value="72" />
-        </label>
-        <button id="rec-play" class="primary">▶ Play</button>
-        <button id="rec-step" data-i18n="btn.step">Step</button>
-        <button id="rec-reset" data-i18n="btn.reset">Reset</button>
-      </div>
-      <div id="rec-info" class="rec-info"></div>
-      <div class="rec-stage">
-        <h3 class="rec-h" data-i18n="rec.callstack">Call stack</h3>
-        <div id="rec-stack" class="rec-stack"></div>
-      </div>
-      <div class="status-row"><span id="rec-status" class="status"></span></div>
-    </section>
+    <meta name="theme-color" content="#0ea5e9" />
 
-    <!-- Event loop -->
-    <section id="panel-eventloop" class="panel" hidden>
-      <div class="controls">
-        <label><span data-i18n="el.scenario">Scenario</span>
-          <select id="el-scenario"></select>
-        </label>
-        <label><span data-i18n="ctrl.speed">Speed</span>
-          <input id="el-speed" type="range" min="1" max="100" value="22" />
-        </label>
-        <button id="el-play" class="primary">▶ Play</button>
-        <button id="el-step" data-i18n="btn.step">Step</button>
-        <button id="el-reset" data-i18n="btn.reset">Reset</button>
-        <span id="el-phase" class="el-phase"></span>
-      </div>
-      <div class="code-box">
-        <div class="code-head"><span>JavaScript</span></div>
-        <pre><code id="el-code"></code></pre>
-      </div>
-      <div class="el-stage">
-        <div class="el-col"><h3 class="rec-h" data-i18n="el.callstack">Call stack</h3><div id="el-stack" class="el-list stack"></div></div>
-        <div class="el-col"><h3 class="rec-h" data-i18n="el.microtasks">Microtask queue</h3><div id="el-micro" class="el-list"></div></div>
-        <div class="el-col"><h3 class="rec-h" data-i18n="el.macrotasks">Macrotask queue</h3><div id="el-macro" class="el-list"></div></div>
-        <div class="el-col"><h3 class="rec-h" data-i18n="el.console">Console</h3><div id="el-console" class="el-console"></div></div>
-      </div>
-      <p class="hint" data-i18n="el.note">Sync runs first, then all microtasks (Promises), then one macrotask (setTimeout) — repeat.</p>
-      <div class="status-row"><span id="el-status" class="status"></span></div>
-    </section>
-
-    <!-- Data structures -->
-    <section id="panel-datastructures" class="panel" hidden>
-      <div class="controls">
-        <label><span data-i18n="ds.structure">Structure</span>
-          <select id="ds-structure"></select>
-        </label>
-        <label><span id="ds-input-label">Value</span>
-          <input id="ds-value" type="text" maxlength="12" placeholder="…" />
-        </label>
-        <button id="ds-add" class="primary">Add</button>
-        <button id="ds-remove">Remove</button>
-        <button id="ds-clear" data-i18n="ds.clear">Clear</button>
-      </div>
-      <div id="ds-info" class="ds-info"></div>
-      <div id="ds-view" class="ds-view"></div>
-      <p class="hint" data-i18n="ds.note">A hash map turns a key into a bucket index; collisions chain in the same bucket.</p>
-    </section>
-
-    <!-- Value vs reference -->
-    <section id="panel-valueref" class="panel" hidden>
-      <div class="controls">
-        <label><span data-i18n="vr.scenario">Scenario</span>
-          <select id="vr-scenario"></select>
-        </label>
-        <button id="vr-play" class="primary">▶ Play</button>
-        <button id="vr-step" data-i18n="btn.step">Step</button>
-        <button id="vr-reset" data-i18n="btn.reset">Reset</button>
-      </div>
-      <div class="code-box">
-        <div class="code-head"><span>JavaScript</span></div>
-        <pre><code id="vr-code"></code></pre>
-      </div>
-      <div class="vr-stage">
-        <div class="vr-col"><h3 class="rec-h" data-i18n="vr.variables">Variables</h3><div id="vr-vars" class="vr-vars"></div></div>
-        <div class="vr-col"><h3 class="rec-h" data-i18n="vr.heap">Heap (objects)</h3><div id="vr-heap" class="vr-heap"></div></div>
-      </div>
-      <p class="hint" data-i18n="vr.note">Primitives copy the value; objects copy the reference.</p>
-      <div class="status-row"><span id="vr-status" class="status"></span></div>
-    </section>
-
-    <!-- Swift / Combine -->
-    <section id="panel-swift" class="panel" hidden>
-      <div class="controls">
-        <label><span data-i18n="sw.scenario">Scenario</span>
-          <select id="sw-scenario"></select>
-        </label>
-        <label><span data-i18n="ctrl.speed">Speed</span>
-          <input id="sw-speed" type="range" min="1" max="100" value="30" />
-        </label>
-        <button id="sw-play" class="primary">▶ Play</button>
-        <button id="sw-step" data-i18n="btn.step">Step</button>
-        <button id="sw-reset" data-i18n="btn.reset">Reset</button>
-      </div>
-      <div class="code-box">
-        <div class="code-head"><span>Swift</span></div>
-        <pre><code id="sw-code"></code></pre>
-      </div>
-      <div id="sw-pipeline" class="sw-pipeline"></div>
-      <h3 class="rec-h" data-i18n="sw.received">Received</h3>
-      <div id="sw-received" class="el-console"></div>
-      <p class="hint" data-i18n="sw.note">Combine sends one value at a time down the operator chain.</p>
-      <div class="status-row"><span id="sw-status" class="status"></span></div>
-    </section>
-  </main>
-
-  <script type="module" src="src/main.js"></script>
-</body>
+    <title>Concretely — rendre le code abstrait concret</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
 </html>
