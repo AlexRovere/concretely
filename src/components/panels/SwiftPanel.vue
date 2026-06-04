@@ -46,6 +46,7 @@ onMounted(() => {
     render();
   };
   player = new StepPlayer({
+    slow: 3, // Combine pipeline is meant to be watched one value at a time — slow the floor right down
     onStep: (s) => { apply(s); setStatus(status, player); },
     onReset: () => { active = -1; current = null; received = []; dropped = false; render(); setStatus(status, player); },
     onDone: () => { active = -1; current = null; render(); setStatus(status, player, t('status.done')); },

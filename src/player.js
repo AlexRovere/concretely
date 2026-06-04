@@ -6,12 +6,13 @@
  * tick (used so very large runs can play fast without a 4ms-per-step floor).
  */
 export class StepPlayer {
-  constructor({ onStep, onDone, onReset } = {}) {
+  constructor({ onStep, onDone, onReset, slow = 1 } = {}) {
     this.steps = [];
     this.i = 0;
     this.delay = 16;
     this.chunk = 1;
     this.timer = null;
+    this.slow = slow; // multiplies the slow end of the speed range (1 = default)
     this.onStep = onStep;
     this.onDone = onDone;
     this.onReset = onReset;
@@ -32,7 +33,7 @@ export class StepPlayer {
   setSpeed(speed) {
     const s = Math.max(1, Math.min(100, speed));
     const t = (s - 1) / 99; // 0 (slow) … 1 (fast)
-    this.delay = Math.max(4, Math.round(600 * (1 - t) ** 2)); // ~600ms … ~4ms
+    this.delay = Math.max(4, Math.round(600 * this.slow * (1 - t) ** 2)); // ~600ms·slow … ~4ms
     this.chunk = s < 70 ? 1 : Math.ceil((s - 69) / 6); // batch steps at high speed
   }
 

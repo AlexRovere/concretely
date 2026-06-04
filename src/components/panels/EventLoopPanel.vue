@@ -86,7 +86,7 @@ onUnmounted(() => player?.stop());
 </script>
 
 <template>
-  <section ref="root" id="panel-eventloop" class="panel" hidden>
+  <section ref="root" class="panel">
     <div class="controls">
       <label><span data-i18n="el.scenario">{{ tt('el.scenario') }}</span>
         <select id="el-scenario"></select>
