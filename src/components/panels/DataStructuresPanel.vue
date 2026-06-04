@@ -38,6 +38,15 @@ onMounted(() => {
   let hot = -1 // highlighted bucket
   const kind = () => structEl.value
 
+  // Seed each structure with a few demo values so the panel isn't empty on first
+  // open (Clear empties them). Switching structure then always shows something.
+  const seed = () => {
+    for (const v of ['3', '8', '1', '5']) stack.push(v)
+    for (const v of ['A', 'B', 'C']) queue.enqueue(v)
+    for (const v of ['cat', 'dog', 'fox', 'owl']) map.set(v)
+  }
+  seed()
+
   const relabelControls = () => {
     if (kind() === 'stack') { addBtn.textContent = t('ds.push'); removeBtn.textContent = t('ds.pop'); removeBtn.hidden = false; inputLabel.textContent = t('ds.value'); }
     else if (kind() === 'queue') { addBtn.textContent = t('ds.enqueue'); removeBtn.textContent = t('ds.dequeue'); removeBtn.hidden = false; inputLabel.textContent = t('ds.value'); }
