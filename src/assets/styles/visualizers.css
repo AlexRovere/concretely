@@ -49,7 +49,7 @@ h1 { font-size: 1.25rem; margin: 0; font-weight: 600; }
   font-size: 0.85rem;
 }
 
-main { padding: 1.5rem; }
+main { padding: 1.5rem; max-width: 1100px; margin: 0 auto; }
 
 .controls {
   display: flex;
@@ -91,6 +91,7 @@ button.primary { background: var(--accent); border-color: var(--accent); color: 
 canvas {
   width: 100%;
   height: auto;
+  max-width: 960px; /* never upscale past native size — keeps the view from ballooning on wide screens */
   background: #0b1220;
   border: 1px solid var(--border);
   border-radius: 8px;

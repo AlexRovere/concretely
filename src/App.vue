@@ -57,7 +57,7 @@ function onLocale(e: Event) {
       </button>
     </nav>
     <label class="locale-pick">
-      <select :value="locale" @change="onLocale">
+      <select id="locale" :value="locale" @change="onLocale">
         <option v-for="l in LOCALES" :key="l.id" :value="l.id">{{ l.name }}</option>
       </select>
     </label>
