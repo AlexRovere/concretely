@@ -32,6 +32,7 @@ import { arcScenarioById } from './arc.js';
 import { rubyGvlScenarioById } from './rubygvl.js';
 import { vueReactivityScenarioById } from './vuereactivity.js';
 import { bubblingScenarioById } from './bubbling.js';
+import { swiftBasicsScenarioById } from './swiftbasics.js';
 
 export const localize = (v, locale) =>
   typeof v === 'object' && v !== null && ('fr' in v || 'en' in v) ? (v[locale] ?? v.fr ?? v.en) : v;
@@ -287,6 +288,211 @@ end`,
       en: 'Rebase REPLAYS the commit: new id, old one orphaned. That is why you never rebase a shared branch.',
     },
     goto: { mode: 'gitdag', scenario: 'rebase' },
+  },
+  {
+    id: 'jb-nontransitif', cat: 'js', lang: 'js',
+    code: `0 == ''      // true
+0 == '0'     // true
+'' == '0'    // … ?`,
+    question: { fr: 'Si 0 == \'\' et 0 == \'0\' sont true, que vaut \'\' == \'0\' ?', en: "If 0 == '' and 0 == '0' are true, what is '' == '0'?" },
+    choices: ['true', 'false'],
+    answer: 1,
+    explain: {
+      fr: 'false ! Chaque == coerce différemment — l’égalité lâche n’est même pas transitive. D’où la règle : ===.',
+      en: 'false! Each == coerces differently — loose equality is not even transitive. Hence the rule: ===.',
+    },
+    goto: { mode: 'jsbasics', scenario: 'egalite' },
+  },
+  {
+    id: 'jb-typeof', cat: 'js', lang: 'js',
+    code: `typeof null`,
+    question: { fr: 'Que renvoie typeof null ?', en: 'What does typeof null return?' },
+    choices: ['"null"', '"object"', '"undefined"', { fr: 'une erreur', en: 'an error' }],
+    answer: 1,
+    explain: {
+      fr: '"object" — un bug de 1995 jamais corrigé pour ne pas casser le web. Utilise x === null.',
+      en: '"object" — a 1995 bug never fixed to avoid breaking the web. Use x === null.',
+    },
+    goto: { mode: 'jsbasics', scenario: 'nombres' },
+  },
+  {
+    id: 'jb-truthy-array', cat: 'js', lang: 'js',
+    code: `if ([]) console.log('exécuté')
+console.log([] == false)`,
+    question: { fr: 'Que se passe-t-il avec le tableau vide [] ?', en: 'What happens with the empty array []?' },
+    choices: [
+      { fr: 'le if est sauté, et [] == false vaut true', en: 'the if is skipped, and [] == false is true' },
+      { fr: 'le if s’exécute, et [] == false vaut true 🤯', en: 'the if runs, and [] == false is true 🤯' },
+      { fr: 'le if s’exécute, et [] == false vaut false', en: 'the if runs, and [] == false is false' },
+      { fr: 'le if est sauté, et [] == false vaut false', en: 'the if is skipped, and [] == false is false' },
+    ],
+    answer: 1,
+    explain: {
+      fr: '[] est truthy (c’est un objet) MAIS [] == false est true ([] → \'\' → 0). Truthiness et coercion == sont deux mécanismes différents.',
+      en: "[] is truthy (it's an object) BUT [] == false is true ([] → '' → 0). Truthiness and == coercion are two different mechanisms.",
+    },
+    goto: { mode: 'jsbasics', scenario: 'truthiness-js' },
+  },
+  {
+    id: 'jb-hoisting', cat: 'js', lang: 'js',
+    code: `console.log(a)
+var a = 1`,
+    question: { fr: 'Qu’affiche ce code ?', en: 'What does this code print?' },
+    choices: ['undefined', '1', 'ReferenceError', 'null'],
+    answer: 0,
+    explain: {
+      fr: 'var est hissée et initialisée à undefined — avec let, ce serait une ReferenceError (TDZ).',
+      en: 'var is hoisted and initialized to undefined — with let it would be a ReferenceError (TDZ).',
+    },
+    goto: { mode: 'jsbasics', scenario: 'hoisting' },
+  },
+  {
+    id: 'sb-if0', cat: 'swift', lang: 'swift',
+    code: `if 0 {
+    print("…")
+}`,
+    question: { fr: 'Que fait `if 0` en Swift ?', en: 'What does `if 0` do in Swift?' },
+    choices: [
+      { fr: 'le bloc s’exécute (0 est truthy)', en: 'the block runs (0 is truthy)' },
+      { fr: 'le bloc est sauté (0 est falsy)', en: 'the block is skipped (0 is falsy)' },
+      { fr: '❌ ça ne compile pas', en: '❌ it does not compile' },
+      { fr: 'crash à l’exécution', en: 'runtime crash' },
+    ],
+    answer: 2,
+    explain: {
+      fr: 'Swift n’a AUCUNE truthiness : if exige un Bool. Le compilateur refuse Int, String, Optional…',
+      en: 'Swift has ZERO truthiness: if requires a Bool. The compiler rejects Int, String, Optional…',
+    },
+    goto: { mode: 'swiftbasics', scenario: 'pas-de-truthiness' },
+  },
+  {
+    id: 'sb-defer', cat: 'swift', lang: 'swift',
+    code: swiftBasicsScenarioById('defer').code,
+    question: { fr: 'Dans quel ordre les prints sortent-ils ?', en: 'In what order do the prints come out?' },
+    choices: [
+      'ouverture, defer A, defer B, travail',
+      'ouverture, travail, defer A, defer B',
+      'ouverture, travail, defer B, defer A',
+      'defer A, defer B, ouverture, travail',
+    ],
+    answer: 2,
+    explain: {
+      fr: 'Les defer partent à la SORTIE du scope, en ordre INVERSE de déclaration (LIFO) : B puis A.',
+      en: 'defer blocks run at scope EXIT, in REVERSE declaration order (LIFO): B then A.',
+    },
+    goto: { mode: 'swiftbasics', scenario: 'defer' },
+  },
+  {
+    id: 'sb-force', cat: 'swift', lang: 'swift',
+    code: `var name: String? = nil
+name!`,
+    question: { fr: 'Que fait `name!` sur un Optional nil ?', en: 'What does `name!` do on a nil Optional?' },
+    choices: [
+      { fr: 'renvoie nil', en: 'returns nil' },
+      { fr: 'renvoie ""', en: 'returns ""' },
+      { fr: '💥 crash (fatal error)', en: '💥 crash (fatal error)' },
+      { fr: '❌ ne compile pas', en: '❌ does not compile' },
+    ],
+    answer: 2,
+    explain: {
+      fr: 'Le force unwrap compile… et crashe à l’exécution sur nil. Préfère ?., ?? ou if let.',
+      en: 'Force unwrap compiles… and crashes at runtime on nil. Prefer ?., ?? or if let.',
+    },
+    goto: { mode: 'swiftbasics', scenario: 'optionals' },
+  },
+  {
+    id: 'kb-equality', cat: 'kotlin', lang: 'kotlin',
+    code: `data class User(val id: Int)
+val a = User(1)
+val b = User(1)
+a == b   // … ?`,
+    question: { fr: 'Deux instances distinctes de User(1) : que vaut a == b ?', en: 'Two distinct User(1) instances: what is a == b?' },
+    choices: [
+      { fr: 'true — == est STRUCTURELLE en Kotlin', en: 'true — == is STRUCTURAL in Kotlin' },
+      { fr: 'false — deux objets distincts', en: 'false — two distinct objects' },
+    ],
+    answer: 0,
+    explain: {
+      fr: 'En Kotlin == appelle equals() (généré par la data class) : true. C’est === qui compare les références (false ici) — l’inverse du piège Java.',
+      en: 'In Kotlin == calls equals() (generated by the data class): true. === compares references (false here) — the inverse of the Java trap.',
+    },
+    goto: { mode: 'kotlinbasics', scenario: 'equality' },
+  },
+  {
+    id: 'kb-bangbang', cat: 'kotlin', lang: 'kotlin',
+    code: `var name: String? = null
+name!!.length`,
+    question: { fr: 'Que fait `name!!` sur un null ?', en: 'What does `name!!` do on a null?' },
+    choices: [
+      { fr: 'renvoie null', en: 'returns null' },
+      { fr: '💥 NullPointerException', en: '💥 NullPointerException' },
+      { fr: '❌ ne compile pas', en: '❌ does not compile' },
+      { fr: 'renvoie 0', en: 'returns 0' },
+    ],
+    answer: 1,
+    explain: {
+      fr: '!! troque la garantie compile-time contre un NPE assumé. Le combo idiomatique : ?. avec ?: en repli.',
+      en: '!! trades the compile-time guarantee for a deliberate NPE. The idiomatic combo: ?. with ?: as fallback.',
+    },
+    goto: { mode: 'kotlinbasics', scenario: 'null-safety' },
+  },
+  {
+    id: 'rb-symbols', cat: 'ruby', lang: 'ruby',
+    code: `"foo".object_id
+"foo".object_id   // même id ?
+:foo.object_id
+:foo.object_id    // même id ?`,
+    question: { fr: 'Mêmes object_id pour les strings ? Pour les symboles ?', en: 'Same object_ids for the strings? For the symbols?' },
+    choices: [
+      { fr: 'strings : mêmes ids · symboles : mêmes ids', en: 'strings: same ids · symbols: same ids' },
+      { fr: 'strings : ids différents · symboles : même id', en: 'strings: different ids · symbols: same id' },
+      { fr: 'strings : mêmes ids · symboles : ids différents', en: 'strings: same ids · symbols: different ids' },
+      { fr: 'tout est différent', en: 'all different' },
+    ],
+    answer: 1,
+    explain: {
+      fr: 'Chaque littéral "foo" alloue un NOUVEL objet ; :foo est interné une fois pour toutes — d’où les symboles comme clés de hash.',
+      en: 'Every "foo" literal allocates a NEW object; :foo is interned once and forever — hence symbols as hash keys.',
+    },
+    goto: { mode: 'rubybasics', scenario: 'symbols' },
+  },
+  {
+    id: 'gen-bst', cat: 'general', lang: 'js',
+    code: `//        50
+//      /    \\
+//    30      70
+//   /  \\    /  \\
+//  20   40 60   80
+// Quel parcours sort 20, 30, 40, 50, 60, 70, 80 ?`,
+    question: { fr: 'Quel parcours d’un arbre binaire de recherche donne les valeurs TRIÉES ?', en: 'Which binary-search-tree traversal yields the values SORTED?' },
+    choices: [
+      { fr: 'in-order (infixe : gauche, nœud, droite)', en: 'in-order (left, node, right)' },
+      { fr: 'pre-order (préfixe)', en: 'pre-order' },
+      { fr: 'post-order (suffixe)', en: 'post-order' },
+      { fr: 'BFS (par niveaux)', en: 'BFS (level order)' },
+    ],
+    answer: 0,
+    explain: {
+      fr: 'L’invariant gauche < nœud < droite fait du parcours infixe un tri gratuit — c’est LA propriété de l’ABR.',
+      en: 'The left < node < right invariant makes the in-order walk a free sort — THE defining BST property.',
+    },
+    goto: { mode: 'bst', scenario: 'in' },
+  },
+  {
+    id: 'gen-bogo', cat: 'general', lang: 'js',
+    code: `function bogosort(a) {
+  while (!estTrie(a)) {
+    melanger(a)        // au hasard, et on re-vérifie…
+  }
+}`,
+    question: { fr: 'Complexité moyenne du bogosort ?', en: 'Average complexity of bogosort?' },
+    choices: ['O(n log n)', 'O(n²)', 'O(n × n!)', 'O(2ⁿ)'],
+    answer: 2,
+    explain: {
+      fr: 'n! permutations possibles, ~une seule triée : en moyenne O(n × n!) — et le pire cas ne termine jamais. Correct ≠ utilisable.',
+      en: 'n! possible permutations, ~one sorted: O(n × n!) on average — and the worst case never ends. Correct ≠ usable.',
+    },
+    goto: { mode: 'sorting', scenario: 'bogo' },
   },
 ];
 

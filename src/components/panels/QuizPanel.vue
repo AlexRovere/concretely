@@ -8,7 +8,7 @@ const props = defineProps({ cat: { type: String, default: 'all' } });
 const emit = defineEmits(['goto']);
 const { t, tf, locale } = useI18n();
 
-const CATS = ['all', 'js', 'vue', 'swift', 'ruby', 'kotlin', 'git'];
+const CATS = ['all', 'general', 'js', 'vue', 'swift', 'ruby', 'kotlin', 'git'];
 // Pool synced to the app's active category ('general' has no questions → all).
 const poolFor = (c) => (quizQuestions(c).length ? c : 'all');
 const cat = ref(poolFor(props.cat));

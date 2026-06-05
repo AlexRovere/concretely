@@ -18,6 +18,11 @@ import { summaryOf as arcSummary, arcScenarioById } from '../src/arc.js';
 import { summaryOf as rgSummary, rubyGvlScenarioById } from '../src/rubygvl.js';
 import { summaryOf as vySummary, vueReactivityScenarioById } from '../src/vuereactivity.js';
 import { summaryOf as bbSummary, bubblingScenarioById } from '../src/bubbling.js';
+import { summaryOf as sbSummary, swiftBasicsScenarioById } from '../src/swiftbasics.js';
+import { summaryOf as kbSummary, kotlinBasicsScenarioById } from '../src/kotlinbasics.js';
+import { summaryOf as rbSummary, rubyBasicsScenarioById } from '../src/rubybasics.js';
+import { buildTree, traverse, BST_DEMO } from '../src/bst.js';
+import { SORTS } from '../src/sorting/algorithms.js';
 
 /* Every quiz answer is re-derived from the MODEL it quizzes about. */
 
@@ -126,6 +131,58 @@ test("gd-rebase: feature points to C3'", () => {
   assert.equal(quizQuestionById('gd-rebase').answer, 1);
 });
 
+/* --------------------------------------------- basics-tab questions */
+
+test('jb-*: the JS quiz answers are real JavaScript behavior', () => {
+  /* eslint-disable eqeqeq */
+  assert.equal('' == '0', false, 'jb-nontransitif');
+  assert.equal(typeof null, 'object', 'jb-typeof');
+  assert.equal(Boolean([]), true, 'jb-truthy-array (if)');
+  assert.equal([] == false, true, 'jb-truthy-array (==)');
+  assert.equal((function () { return a; var a = 1; })(), undefined, 'jb-hoisting');
+  assert.equal(quizQuestionById('jb-nontransitif').answer, 1);
+  assert.equal(quizQuestionById('jb-typeof').choices[quizQuestionById('jb-typeof').answer], '"object"');
+  assert.equal(quizQuestionById('jb-truthy-array').answer, 1);
+  assert.equal(quizQuestionById('jb-hoisting').choices[quizQuestionById('jb-hoisting').answer], 'undefined');
+});
+
+test('sb-*: the Swift quiz answers match the swiftbasics model', () => {
+  assert.ok(sbSummary(swiftBasicsScenarioById('pas-de-truthiness').ops).errors.includes('if 0 { }'));
+  assert.equal(quizQuestionById('sb-if0').answer, 2);
+  const { logs } = sbSummary(swiftBasicsScenarioById('defer').ops);
+  assert.equal(quizQuestionById('sb-defer').choices[quizQuestionById('sb-defer').answer], logs.join(', '));
+  assert.ok(sbSummary(swiftBasicsScenarioById('optionals').ops).crashes.includes('name!'));
+  assert.equal(quizQuestionById('sb-force').answer, 2);
+});
+
+test('kb-*: the Kotlin quiz answers match the kotlinbasics model', () => {
+  const eq = kotlinBasicsScenarioById('equality').ops;
+  assert.equal(eq.find((o) => o.eval === 'a == b').value, 'true');
+  assert.equal(quizQuestionById('kb-equality').answer, 0);
+  assert.ok(kbSummary(kotlinBasicsScenarioById('null-safety').ops).crashes.includes('name!!.length'));
+  assert.equal(quizQuestionById('kb-bangbang').answer, 1);
+});
+
+test('rb-symbols: strings differ, symbols are interned, per the model', () => {
+  const { stringIds, symbolIds } = rbSummary(rubyBasicsScenarioById('symbols').ops);
+  assert.notEqual(stringIds[0], stringIds[1]);
+  assert.equal(Object.keys(symbolIds).length, 1);
+  assert.equal(quizQuestionById('rb-symbols').answer, 1);
+});
+
+test('gen-bst: the in-order traversal really is sorted', () => {
+  const tree = buildTree(BST_DEMO);
+  const visited = [];
+  for (const s of traverse(tree, 'in')) visited.push(s.value);
+  assert.deepEqual(visited, [...BST_DEMO].sort((a, b) => a - b));
+  assert.equal(quizQuestionById('gen-bst').answer, 0);
+});
+
+test('gen-bogo: the registry confirms the factorial complexity', () => {
+  assert.match(SORTS.bogo.complexity.avg, /!/);
+  assert.match(quizQuestionById('gen-bogo').choices[quizQuestionById('gen-bogo').answer], /!/);
+});
+
 /* ------------------------------------------------------------- structure */
 
 test('every question is well-formed (choices, answer, code, goto)', () => {
@@ -144,7 +201,7 @@ test('every question is well-formed (choices, answer, code, goto)', () => {
 
 test('category filter returns the right subsets', () => {
   assert.equal(quizQuestions('all').length, QUIZ_QUESTIONS.length);
-  const cats = ['js', 'vue', 'swift', 'ruby', 'kotlin', 'git'];
+  const cats = ['general', 'js', 'vue', 'swift', 'ruby', 'kotlin', 'git'];
   let sum = 0;
   for (const c of cats) {
     const qs = quizQuestions(c);
