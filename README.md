@@ -11,7 +11,7 @@ npm install
 npm run dev        # Vite dev server on http://localhost:5173
 npm run build      # type-check (vue-tsc) + production build to dist/
 npm run preview    # serve the production build
-npm test           # node --test — 204 tests on the pure models
+npm test           # node --test — 249 tests on the pure models
 ```
 
 ## What's inside
@@ -113,6 +113,30 @@ main and resumes on it, `async`/`awaitAll` overlaps requests.
 (full teardown + a brand-new instance), Home/return (`onRestart`), and Back
 (destroyed for good).
 
+**Vue reactivity** — the reactive proxy tracking reads (get) and triggering
+exactly the subscribed effects on writes (set); `computed` evaluating lazily,
+serving from cache, and going *dirty* on a dependency change without
+recomputing until the next read.
+
+**Virtual DOM & :key** — the same list update diffed by POSITION (no key:
+a prepend patches every node, input state scrambles) vs by KEY (nodes are
+reused and moved, never rebuilt) — with live op counters.
+
+**DOM events** — capture ↓, target, bubble ↑ on a DOM tree; `stopPropagation`
+cutting the walk; and event delegation handling every `<li>` with one listener.
+
+**Debounce vs throttle** — the same event stream on a tick timeline: debounce
+fires once per burst after the silence; throttle fires at a steady rate
+starting immediately — and the scroll case where debounce never fires.
+
+**Git: branches & merge** — the commit DAG live (SVG): branches as pointers,
+divergence, a real merge commit (two parents) vs fast-forward, and rebase
+replaying commits under NEW ids, orphaning the old ones.
+
+**Git: reset** — a change travelling working tree → index → HEAD, then
+`reset --soft/--mixed/--hard` shown zone by zone: what each mode keeps and
+what `--hard` destroys.
+
 **Binary tree (BST)** — a binary search tree drawn as a diagram; step through
 in/pre/post-order traversals (in-order comes out sorted) or a search that walks a
 single path down to a hit or miss.
@@ -137,8 +161,8 @@ lightweight built-in syntax highlighting (no dependency).
 the locale switch; code snippets stay in their own language. Default is French.
 
 **Category filter** — a selector in the header narrows the tabs to one family
-(All / General / JavaScript / Swift / Ruby / Kotlin-Android), so the language
-deep-dives don't crowd the algorithm topics.
+(All / General / JavaScript / Vue-Front / Swift / Ruby / Kotlin-Android / Git),
+so the language deep-dives don't crowd the algorithm topics.
 
 ## Architecture
 
@@ -160,6 +184,8 @@ src/
     RubyBasicsPanel.vue · RubyBlocksPanel.vue · RubyLookupPanel.vue
     RubyLazyPanel.vue · RubyGvlPanel.vue · ComposePanel.vue
     KtCoroutinesPanel.vue · ViewModelPanel.vue · KtFlowPanel.vue · LifecyclePanel.vue
+    VueReactivityPanel.vue · VdomPanel.vue · BubblingPanel.vue · DebouncePanel.vue
+    GitDagPanel.vue · GitResetPanel.vue
   composables/
     useI18n.ts               # bridges the JS i18n locale to a reactive Vue ref
     useCodeLang.ts           # shared code-language selection (JS, Java, Swift, …)
@@ -174,6 +200,8 @@ src/
   rubybasics.js · rubyblocks.js · rubylookup.js · rubylazy.js · rubygvl.js # Ruby models
   compose.js · ktcoroutines.js · viewmodel.js · ktflow.js · lifecycle.js   # Kotlin/Android
                                   # (rubygvl & ktcoroutines reuse the swiftconcurrency tick engine)
+  vuereactivity.js · vdom.js · bubbling.js · debounce.js                   # Vue / Front models
+  gitdag.js · gitreset.js                                                  # Git models
   sorting/algorithms.js      # step generators + complexity/tips
   pathfinding/{grid,algorithms}.js
   render/{sortRenderer,gridRenderer}.js
@@ -186,7 +214,7 @@ Because the state is fully reconstructible by replaying steps, the models are
 unit-tested without a browser:
 
 ```bash
-npm test           # node --test — 204 tests
+npm test           # node --test — 249 tests
 ```
 
 Tests check that replaying a sort's steps yields a sorted array (and never mutates

@@ -27,10 +27,16 @@ import KtCoroutinesPanel from '@/components/panels/KtCoroutinesPanel.vue'
 import ViewModelPanel from '@/components/panels/ViewModelPanel.vue'
 import KtFlowPanel from '@/components/panels/KtFlowPanel.vue'
 import LifecyclePanel from '@/components/panels/LifecyclePanel.vue'
+import VueReactivityPanel from '@/components/panels/VueReactivityPanel.vue'
+import VdomPanel from '@/components/panels/VdomPanel.vue'
+import BubblingPanel from '@/components/panels/BubblingPanel.vue'
+import DebouncePanel from '@/components/panels/DebouncePanel.vue'
+import GitDagPanel from '@/components/panels/GitDagPanel.vue'
+import GitResetPanel from '@/components/panels/GitResetPanel.vue'
 
 const { t, locale, setLocale, LOCALES } = useI18n()
 
-const CATEGORIES = ['all', 'general', 'js', 'swift', 'ruby', 'kotlin']
+const CATEGORIES = ['all', 'general', 'js', 'vue', 'swift', 'ruby', 'kotlin', 'git']
 
 const TABS = [
   { mode: 'sorting', key: 'tabs.sorting', cat: 'general' },
@@ -56,6 +62,12 @@ const TABS = [
   { mode: 'viewmodel', key: 'tabs.viewmodel', cat: 'kotlin' },
   { mode: 'ktflow', key: 'tabs.ktflow', cat: 'kotlin' },
   { mode: 'lifecycle', key: 'tabs.lifecycle', cat: 'kotlin' },
+  { mode: 'vuereactivity', key: 'tabs.vuereactivity', cat: 'vue' },
+  { mode: 'vdom', key: 'tabs.vdom', cat: 'vue' },
+  { mode: 'bubbling', key: 'tabs.bubbling', cat: 'vue' },
+  { mode: 'debounce', key: 'tabs.debounce', cat: 'vue' },
+  { mode: 'gitdag', key: 'tabs.gitdag', cat: 'git' },
+  { mode: 'gitreset', key: 'tabs.gitreset', cat: 'git' },
   { mode: 'bst', key: 'tabs.bst', cat: 'general' },
   { mode: 'dp', key: 'tabs.dp', cat: 'general' },
   { mode: 'regex', key: 'tabs.regex', cat: 'general' }
@@ -85,6 +97,12 @@ const panels: Record<string, unknown> = {
   viewmodel: ViewModelPanel,
   ktflow: KtFlowPanel,
   lifecycle: LifecyclePanel,
+  vuereactivity: VueReactivityPanel,
+  vdom: VdomPanel,
+  bubbling: BubblingPanel,
+  debounce: DebouncePanel,
+  gitdag: GitDagPanel,
+  gitreset: GitResetPanel,
   bst: BstPanel,
   dp: DpPanel,
   regex: RegexPanel

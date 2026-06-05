@@ -407,3 +407,27 @@ canvas {
 .tl-drop { background: #2a0e12; color: #ef4444; }
 .tl-legend { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.5rem; font-size: 0.75rem; color: var(--muted); }
 .tl-legend .sw { width: 0.8rem; height: 0.8rem; border-radius: 3px; display: inline-block; vertical-align: -2px; margin-right: 0.3rem; }
+
+/* Git DAG */
+.gd-wrap { background: #0b1220; border: 1px solid var(--border); border-radius: 8px; padding: 0.5rem; overflow-x: auto; }
+.gd-svg { display: block; }
+.gd-svg .edge { stroke: #334155; stroke-width: 2; fill: none; }
+.gd-svg .node { stroke: #0b1220; stroke-width: 2; }
+.gd-svg .node.orphan { opacity: 0.3; stroke-dasharray: 4 3; }
+.gd-svg .cid { font: 600 11px ui-monospace, "Cascadia Code", Consolas, monospace; fill: #e2e8f0; text-anchor: middle; }
+.gd-svg .cid.orphan { opacity: 0.4; }
+.gd-svg .btag { font: 600 11px ui-monospace, monospace; fill: #fbbf24; text-anchor: middle; }
+.gd-svg .btag.head { fill: #22c55e; }
+
+/* Virtual DOM rows */
+.vd-row { display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap; min-height: 2.3rem; margin: 0.3rem 0; }
+.vd-cell {
+  font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: 0.9rem;
+  background: #1e293b; color: #d6e2f0; border: 1px solid var(--border);
+  border-radius: 6px; padding: 0.3rem 0.8rem; min-width: 2.2rem; text-align: center;
+}
+.vd-cell.keep { border-color: #22c55e; color: #22c55e; }
+.vd-cell.patch { border-color: #ef4444; background: #2a0e12; color: #ef4444; }
+.vd-cell.move { border-color: #f59e0b; color: #fbbf24; }
+.vd-cell.insert { border-color: #38bdf8; color: #7dd3fc; }
+.vd-label { font-size: 0.75rem; color: var(--muted); width: 4rem; }
