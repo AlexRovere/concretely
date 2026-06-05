@@ -33,6 +33,7 @@ import BubblingPanel from '@/components/panels/BubblingPanel.vue'
 import DebouncePanel from '@/components/panels/DebouncePanel.vue'
 import GitDagPanel from '@/components/panels/GitDagPanel.vue'
 import GitResetPanel from '@/components/panels/GitResetPanel.vue'
+import QuizPanel from '@/components/panels/QuizPanel.vue'
 
 const { t, locale, setLocale, LOCALES } = useI18n()
 
@@ -68,6 +69,7 @@ const TABS = [
   { mode: 'debounce', key: 'tabs.debounce', cat: 'vue' },
   { mode: 'gitdag', key: 'tabs.gitdag', cat: 'git' },
   { mode: 'gitreset', key: 'tabs.gitreset', cat: 'git' },
+  { mode: 'quiz', key: 'tabs.quiz', cat: '*' },
   { mode: 'bst', key: 'tabs.bst', cat: 'general' },
   { mode: 'dp', key: 'tabs.dp', cat: 'general' },
   { mode: 'regex', key: 'tabs.regex', cat: 'general' }
@@ -103,6 +105,7 @@ const panels: Record<string, unknown> = {
   debounce: DebouncePanel,
   gitdag: GitDagPanel,
   gitreset: GitResetPanel,
+  quiz: QuizPanel,
   bst: BstPanel,
   dp: DpPanel,
   regex: RegexPanel
@@ -113,8 +116,14 @@ const currentPanel = computed(() => panels[mode.value])
 
 const cat = ref<string>('all')
 const visibleTabs = computed(() =>
-  cat.value === 'all' ? TABS : TABS.filter((tb) => tb.cat === cat.value)
+  cat.value === 'all' ? TABS : TABS.filter((tb) => tb.cat === cat.value || tb.cat === '*')
 )
+
+// The quiz's "watch it animated" button jumps straight to a topic tab.
+function onGoto(target: string) {
+  cat.value = 'all'
+  mode.value = target
+}
 
 function onCat(e: Event) {
   cat.value = (e.target as HTMLSelectElement).value
@@ -157,7 +166,7 @@ function onLocale(e: Event) {
 
   <main>
     <KeepAlive>
-      <component :is="currentPanel" />
+      <component :is="currentPanel" @goto="onGoto" />
     </KeepAlive>
   </main>
 </template>

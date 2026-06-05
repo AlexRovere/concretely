@@ -11,7 +11,7 @@ npm install
 npm run dev        # Vite dev server on http://localhost:5173
 npm run build      # type-check (vue-tsc) + production build to dist/
 npm run preview    # serve the production build
-npm test           # node --test — 249 tests on the pure models
+npm test           # node --test — 268 tests on the pure models
 ```
 
 ## What's inside
@@ -137,6 +137,13 @@ replaying commits under NEW ids, orphaning the old ones.
 `reset --soft/--mixed/--hard` shown zone by zone: what each mode keeps and
 what `--hard` destroys.
 
+**🎯 Quiz** — "predict the output" before watching it: 17 interview-classic
+questions drawn from the topic scenarios (event-loop order, the proc return,
+the @ObservedObject reset, `if 0` in Ruby, rebase ids…), filterable by
+category, with explanations and a jump to the matching animation. Every
+correct answer is cross-checked against the simulations by the test suite —
+the quiz can never disagree with the models.
+
 **Binary tree (BST)** — a binary search tree drawn as a diagram; step through
 in/pre/post-order traversals (in-order comes out sorted) or a search that walks a
 single path down to a hit or miss.
@@ -202,6 +209,7 @@ src/
                                   # (rubygvl & ktcoroutines reuse the swiftconcurrency tick engine)
   vuereactivity.js · vdom.js · bubbling.js · debounce.js                   # Vue / Front models
   gitdag.js · gitreset.js                                                  # Git models
+  quiz.js                          # predict-the-output questions, model-backed
   sorting/algorithms.js      # step generators + complexity/tips
   pathfinding/{grid,algorithms}.js
   render/{sortRenderer,gridRenderer}.js
@@ -214,7 +222,7 @@ Because the state is fully reconstructible by replaying steps, the models are
 unit-tested without a browser:
 
 ```bash
-npm test           # node --test — 249 tests
+npm test           # node --test — 268 tests
 ```
 
 Tests check that replaying a sort's steps yields a sorted array (and never mutates

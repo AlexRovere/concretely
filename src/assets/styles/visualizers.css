@@ -431,3 +431,26 @@ canvas {
 .vd-cell.move { border-color: #f59e0b; color: #fbbf24; }
 .vd-cell.insert { border-color: #38bdf8; color: #7dd3fc; }
 .vd-label { font-size: 0.75rem; color: var(--muted); width: 4rem; }
+
+/* Quiz */
+.qz-prompt { font-size: 0.95rem; color: var(--ink); margin: 0.25rem 0 0.75rem; }
+.qz-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin-top: 0.9rem; }
+@media (max-width: 700px) { .qz-choices { grid-template-columns: 1fr; } }
+.qz-choice {
+  text-align: left; font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+  font-size: 0.88rem; background: #0f192e; color: #d6e2f0;
+  border: 1px solid var(--border); border-radius: 8px; padding: 0.65rem 0.9rem; cursor: pointer;
+}
+.qz-choice:hover { border-color: var(--accent); }
+.qz-choice.correct { border-color: #22c55e; background: #0c2316; color: #22c55e; }
+.qz-choice.wrong { border-color: #ef4444; background: #2a0e12; color: #ef4444; }
+.qz-choice.faded { opacity: 0.45; }
+.qz-feedback { margin-top: 1rem; }
+.qz-verdict { font-weight: 700; margin: 0 0 0.3rem; }
+.qz-verdict.ok { color: #22c55e; }
+.qz-verdict.ko { color: #ef4444; }
+.qz-explain { color: var(--muted); font-size: 0.9rem; margin: 0 0 0.8rem; }
+.qz-actions { display: flex; gap: 0.6rem; }
+.qz-final { text-align: center; padding: 2.5rem 0; }
+.qz-grade { font-size: 3rem; margin: 0; }
+.qz-score { font-size: 1.2rem; color: var(--ink); margin: 0.5rem 0 1.2rem; }
