@@ -40,6 +40,17 @@ h1 { font-size: 1.25rem; margin: 0; font-weight: 600; }
 .tab.active { background: var(--accent); color: white; border-color: var(--accent); }
 
 .locale-pick { margin-left: auto; }
+/* Category picker: pinned LEFT, right next to the title — it is the primary nav. */
+.cat-pick { flex-shrink: 0; }
+#category {
+  background: var(--panel);
+  color: var(--ink);
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
 #locale {
   background: var(--panel);
   color: var(--ink);

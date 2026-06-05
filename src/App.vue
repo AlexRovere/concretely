@@ -37,7 +37,7 @@ import QuizPanel from '@/components/panels/QuizPanel.vue'
 
 const { t, locale, setLocale, LOCALES } = useI18n()
 
-const CATEGORIES = ['all', 'general', 'js', 'vue', 'swift', 'ruby', 'kotlin', 'git']
+const CATEGORIES = ['general', 'js', 'vue', 'swift', 'ruby', 'kotlin', 'git']
 
 const TABS = [
   { mode: 'sorting', key: 'tabs.sorting', cat: 'general' },
@@ -114,14 +114,15 @@ const panels: Record<string, unknown> = {
 const mode = ref<string>('sorting')
 const currentPanel = computed(() => panels[mode.value])
 
-const cat = ref<string>('all')
+const cat = ref<string>('general')
 const visibleTabs = computed(() =>
-  cat.value === 'all' ? TABS : TABS.filter((tb) => tb.cat === cat.value || tb.cat === '*')
+  TABS.filter((tb) => tb.cat === cat.value || tb.cat === '*')
 )
 
 // The quiz's "watch it animated" button jumps straight to a topic tab.
 function onGoto(target: string) {
-  cat.value = 'all'
+  const tab = TABS.find((tb) => tb.mode === target)
+  if (tab && tab.cat !== '*') cat.value = tab.cat
   mode.value = target
 }
 
@@ -141,7 +142,7 @@ function onLocale(e: Event) {
 <template>
   <header>
     <h1>Concretely</h1>
-    <label class="locale-pick cat-pick">
+    <label class="cat-pick">
       <select id="category" :value="cat" @change="onCat">
         <option v-for="c in CATEGORIES" :key="c" :value="c">{{ t('cat.' + c) }}</option>
       </select>
