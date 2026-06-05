@@ -177,8 +177,8 @@ function onLocale(e: Event) {
   </header>
 
   <main>
+    <!-- :cat is only consumed by the QuizPanel (syncs its question pool). -->
     <KeepAlive>
-      <!-- :cat is only consumed by the QuizPanel (syncs its question pool). -->
       <component :is="currentPanel" :cat="cat" @goto="onGoto" />
     </KeepAlive>
   </main>
