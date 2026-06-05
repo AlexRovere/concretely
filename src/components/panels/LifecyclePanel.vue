@@ -33,7 +33,7 @@ onMounted(() => {
   const render = () => {
     statesEl.innerHTML = STATES.map((st) =>
       `<div class="sw-stage${st === state ? ' hot' : ''}">` +
-      `<div class="sw-kind">${st === 'resumed' ? 'visible + focus' : st === 'started' ? 'visible' : ''}</div>` +
+      `<div class="sw-kind">${esc(st === 'resumed' ? t('lc.visibleFocus') : st === 'started' ? t('lc.visible') : '')}</div>` +
       `<div class="sw-label">${esc(st)}</div></div>`).join('<div class="sw-arrow">→</div>');
     phaseEl.textContent = t('lc.instance')(instance);
     logEl.innerHTML = log.map((l) => `<div class="el-log">${l}</div>`).join('');

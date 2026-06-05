@@ -31,11 +31,11 @@ onMounted(() => {
     const ticks = history.map((h) => `<th class="tl-tick">${h.t}</th>`).join('');
     const rawRow = `<tr><th>${esc(t('db.raw'))}</th>` + history.map((h) =>
       h.event ? `<td class="tl-cell tl-run-0">•</td>` : `<td class="tl-cell idle"></td>`).join('') + '</tr>';
-    const dbRow = `<tr><th>debounce</th>` + history.map((h) =>
+    const dbRow = `<tr><th>${esc(t('db.debounce'))}</th>` + history.map((h) =>
       h.debounce === 'fired' ? `<td class="tl-cell tl-run-1">✓</td>`
         : h.debounce === 'waiting' ? `<td class="tl-cell tl-susp">…</td>`
           : `<td class="tl-cell idle"></td>`).join('') + '</tr>';
-    const thRow = `<tr><th>throttle</th>` + history.map((h) =>
+    const thRow = `<tr><th>${esc(t('db.throttle'))}</th>` + history.map((h) =>
       h.throttle === 'fired' ? `<td class="tl-cell tl-run-1">✓</td>`
         : h.throttle === 'blocked' ? `<td class="tl-cell tl-drop">✗</td>`
           : `<td class="tl-cell idle"></td>`).join('') + '</tr>';

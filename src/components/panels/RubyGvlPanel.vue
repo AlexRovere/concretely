@@ -24,7 +24,8 @@ onMounted(() => {
     o.value = s.id; o.textContent = s.id; select.appendChild(o);
   }
 
-  const esc = (v) => String(v).replace(/[&<>]/g, (c) => (c === '&' ? '&amp;' : c === '<' ? '&lt;' : '&gt;'));
+  // Also escapes quotes: these strings land inside title="…" attributes.
+  const esc = (v) => String(v).replace(/[&<>"]/g, (c) => (c === '&' ? '&amp;' : c === '<' ? '&lt;' : c === '>' ? '&gt;' : '&quot;'));
   let scenario = null, history = [];
   const taskIndex = (id) => scenario.tasks.findIndex((x) => x.id === id) % 4;
 

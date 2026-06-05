@@ -67,7 +67,9 @@ onMounted(() => {
     else if (s.type === 'skip') { skipped.add(s.view); log.push(esc(t('ss.log.skip')(s.view))); }
     else if (s.type === 'recreate') {
       const o = objects[s.view]; o.instance = s.instance;
-      o.values = { ...swiftStateScenarioById(select.value).tree.children.find((c) => c.id === s.view).object.values };
+      // Recursive lookup: the object view may sit anywhere in the tree.
+      const findNode = (n) => (n.id === s.view ? n : (n.children || []).map(findNode).find(Boolean));
+      o.values = { ...findNode(scenario.tree).object.values };
       resetFlash = s.view; hot = s.view;
       log.push(esc(t('ss.log.recreate')(s.name, s.instance)));
     } else if (s.type === 'keep') { hot = s.view; log.push(esc(t('ss.log.keep')(s.name, s.instance))); }

@@ -32,9 +32,9 @@ onMounted(() => {
     if (!scenario) return;
     const cell = (item, mark) => `<div class="vd-cell${mark ? ' ' + mark : ''}">${esc(item)}</div>`;
     listsEl.innerHTML =
-      `<div class="vd-row"><span class="vd-label">${scenario.mode === 'keyed' ? ':key ✓' : 'sans :key'}</span></div>` +
-      `<div class="vd-row"><span class="vd-label">avant</span>${scenario.old.map((x) => cell(x, '')).join('')}</div>` +
-      `<div class="vd-row"><span class="vd-label">après</span>${after.map((c) => cell(c.item, c.mark)).join('')}</div>`;
+      `<div class="vd-row"><span class="vd-label">${esc(t(scenario.mode === 'keyed' ? 'vd.keyed' : 'vd.unkeyed'))}</span></div>` +
+      `<div class="vd-row"><span class="vd-label">${esc(t('vd.before'))}</span>${scenario.old.map((x) => cell(x, '')).join('')}</div>` +
+      `<div class="vd-row"><span class="vd-label">${esc(t('vd.after'))}</span>${after.map((c) => cell(c.item, c.mark)).join('')}</div>`;
     opsEl.textContent = t('vd.ops')(ops);
     logEl.innerHTML = log.map((l) => `<div class="el-log">${esc(l)}</div>`).join('');
     logEl.scrollTop = logEl.scrollHeight;

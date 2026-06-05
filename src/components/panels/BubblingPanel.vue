@@ -34,7 +34,7 @@ onMounted(() => {
       const node = scenario.path[i];
       const listeners = scenario.listeners.filter((l) => l.node === node);
       const ls = listeners.map((l) =>
-        `<div class="ss-meta">${fired.has(l.label) ? '🔔' : '·'} ${esc(l.label)} <span class="arc-kind">(${l.phase})</span></div>`).join('');
+        `<div class="ss-meta">${fired.has(l.label) ? '🔔' : '·'} ${esc(l.label)} <span class="arc-kind">(${esc(t('bb.phase')(l.phase))})</span></div>`).join('');
       const inner = i + 1 < scenario.path.length ? `<div class="ss-children">${build(i + 1)}</div>` : '';
       const cls = ['ss-view', node === current ? ' hot' : '', node === stoppedAt ? ' skipped' : ''].join('');
       return `<div class="${cls}"><span class="ss-name">${esc(node)}</span>` +

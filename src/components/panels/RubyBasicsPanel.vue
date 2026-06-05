@@ -33,8 +33,8 @@ onMounted(() => {
 
   const apply = (s) => {
     if (s.type === 'eval') lines.push(`${esc(s.code)} <b># => ${esc(s.value)}</b>${s.note ? ` <span class="arc-kind">— ${esc(s.note)}</span>` : ''}`);
-    else if (s.type === 'alloc') lines.push(`${esc(s.code)} <b># => ${s.objectId}</b> <span class="arc-kind">${s.kind === 'symbol' ? (s.reused ? '♻️ même symbole, même id' : 'symbole interné') : '🆕 nouvelle allocation'}</span>`);
-    else if (s.type === 'branch') lines.push(`${esc(s.cond)} <b># ${s.truthy ? '→ truthy ✓' : '→ falsy ✗'}</b>`);
+    else if (s.type === 'alloc') lines.push(`${esc(s.code)} <b># => ${esc(s.objectId)}</b> <span class="arc-kind">${esc(s.kind === 'symbol' ? (s.reused ? t('rb.alloc.reused') : t('rb.alloc.interned')) : t('rb.alloc.new'))}</span>`);
+    else if (s.type === 'branch') lines.push(`${esc(s.cond)} <b># ${esc(s.truthy ? t('rb.truthy') : t('rb.falsy'))}</b>`);
     else if (s.type === 'log') lines.push(`<span class="vr-ref">puts</span> ${esc(s.value)}`);
     render();
   };

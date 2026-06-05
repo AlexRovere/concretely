@@ -33,7 +33,7 @@ onMounted(() => {
       `<div class="ss-view${fn === hot ? ' hot' : ''}${skipped.has(fn) ? ' skipped' : ''}">` +
       `<span class="ss-name">${esc(fn)}</span>` +
       `<span class="ss-badge">${esc(t('cp.runs')(runs[fn] || 0))}</span>${meta}</div>`;
-    const stateMeta = `<div class="ss-meta${reinitFlash ? ' reset' : ''}">${scenario.state.remember ? 'remember { mutableStateOf }' : 'mutableStateOf (sans remember)'} — ${esc(scenario.state.name)} = ${esc(value)}</div>`;
+    const stateMeta = `<div class="ss-meta${reinitFlash ? ' reset' : ''}">${scenario.state.remember ? 'remember { mutableStateOf }' : esc(t('cp.label.noRemember'))} — ${esc(scenario.state.name)} = ${esc(value)}</div>`;
     const kids = scenario.children.map((c) => box(c.id)).join('');
     treeEl.innerHTML = box(scenario.root, stateMeta + (kids ? `<div class="ss-children">${kids}</div>` : ''));
     logEl.innerHTML = log.map((l) => `<div class="el-log">${esc(l)}</div>`).join('');
