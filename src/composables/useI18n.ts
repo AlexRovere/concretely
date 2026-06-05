@@ -30,9 +30,19 @@ export function useI18n() {
     return typeof v === 'function' ? '' : (v as string)
   }
 
+  /**
+   * Reactive translate for PARAMETERIZED keys (function entries), for the rare
+   * declarative templates (QuizPanel): tf('quiz.progress', 1, 17).
+   */
+  const tf = (key: string, ...args: unknown[]): string => {
+    void locale.value // establish reactive dependency
+    const v = tRaw(key) as unknown
+    return typeof v === 'function' ? String(v(...args)) : (v as string)
+  }
+
   const setLocale = (l: string): void => {
     setLocaleRaw(l)
   }
 
-  return { t, locale, setLocale, LOCALES, algoMeta, onLocaleChange }
+  return { t, tf, locale, setLocale, LOCALES, algoMeta, onLocaleChange }
 }

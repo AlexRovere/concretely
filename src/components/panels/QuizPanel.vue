@@ -5,7 +5,7 @@ import { highlight } from '@/highlight.js';
 import { useI18n } from '@/composables/useI18n';
 
 const emit = defineEmits(['goto']);
-const { t, locale } = useI18n();
+const { t, tf, locale } = useI18n();
 
 const CATS = ['all', 'js', 'vue', 'swift', 'ruby', 'kotlin', 'git'];
 const cat = ref('all');
@@ -72,7 +72,7 @@ const grade = computed(() => {
           <option v-for="c in CATS" :key="c" :value="c">{{ t('cat.' + c) }}</option>
         </select>
       </label>
-      <span class="el-phase" v-if="!finished">{{ t('quiz.progress')(idx + 1, questions.length) }} — {{ t('quiz.score')(score) }}</span>
+      <span class="el-phase" v-if="!finished">{{ tf('quiz.progress', idx + 1, questions.length) }} — {{ tf('quiz.score', score) }}</span>
       <button @click="restart()">{{ t('quiz.replay') }}</button>
     </div>
 
@@ -109,7 +109,7 @@ const grade = computed(() => {
 
     <div v-else-if="finished" class="qz-final">
       <p class="qz-grade">{{ grade }}</p>
-      <p class="qz-score">{{ t('quiz.final')(score, questions.length) }}</p>
+      <p class="qz-score">{{ tf('quiz.final', score, questions.length) }}</p>
       <button class="primary" @click="restart()">{{ t('quiz.replay') }}</button>
     </div>
 
