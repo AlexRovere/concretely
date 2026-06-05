@@ -11,7 +11,7 @@ npm install
 npm run dev        # Vite dev server on http://localhost:5173
 npm run build      # type-check (vue-tsc) + production build to dist/
 npm run preview    # serve the production build
-npm test           # node --test — 268 tests on the pure models
+npm test           # node --test — 278 tests on the pure models
 ```
 
 ## What's inside
@@ -71,6 +71,14 @@ strong↔strong retain cycle that leaks, and the `weak` reference that fixes it.
 **Structs vs classes** — Swift value semantics side by side with reference
 semantics, plus copy-on-write: `var b = a` shares the array buffer until the
 first `append` triggers the real copy.
+
+**Language basics** — each language category opens with a "basics & quirks"
+tab stepped line by line: **JS** (`==` coercion traps cross-checked by real
+JavaScript in the tests, hoisting/TDZ, IEEE 754, `typeof null`), **Swift**
+(optionals in the type system, zero truthiness — `if 0` doesn't compile,
+`defer` LIFO, `let` semantics), **Kotlin** (null safety `?.`/`?:`/`!!`,
+`==` structural vs `===` referential — the inverse Java trap, `val` vs
+mutation, `when` as expression), and **Ruby** below.
 
 **Ruby basics** — everything is an object and an expression, truthiness where
 `0` and `""` are truthy (only `nil`/`false` are falsy), string literals that
@@ -210,6 +218,8 @@ src/
   vuereactivity.js · vdom.js · bubbling.js · debounce.js                   # Vue / Front models
   gitdag.js · gitreset.js                                                  # Git models
   quiz.js                          # predict-the-output questions, model-backed
+  evaltrace.js                     # shared eval-trace engine for the basics tabs
+  jsbasics.js · swiftbasics.js · kotlinbasics.js  # language quirks (+ rubybasics.js)
   sorting/algorithms.js      # step generators + complexity/tips
   pathfinding/{grid,algorithms}.js
   render/{sortRenderer,gridRenderer}.js
@@ -222,7 +232,7 @@ Because the state is fully reconstructible by replaying steps, the models are
 unit-tested without a browser:
 
 ```bash
-npm test           # node --test — 268 tests
+npm test           # node --test — 278 tests
 ```
 
 Tests check that replaying a sort's steps yields a sorted array (and never mutates

@@ -1,14 +1,17 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { quizQuestions, localize } from '@/quiz.js';
 import { highlight } from '@/highlight.js';
 import { useI18n } from '@/composables/useI18n';
 
+const props = defineProps({ cat: { type: String, default: 'all' } });
 const emit = defineEmits(['goto']);
 const { t, tf, locale } = useI18n();
 
 const CATS = ['all', 'js', 'vue', 'swift', 'ruby', 'kotlin', 'git'];
-const cat = ref('all');
+// Pool synced to the app's active category ('general' has no questions → all).
+const poolFor = (c) => (quizQuestions(c).length ? c : 'all');
+const cat = ref(poolFor(props.cat));
 
 const shuffle = (arr) => {
   const a = [...arr];
@@ -19,7 +22,7 @@ const shuffle = (arr) => {
   return a;
 };
 
-const questions = ref(shuffle(quizQuestions('all')));
+const questions = ref(shuffle(quizQuestions(cat.value)));
 const idx = ref(0);
 const picked = ref(null);
 const score = ref(0);
@@ -41,6 +44,9 @@ function restart(newCat = cat.value) {
 function onCat(e) {
   restart(e.target.value);
 }
+
+// Follow the app's category selector (the panel stays alive under KeepAlive).
+watch(() => props.cat, (c) => restart(poolFor(c)));
 
 function pick(i) {
   if (picked.value !== null) return;

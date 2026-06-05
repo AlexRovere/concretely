@@ -34,6 +34,9 @@ import DebouncePanel from '@/components/panels/DebouncePanel.vue'
 import GitDagPanel from '@/components/panels/GitDagPanel.vue'
 import GitResetPanel from '@/components/panels/GitResetPanel.vue'
 import QuizPanel from '@/components/panels/QuizPanel.vue'
+import JsBasicsPanel from '@/components/panels/JsBasicsPanel.vue'
+import SwiftBasicsPanel from '@/components/panels/SwiftBasicsPanel.vue'
+import KotlinBasicsPanel from '@/components/panels/KotlinBasicsPanel.vue'
 
 const { t, locale, setLocale, LOCALES } = useI18n()
 
@@ -44,9 +47,11 @@ const TABS = [
   { mode: 'pathfinding', key: 'tabs.pathfinding', cat: 'general' },
   { mode: 'bigo', key: 'tabs.bigo', cat: 'general' },
   { mode: 'recursion', key: 'tabs.recursion', cat: 'general' },
+  { mode: 'jsbasics', key: 'tabs.jsbasics', cat: 'js' },
   { mode: 'eventloop', key: 'tabs.eventloop', cat: 'js' },
   { mode: 'datastructures', key: 'tabs.datastructures', cat: 'general' },
   { mode: 'valueref', key: 'tabs.valueref', cat: 'js' },
+  { mode: 'swiftbasics', key: 'tabs.swiftbasics', cat: 'swift' },
   { mode: 'swift', key: 'tabs.swift', cat: 'swift' },
   { mode: 'swiftstate', key: 'tabs.swiftstate', cat: 'swift' },
   { mode: 'swiftconcurrency', key: 'tabs.swiftconcurrency', cat: 'swift' },
@@ -58,6 +63,7 @@ const TABS = [
   { mode: 'rubylookup', key: 'tabs.rubylookup', cat: 'ruby' },
   { mode: 'rubylazy', key: 'tabs.rubylazy', cat: 'ruby' },
   { mode: 'rubygvl', key: 'tabs.rubygvl', cat: 'ruby' },
+  { mode: 'kotlinbasics', key: 'tabs.kotlinbasics', cat: 'kotlin' },
   { mode: 'compose', key: 'tabs.compose', cat: 'kotlin' },
   { mode: 'ktcoroutines', key: 'tabs.ktcoroutines', cat: 'kotlin' },
   { mode: 'viewmodel', key: 'tabs.viewmodel', cat: 'kotlin' },
@@ -106,6 +112,9 @@ const panels: Record<string, unknown> = {
   gitdag: GitDagPanel,
   gitreset: GitResetPanel,
   quiz: QuizPanel,
+  jsbasics: JsBasicsPanel,
+  swiftbasics: SwiftBasicsPanel,
+  kotlinbasics: KotlinBasicsPanel,
   bst: BstPanel,
   dp: DpPanel,
   regex: RegexPanel
@@ -115,9 +124,11 @@ const mode = ref<string>('sorting')
 const currentPanel = computed(() => panels[mode.value])
 
 const cat = ref<string>('general')
-const visibleTabs = computed(() =>
-  TABS.filter((tb) => tb.cat === cat.value || tb.cat === '*')
-)
+// Topic tabs of the active category, then the always-visible tabs (Quiz) LAST.
+const visibleTabs = computed(() => [
+  ...TABS.filter((tb) => tb.cat === cat.value),
+  ...TABS.filter((tb) => tb.cat === '*')
+])
 
 // The quiz's "watch it animated" button jumps straight to a topic tab.
 function onGoto(target: string) {
@@ -167,7 +178,8 @@ function onLocale(e: Event) {
 
   <main>
     <KeepAlive>
-      <component :is="currentPanel" @goto="onGoto" />
+      <!-- :cat is only consumed by the QuizPanel (syncs its question pool). -->
+      <component :is="currentPanel" :cat="cat" @goto="onGoto" />
     </KeepAlive>
   </main>
 </template>
