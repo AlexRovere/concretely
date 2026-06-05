@@ -16,6 +16,9 @@ const KEYWORDS = new Set([
   'from', 'new', 'delete', 'public', 'private', 'protected', 'internal', 'static',
   'final', 'abstract', 'virtual', 'override', 'async', 'await', 'defer', 'inout',
   'mut', 'out', 'ref', 'where', 'guard', 'extends', 'implements', 'typedef', 'type',
+  // kotlin
+  'suspend', 'when', 'data', 'sealed', 'companion', 'by', 'lateinit', 'init',
+  'is', 'as', 'object', 'inner', 'open', 'inline', 'reified',
   // control flow
   'if', 'else', 'elif', 'elsif', 'unless', 'for', 'foreach', 'while', 'do', 'loop',
   'switch', 'case', 'default', 'break', 'continue', 'return', 'goto', 'yield',

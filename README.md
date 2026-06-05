@@ -11,7 +11,7 @@ npm install
 npm run dev        # Vite dev server on http://localhost:5173
 npm run build      # type-check (vue-tsc) + production build to dist/
 npm run preview    # serve the production build
-npm test           # node --test — 95 tests on the pure models
+npm test           # node --test — 204 tests on the pure models
 ```
 
 ## What's inside
@@ -51,6 +51,68 @@ reference, so mutating through one binding changes them all.
 publisher through `map` / `filter` operators to the sink; filtered values never
 arrive.
 
+**SwiftUI state** — step through @State / @Binding / @StateObject /
+@ObservedObject: see who owns the state, which bodies re-evaluate, and the
+classic "my counter resets" bug — an `@ObservedObject` created in the parent's
+body is recreated on every parent render; `@StateObject` survives it.
+
+**Swift concurrency** — a tick timeline of threads: `await` suspends and FREES
+its thread, `async let` children run in parallel on the pool, and an actor
+serializes access (watch the second task wait for the lock — no data race).
+
+**Main thread** — the same 6-tick heavy load run synchronously on the main
+thread (frames drop, taps queue, the app feels frozen ❄) vs dispatched to the
+background with a final hop back to main for the UI update (everything stays
+fluid).
+
+**ARC & memory** — retain counts live: alloc, retain, release, deinit — then a
+strong↔strong retain cycle that leaks, and the `weak` reference that fixes it.
+
+**Structs vs classes** — Swift value semantics side by side with reference
+semantics, plus copy-on-write: `var b = a` shares the array buffer until the
+first `append` triggers the real copy.
+
+**Ruby basics** — everything is an object and an expression, truthiness where
+`0` and `""` are truthy (only `nil`/`false` are falsy), string literals that
+allocate on every use vs interned symbols (live `object_id`s), and `&.` / `||=`.
+
+**Blocks & lambdas** — `yield`, then THE trap: `return` in a lambda hands
+control back to the caller, `return` in a proc unwinds the enclosing method —
+watched live on the call stack.
+
+**Method lookup** — `obj.method` walking the ancestors chain: `prepend` before
+the class, `include` after it, `super` resuming from the next ancestor, and the
+second `method_missing` pass when nothing matches.
+
+**Eager vs lazy** — `map.select.first(2)`: eager builds a full intermediate
+array per stage (20 block calls); `.lazy` flows one element at a time and stops
+at 8 — and works on an infinite range.
+
+**GVL & threads** — the same two threads on two cores: CPU-bound work
+serializes behind the GVL (no speedup), while blocking I/O releases it and the
+waits genuinely overlap — why Ruby threads shine for I/O.
+
+**Compose recomposition** — `mutableStateOf` without `remember` is rebuilt on
+every recomposition (the counter that never moves 💥) vs `remember` that
+survives; and smart recomposition: only composables READING the changed state
+re-execute, the rest are skipped.
+
+**Coroutines & dispatchers** — `suspend` frees the main thread (a click handler
+runs during the network wait), `withContext(Dispatchers.IO)` hops the work off
+main and resumes on it, `async`/`awaitAll` overlaps requests.
+
+**ViewModel & rotation** — the Android classic: rotation destroys the Activity
+(plain fields lost 💥), a ViewModel survives rotation but not process death,
+`SavedStateHandle` (Bundle) survives both.
+
+**Flow: cold vs hot** — a cold flow re-runs its producer for every collector; a
+`StateFlow` shares one producer and replays its latest value to late collectors
+(♻️) — where UI state belongs.
+
+**Lifecycle** — onCreate → … → onDestroy stepped on three journeys: rotation
+(full teardown + a brand-new instance), Home/return (`onRestart`), and Back
+(destroyed for good).
+
 **Binary tree (BST)** — a binary search tree drawn as a diagram; step through
 in/pre/post-order traversals (in-order comes out sorted) or a search that walks a
 single path down to a hit or miss.
@@ -74,6 +136,10 @@ lightweight built-in syntax highlighting (no dependency).
 **Bilingual UI** — the whole interface is available in **French and English** via
 the locale switch; code snippets stay in their own language. Default is French.
 
+**Category filter** — a selector in the header narrows the tabs to one family
+(All / General / JavaScript / Swift / Ruby / Kotlin-Android), so the language
+deep-dives don't crowd the algorithm topics.
+
 ## Architecture
 
 The heart of the app is a set of **pure step generators** — each algorithm/model
@@ -89,6 +155,11 @@ src/
   components/panels/         # one SFC per topic (template + onMounted player logic)
     SortingPanel.vue · PathfindingPanel.vue · BigOPanel.vue · RecursionPanel.vue
     EventLoopPanel.vue · DataStructuresPanel.vue · ValueRefPanel.vue · SwiftPanel.vue
+    SwiftStatePanel.vue · SwiftConcurrencyPanel.vue · MainThreadPanel.vue
+    ArcPanel.vue · CowPanel.vue · BstPanel.vue · DpPanel.vue · RegexPanel.vue
+    RubyBasicsPanel.vue · RubyBlocksPanel.vue · RubyLookupPanel.vue
+    RubyLazyPanel.vue · RubyGvlPanel.vue · ComposePanel.vue
+    KtCoroutinesPanel.vue · ViewModelPanel.vue · KtFlowPanel.vue · LifecyclePanel.vue
   composables/
     useI18n.ts               # bridges the JS i18n locale to a reactive Vue ref
     useCodeLang.ts           # shared code-language selection (JS, Java, Swift, …)
@@ -99,6 +170,10 @@ src/
   distributions.js · metrics.js
   bigo.js · recursion.js · eventloop.js · datastructures.js · valueref.js · combine.js
   bst.js · dp.js · automaton.js   # binary search tree · edit-distance DP · DFA models
+  swiftstate.js · swiftconcurrency.js · mainthread.js · arc.js · cow.js  # Swift models
+  rubybasics.js · rubyblocks.js · rubylookup.js · rubylazy.js · rubygvl.js # Ruby models
+  compose.js · ktcoroutines.js · viewmodel.js · ktflow.js · lifecycle.js   # Kotlin/Android
+                                  # (rubygvl & ktcoroutines reuse the swiftconcurrency tick engine)
   sorting/algorithms.js      # step generators + complexity/tips
   pathfinding/{grid,algorithms}.js
   render/{sortRenderer,gridRenderer}.js
@@ -111,7 +186,7 @@ Because the state is fully reconstructible by replaying steps, the models are
 unit-tested without a browser:
 
 ```bash
-npm test           # node --test — 95 tests
+npm test           # node --test — 204 tests
 ```
 
 Tests check that replaying a sort's steps yields a sorted array (and never mutates
