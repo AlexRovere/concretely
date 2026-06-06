@@ -98,7 +98,7 @@ fun Counter() {
     var count by remember { mutableStateOf(0) }
 
     Button(onClick = { count++ }) {
-        Text("Clics : \$count")             // s'incrémente normalement
+        Text("Clics : $count")             // s'incrémente normalement
     }
 }`,
     root: 'Counter',

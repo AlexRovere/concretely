@@ -45,7 +45,7 @@ function escapeHtml(s) {
  * @returns {string} HTML
  */
 export function highlight(code, lang = 'js') {
-  const hashComment = lang === 'ruby' || lang === 'php';
+  const hashComment = lang === 'ruby' || lang === 'php' || lang === 'git' || lang === 'bash';
   const n = code.length;
   let i = 0;
   let out = '';

@@ -34,6 +34,8 @@ import DebouncePanel from '@/components/panels/DebouncePanel.vue'
 import GitDagPanel from '@/components/panels/GitDagPanel.vue'
 import GitResetPanel from '@/components/panels/GitResetPanel.vue'
 import QuizPanel from '@/components/panels/QuizPanel.vue'
+import CheatsheetPanel from '@/components/panels/CheatsheetPanel.vue'
+import SearchPalette from '@/components/SearchPalette.vue'
 import JsBasicsPanel from '@/components/panels/JsBasicsPanel.vue'
 import SwiftBasicsPanel from '@/components/panels/SwiftBasicsPanel.vue'
 import KotlinBasicsPanel from '@/components/panels/KotlinBasicsPanel.vue'
@@ -75,6 +77,7 @@ const TABS = [
   { mode: 'debounce', key: 'tabs.debounce', cat: 'vue' },
   { mode: 'gitdag', key: 'tabs.gitdag', cat: 'git' },
   { mode: 'gitreset', key: 'tabs.gitreset', cat: 'git' },
+  { mode: 'cheatsheet', key: 'tabs.cheatsheet', cat: '*' },
   { mode: 'quiz', key: 'tabs.quiz', cat: '*' },
   { mode: 'bst', key: 'tabs.bst', cat: 'general' },
   { mode: 'dp', key: 'tabs.dp', cat: 'general' },
@@ -112,6 +115,7 @@ const panels: Record<string, unknown> = {
   gitdag: GitDagPanel,
   gitreset: GitResetPanel,
   quiz: QuizPanel,
+  cheatsheet: CheatsheetPanel,
   jsbasics: JsBasicsPanel,
   swiftbasics: SwiftBasicsPanel,
   kotlinbasics: KotlinBasicsPanel,
@@ -135,6 +139,21 @@ function onGoto(target: string) {
   const tab = TABS.find((tb) => tb.mode === target)
   if (tab && tab.cat !== '*') cat.value = tab.cat
   mode.value = target
+}
+
+// ---- Global search (Ctrl+K palette) -------------------------------------
+const palette = ref<InstanceType<typeof SearchPalette> | null>(null)
+// Seed handed to the CheatsheetPanel so a picked snippet is filtered in.
+const cheatQuery = ref('')
+
+function onPick(e: { kind: string; mode: string; cat: string; titleFr: string; titleEn: string }) {
+  if (e.kind === 'tab') {
+    onGoto(e.mode)
+    return
+  }
+  cat.value = e.cat
+  mode.value = 'cheatsheet'
+  cheatQuery.value = locale.value === 'fr' ? e.titleFr : e.titleEn
 }
 
 function onCat(e: Event) {
@@ -169,6 +188,9 @@ function onLocale(e: Event) {
         {{ t(tab.key) }}
       </button>
     </nav>
+    <button class="search-btn" :title="t('search.btn') + ' (Ctrl K)'" @click="palette?.show()">
+      🔍 <kbd>Ctrl K</kbd>
+    </button>
     <label class="locale-pick">
       <select id="locale" :value="locale" @change="onLocale">
         <option v-for="l in LOCALES" :key="l.id" :value="l.id">{{ l.name }}</option>
@@ -177,9 +199,11 @@ function onLocale(e: Event) {
   </header>
 
   <main>
-    <!-- :cat is only consumed by the QuizPanel (syncs its question pool). -->
+    <!-- :cat syncs the Quiz pool & the Cheatsheet; :query seeds the Cheatsheet filter. -->
     <KeepAlive>
-      <component :is="currentPanel" :cat="cat" @goto="onGoto" />
+      <component :is="currentPanel" :cat="cat" :query="cheatQuery" @goto="onGoto" />
     </KeepAlive>
   </main>
+
+  <SearchPalette ref="palette" :tabs="TABS" @pick="onPick" />
 </template>

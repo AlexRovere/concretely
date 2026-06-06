@@ -16,6 +16,7 @@
     "clean": "rimraf dist node_modules/.vite"
   },
   "dependencies": {
+    "fuse.js": "^7.4.2",
     "vue": "^3.4.15"
   },
   "devDependencies": {

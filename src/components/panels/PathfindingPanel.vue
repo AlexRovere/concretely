@@ -140,7 +140,7 @@ onUnmounted(() => player?.stop())
     <div class="code-box">
       <div class="code-head">
         <span id="grid-code-title"></span>
-        <select id="grid-lang" class="lang-select" v-model="currentLang">
+        <select id="grid-lang" v-model="currentLang" class="lang-select">
           <option v-for="l in LANGUAGES" :key="l.id" :value="l.id">{{ l.name }}</option>
         </select>
       </div>

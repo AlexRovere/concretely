@@ -78,7 +78,7 @@ const grade = computed(() => {
           <option v-for="c in CATS" :key="c" :value="c">{{ t('cat.' + c) }}</option>
         </select>
       </label>
-      <span class="el-phase" v-if="!finished">{{ tf('quiz.progress', idx + 1, questions.length) }} — {{ tf('quiz.score', score) }}</span>
+      <span v-if="!finished" class="el-phase">{{ tf('quiz.progress', idx + 1, questions.length) }} — {{ tf('quiz.score', score) }}</span>
       <button @click="restart()">{{ t('quiz.replay') }}</button>
     </div>
 
