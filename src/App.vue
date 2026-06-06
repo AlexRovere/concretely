@@ -35,6 +35,7 @@ import GitDagPanel from '@/components/panels/GitDagPanel.vue'
 import GitResetPanel from '@/components/panels/GitResetPanel.vue'
 import QuizPanel from '@/components/panels/QuizPanel.vue'
 import CheatsheetPanel from '@/components/panels/CheatsheetPanel.vue'
+import PlaygroundPanel from '@/components/panels/PlaygroundPanel.vue'
 import SearchPalette from '@/components/SearchPalette.vue'
 import SettingsMenu from '@/components/SettingsMenu.vue'
 import { useTheme } from '@/composables/useTheme'
@@ -47,7 +48,9 @@ useTheme() // applies the persisted theme + code palette/font on startup
 
 const CATEGORIES = ['general', 'js', 'vue', 'swift', 'ruby', 'kotlin', 'git']
 
-const TABS = [
+// `cat: '*'` = always-visible tab (appended last); `not` lists categories
+// where such a tab is hidden (no Swift compiler runs in a browser).
+const TABS: { mode: string; key: string; cat: string; not?: string[] }[] = [
   { mode: 'sorting', key: 'tabs.sorting', cat: 'general' },
   { mode: 'pathfinding', key: 'tabs.pathfinding', cat: 'general' },
   { mode: 'bigo', key: 'tabs.bigo', cat: 'general' },
@@ -81,6 +84,7 @@ const TABS = [
   { mode: 'gitdag', key: 'tabs.gitdag', cat: 'git' },
   { mode: 'gitreset', key: 'tabs.gitreset', cat: 'git' },
   { mode: 'cheatsheet', key: 'tabs.cheatsheet', cat: '*' },
+  { mode: 'playground', key: 'tabs.playground', cat: '*', not: ['swift'] },
   { mode: 'quiz', key: 'tabs.quiz', cat: '*' },
   { mode: 'bst', key: 'tabs.bst', cat: 'general' },
   { mode: 'dp', key: 'tabs.dp', cat: 'general' },
@@ -119,6 +123,7 @@ const panels: Record<string, unknown> = {
   gitreset: GitResetPanel,
   quiz: QuizPanel,
   cheatsheet: CheatsheetPanel,
+  playground: PlaygroundPanel,
   jsbasics: JsBasicsPanel,
   swiftbasics: SwiftBasicsPanel,
   kotlinbasics: KotlinBasicsPanel,
@@ -131,10 +136,11 @@ const mode = ref<string>('sorting')
 const currentPanel = computed(() => panels[mode.value])
 
 const cat = ref<string>('general')
-// Topic tabs of the active category, then the always-visible tabs (Quiz) LAST.
+// Topic tabs of the active category, then the always-visible tabs LAST
+// (Cheatsheet, Playground, Quiz) — minus the ones excluded for this category.
 const visibleTabs = computed(() => [
   ...TABS.filter((tb) => tb.cat === cat.value),
-  ...TABS.filter((tb) => tb.cat === '*')
+  ...TABS.filter((tb) => tb.cat === '*' && !tb.not?.includes(cat.value))
 ])
 
 // The quiz's "watch it animated" button jumps straight to a topic tab.
