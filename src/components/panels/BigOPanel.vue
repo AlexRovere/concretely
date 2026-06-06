@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue';
 import { GROWTH, growthById, series, opsAt, formatOps } from '@/bigo.js';
 import { t, onLocaleChange } from '@/i18n.js';
+import { themeColors, onThemeChange } from '@/render/cssColors.js';
 import { useI18n } from '@/composables/useI18n';
 
 const { t: tt } = useI18n();
@@ -36,7 +37,7 @@ onMounted(() => {
     for (const g of curves) maxY = Math.max(maxY, g.fn(maxN));
     const px = (n) => pad + ((n - 1) / Math.max(1, maxN - 1)) * (W - 2 * pad);
     const py = (v) => H - pad - Math.min(1, v / maxY) * (H - 2 * pad);
-    ctx.strokeStyle = '#1f2937';
+    ctx.strokeStyle = themeColors({ axis: ['--border', '#1f2937'] }).axis;
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(pad, pad); ctx.lineTo(pad, H - pad); ctx.lineTo(W - pad, H - pad);
@@ -66,6 +67,7 @@ onMounted(() => {
   nEl.oninput = update;
   fs.addEventListener('change', update);
   onLocaleChange(renderReadout);
+  onThemeChange(draw);
   update();
 });
 </script>

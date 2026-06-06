@@ -1,10 +1,11 @@
 import { applyStep } from '../sorting/algorithms.js';
+import { themeColors, onThemeChange } from './cssColors.js';
 
-const COLORS = {
-  bar: '#475569',
-  sorted: '#22c55e',
-  compare: '#eab308',
-  active: '#ef4444',
+const COLOR_SPEC = {
+  bar: ['--cv-bar', '#475569'],
+  sorted: ['--ok', '#22c55e'],
+  compare: ['--warn', '#eab308'],
+  active: ['--ko', '#ef4444'],
 };
 
 /** Draws an array as bars and highlights compare/swap/sorted steps. */
@@ -12,6 +13,7 @@ export class SortRenderer {
   constructor(canvas, array) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
+    onThemeChange(() => this.draw()); // one renderer per panel — no leak
     this.reset(array);
   }
 
@@ -42,6 +44,7 @@ export class SortRenderer {
 
   draw() {
     const { ctx, canvas, array, max } = this;
+    const COLORS = themeColors(COLOR_SPEC);
     const W = canvas.width, H = canvas.height;
     ctx.clearRect(0, 0, W, H);
     const n = array.length;

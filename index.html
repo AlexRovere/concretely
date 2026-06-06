@@ -26,12 +26,22 @@
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="fr_FR" />
 
-    <meta name="theme-color" content="#0ea5e9" />
+    <meta name="theme-color" content="#0f172a" />
 
     <title>Concretely — rendre le code abstrait concret</title>
   </head>
   <body>
     <div id="app"></div>
+    <!-- Anti-FOUC : pose le thème avant le premier paint (même clé que useTheme). -->
+    <script>
+      try {
+        var t = new URLSearchParams(location.search).get('theme');
+        if (t !== 'dark' && t !== 'light') t = localStorage.getItem('concretely:theme');
+        if (t !== 'dark' && t !== 'light')
+          t = matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+        document.documentElement.dataset.theme = t;
+      } catch (e) { document.documentElement.dataset.theme = 'dark'; }
+    </script>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

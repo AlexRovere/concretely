@@ -16,6 +16,9 @@
     "clean": "rimraf dist node_modules/.vite"
   },
   "dependencies": {
+    "@fontsource-variable/fira-code": "^5.2.7",
+    "@fontsource-variable/jetbrains-mono": "^5.2.8",
+    "@fontsource/ibm-plex-mono": "^5.2.7",
     "fuse.js": "^7.4.2",
     "vue": "^3.4.15"
   },

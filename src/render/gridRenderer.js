@@ -1,13 +1,14 @@
 import { key, isWall } from '../pathfinding/grid.js';
+import { themeColors, onThemeChange } from './cssColors.js';
 
-const COLORS = {
-  empty: '#1f2937',
-  wall: '#0b1220',
-  frontier: '#0ea5e9',
-  visited: '#7c3aed',
-  path: '#eab308',
-  start: '#22c55e',
-  end: '#ef4444',
+const COLOR_SPEC = {
+  empty: ['--cv-cell', '#1f2937'],
+  wall: ['--cv-wall', '#0b1220'],
+  frontier: ['--cv-frontier', '#0ea5e9'],
+  visited: ['--cv-visited', '#7c3aed'],
+  path: ['--warn', '#eab308'],
+  start: ['--ok', '#22c55e'],
+  end: ['--ko', '#ef4444'],
 };
 
 /** Draws a grid with walls, the search frontier/visited cells, and the path. */
@@ -15,6 +16,7 @@ export class GridRenderer {
   constructor(canvas, grid, start, end) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
+    onThemeChange(() => this.draw()); // one renderer per panel — no leak
     this.set(grid, start, end);
   }
 
@@ -56,6 +58,7 @@ export class GridRenderer {
 
   draw() {
     const { ctx, canvas, grid } = this;
+    const COLORS = themeColors(COLOR_SPEC);
     const cs = this.cellSize();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     for (let r = 0; r < grid.rows; r++) {

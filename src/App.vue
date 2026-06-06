@@ -36,11 +36,14 @@ import GitResetPanel from '@/components/panels/GitResetPanel.vue'
 import QuizPanel from '@/components/panels/QuizPanel.vue'
 import CheatsheetPanel from '@/components/panels/CheatsheetPanel.vue'
 import SearchPalette from '@/components/SearchPalette.vue'
+import SettingsMenu from '@/components/SettingsMenu.vue'
+import { useTheme } from '@/composables/useTheme'
 import JsBasicsPanel from '@/components/panels/JsBasicsPanel.vue'
 import SwiftBasicsPanel from '@/components/panels/SwiftBasicsPanel.vue'
 import KotlinBasicsPanel from '@/components/panels/KotlinBasicsPanel.vue'
 
 const { t, locale, setLocale, LOCALES } = useI18n()
+useTheme() // applies the persisted theme + code palette/font on startup
 
 const CATEGORIES = ['general', 'js', 'vue', 'swift', 'ruby', 'kotlin', 'git']
 
@@ -191,6 +194,7 @@ function onLocale(e: Event) {
     <button class="search-btn" :title="t('search.btn') + ' (Ctrl K)'" @click="palette?.show()">
       🔍 <kbd>Ctrl K</kbd>
     </button>
+    <SettingsMenu />
     <label class="locale-pick">
       <select id="locale" :value="locale" @change="onLocale">
         <option v-for="l in LOCALES" :key="l.id" :value="l.id">{{ l.name }}</option>
