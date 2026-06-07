@@ -174,6 +174,8 @@ h1 {
 }
 /* Theme toggle + appearance settings (header, right side). */
 .settings { position: relative; display: flex; gap: 0.4rem; flex-shrink: 0; }
+/* Hamburger : mobile uniquement (ouvre le drawer de navigation). */
+.ham { display: none; font-size: 1.05rem; }
 .icon-btn {
   background: var(--panel);
   border: 1px solid var(--border);
@@ -878,10 +880,10 @@ canvas {
   }
   .tabs::-webkit-scrollbar { display: none; }
   .tab { flex-shrink: 0; white-space: nowrap; }
-  /* Le popover s'ancre au header (sticky → positionné) plutôt qu'au bouton ⚙️,
-     pour ne jamais déborder du bord gauche des petits écrans. */
-  .settings { position: static; }
-  .settings-pop { right: 0.75rem; width: min(17.5rem, calc(100vw - 1.5rem)); }
+  /* Header mobile minimal : ☰ + titre + 🔍. Catégorie, apparence et langue
+     vivent dans le drawer (NavDrawer). */
+  .ham { display: inline-flex; }
+  .cat-pick, .settings, .locale-pick { display: none; }
 }
 
 @media (max-width: 760px) {
@@ -906,6 +908,59 @@ canvas {
   .qz-final { padding: 1.5rem 0; }
   .qz-grade { font-size: 2.4rem; }
 }
+
+/* ------------------------------------------------ drawer mobile (☰ menu) */
+
+.dw-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 60;
+}
+.dw {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: min(20rem, 86vw);
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  padding: 0.9rem 1rem 1.25rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+.dw-head { display: flex; align-items: center; justify-content: space-between; }
+.dw-title {
+  font-size: 1.15rem;
+  letter-spacing: -0.01em;
+  background: linear-gradient(100deg, var(--accent), var(--accent-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.dw-cats { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.dw-tabs { display: flex; flex-direction: column; gap: 2px; }
+.dw-tab {
+  text-align: left;
+  background: transparent;
+  border: none;
+  color: var(--ink-2);
+  padding: 0.5rem 0.6rem;
+  border-radius: 8px;
+  font-size: 0.92rem;
+  cursor: pointer;
+}
+.dw-tab:hover { background: var(--accent-soft); }
+.dw-tab.active { background: var(--accent); color: #fff; }
+.dw-sep { border: none; border-top: 1px solid var(--border); margin: 0.2rem 0; width: 100%; }
+
+.drawer-enter-active, .drawer-leave-active { transition: opacity 0.2s ease; }
+.drawer-enter-active .dw, .drawer-leave-active .dw { transition: transform 0.22s ease; }
+.drawer-enter-from, .drawer-leave-to { opacity: 0; }
+.drawer-enter-from .dw, .drawer-leave-to .dw { transform: translateX(-100%); }
 
 /* Écrans tactiles : pas de clavier physique (l'indice Ctrl K disparaît),
    cibles tactiles plus grandes, et champs ≥ 16px pour empêcher le zoom

@@ -38,6 +38,7 @@ import CheatsheetPanel from '@/components/panels/CheatsheetPanel.vue'
 import PlaygroundPanel from '@/components/panels/PlaygroundPanel.vue'
 import SearchPalette from '@/components/SearchPalette.vue'
 import SettingsMenu from '@/components/SettingsMenu.vue'
+import NavDrawer from '@/components/NavDrawer.vue'
 import { useTheme } from '@/composables/useTheme'
 import JsBasicsPanel from '@/components/panels/JsBasicsPanel.vue'
 import SwiftBasicsPanel from '@/components/panels/SwiftBasicsPanel.vue'
@@ -187,13 +188,19 @@ function onPick(e: { kind: string; mode: string; cat: string; titleFr: string; t
   cheatQuery.value = locale.value === 'fr' ? e.titleFr : e.titleEn
 }
 
-function onCat(e: Event) {
-  cat.value = (e.target as HTMLSelectElement).value
+function selectCat(c: string) {
+  cat.value = c
   // If the active tab is filtered out, jump to the first visible one.
   if (!visibleTabs.value.some((tb) => tb.mode === mode.value)) {
     mode.value = visibleTabs.value[0].mode
   }
 }
+function onCat(e: Event) {
+  selectCat((e.target as HTMLSelectElement).value)
+}
+
+// Mobile drawer (☰): navigation + options in a side panel.
+const drawer = ref(false)
 
 function onLocale(e: Event) {
   setLocale((e.target as HTMLSelectElement).value)
@@ -202,6 +209,7 @@ function onLocale(e: Event) {
 
 <template>
   <header :class="{ 'nav-hidden': navHidden }">
+    <button class="icon-btn ham" :aria-label="t('menu.title')" @click="drawer = true">☰</button>
     <h1>Concretely</h1>
     <label class="cat-pick">
       <select id="category" :value="cat" @change="onCat">
@@ -238,4 +246,15 @@ function onLocale(e: Event) {
   </main>
 
   <SearchPalette ref="palette" :tabs="TABS" @pick="onPick" />
+  <NavDrawer
+    :open="drawer"
+    :tabs="TABS"
+    :categories="CATEGORIES"
+    :cat="cat"
+    :mode="mode"
+    @close="drawer = false"
+    @cat="selectCat"
+    @goto="onGoto"
+  />
+
 </template>
