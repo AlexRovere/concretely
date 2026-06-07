@@ -59,13 +59,14 @@ import CMemoryPanel from '@/components/panels/CMemoryPanel.vue'
 import SchedulerPanel from '@/components/panels/SchedulerPanel.vue'
 import OsBasicsPanel from '@/components/panels/OsBasicsPanel.vue'
 import K8sBasicsPanel from '@/components/panels/K8sBasicsPanel.vue'
+import JavaBasicsPanel from '@/components/panels/JavaBasicsPanel.vue'
 
 const { t, locale, setLocale, LOCALES } = useI18n()
 useTheme() // applies the persisted theme + code palette/font on startup
 
 // Languages first, then tools/infra.
 const CATEGORIES = [
-  'general', 'js', 'ts', 'python', 'vue', 'swift', 'ruby', 'kotlin', 'go', 'rust', 'c',
+  'general', 'js', 'ts', 'python', 'vue', 'swift', 'ruby', 'kotlin', 'java', 'go', 'rust', 'c',
   'sql', 'git', 'linux', 'os', 'web', 'docker', 'k8s'
 ]
 
@@ -120,6 +121,7 @@ const TABS: { mode: string; key: string; cat: string; not?: string[] }[] = [
   { mode: 'scheduler', key: 'tabs.scheduler', cat: 'os' },
   { mode: 'osbasics', key: 'tabs.osbasics', cat: 'os' },
   { mode: 'k8sbasics', key: 'tabs.k8sbasics', cat: 'k8s' },
+  { mode: 'javabasics', key: 'tabs.javabasics', cat: 'java' },
   { mode: 'cheatsheet', key: 'tabs.cheatsheet', cat: '*' },
   { mode: 'playground', key: 'tabs.playground', cat: '*', not: ['swift', 'web', 'docker', 'os', 'k8s'] },
   { mode: 'quiz', key: 'tabs.quiz', cat: '*' },
@@ -180,6 +182,7 @@ const panels: Record<string, unknown> = {
   scheduler: SchedulerPanel,
   osbasics: OsBasicsPanel,
   k8sbasics: K8sBasicsPanel,
+  javabasics: JavaBasicsPanel,
   bst: BstPanel,
   dp: DpPanel,
   regex: RegexPanel

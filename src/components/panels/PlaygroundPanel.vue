@@ -69,6 +69,11 @@ async function runText(code) {
       const { logs: out, netError } = await runC(code);
       logs.value = out;
       if (netError) logs.value.push({ kind: 'crash', text: t('pg.netError') });
+    } else if (engine.value === 'java') {
+      const { runJava } = await import('@/playground/runjava.js');
+      const { logs: out, netError } = await runJava(code);
+      logs.value = out;
+      if (netError) logs.value.push({ kind: 'crash', text: t('pg.netError') });
     } else if (engine.value === 'sql') {
       const { runSql } = await import('@/playground/runsql.js');
       const { logs: out, netError } = await runSql(code, { onLoading: () => { loading.value = true; } });

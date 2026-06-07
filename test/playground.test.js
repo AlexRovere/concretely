@@ -4,11 +4,11 @@ import { PLAYGROUNDS, playgroundFor } from '../src/playground/samples.js';
 import { parseGitCommands, runGitOps, renderDagSvg } from '../src/playground/gitrepl.js';
 import { runShell } from '../src/playground/shellfs.js';
 
-const ENGINES = new Set(['js', 'vue', 'ruby', 'kotlin', 'git', 'ts', 'go', 'rust', 'sh', 'sql', 'python', 'c']);
-const LANGS = new Set(['js', 'ruby', 'kotlin', 'shell', 'ts', 'go', 'rust', 'sql', 'python', 'c']);
+const ENGINES = new Set(['js', 'vue', 'ruby', 'kotlin', 'git', 'ts', 'go', 'rust', 'sh', 'sql', 'python', 'c', 'java']);
+const LANGS = new Set(['js', 'ruby', 'kotlin', 'shell', 'ts', 'go', 'rust', 'sql', 'python', 'c', 'java']);
 
 test('every category except swift has a playground (engine + sample)', () => {
-  for (const cat of ['general', 'js', 'ts', 'vue', 'ruby', 'kotlin', 'go', 'rust', 'git', 'linux', 'sql', 'python', 'c']) {
+  for (const cat of ['general', 'js', 'ts', 'vue', 'ruby', 'kotlin', 'go', 'rust', 'git', 'linux', 'sql', 'python', 'c', 'java']) {
     const c = playgroundFor(cat);
     assert.ok(c, cat);
     assert.ok(ENGINES.has(c.engine), `${cat}: engine ${c.engine}`);
@@ -20,7 +20,7 @@ test('every category except swift has a playground (engine + sample)', () => {
   assert.equal(playgroundFor('docker'), null, 'no Docker daemon in a browser — no playground');
   assert.equal(playgroundFor('os'), null, 'concepts only — no playground');
   assert.equal(playgroundFor('k8s'), null, 'no cluster in a browser — no playground');
-  assert.equal(Object.keys(PLAYGROUNDS).length, 13);
+  assert.equal(Object.keys(PLAYGROUNDS).length, 14);
 });
 
 test('shell: the shipped linux sample runs without any crash', () => {

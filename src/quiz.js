@@ -1122,6 +1122,66 @@ curl http://api   # … ?
     goto: { mode: 'k8sbasics', scenario: 'resources-oom' },
   },
   {
+    id: 'java-cache', cat: 'java', lang: 'js',
+    code: `Integer a = 127, b = 127;
+Integer c = 128, d = 128;
+a == b   // … ?
+c == d   // … ?`,
+    question: { fr: 'Que valent les deux comparaisons == ?', en: 'What do the two == comparisons yield?' },
+    choices: [
+      { fr: 'true puis true', en: 'true then true' },
+      { fr: 'true puis false 😱', en: 'true then false 😱' },
+      { fr: 'false puis false', en: 'false then false' },
+      { fr: '❌ ne compile pas', en: '❌ does not compile' },
+    ],
+    answer: 1,
+    explain: {
+      fr: 'L\'autoboxing passe par Integer.valueOf : -128..127 sont en CACHE (même objet → true). À 128, deux objets distincts — == compare les références. equals() pour les valeurs, toujours.',
+      en: 'Autoboxing goes through Integer.valueOf: -128..127 are CACHED (same object → true). At 128, two distinct objects — == compares references. equals() for values, always.',
+    },
+    goto: { mode: 'javabasics', scenario: 'integer-cache' },
+  },
+  {
+    id: 'java-npe', cat: 'java', lang: 'js',
+    code: `Integer total = null;   // OK — un objet peut être null
+int t = total;          // … ?`,
+    question: { fr: 'Que fait `int t = total;` quand total est null ?', en: 'What does `int t = total;` do when total is null?' },
+    choices: [
+      { fr: 't vaut 0', en: 't is 0' },
+      { fr: '❌ ne compile pas', en: '❌ does not compile' },
+      { fr: '💥 NullPointerException — l\'unboxing déballe null', en: '💥 NullPointerException — unboxing unwraps null' },
+      { fr: 't vaut null', en: 't is null' },
+    ],
+    answer: 2,
+    explain: {
+      fr: 'L\'affectation compile (auto-unboxing) mais exécute total.intValue() sur null → NPE. Le piège est invisible à la lecture — méfiance aux frontières Integer/int.',
+      en: 'The assignment compiles (auto-unboxing) but runs total.intValue() on null → NPE. The trap is invisible when reading — beware Integer/int boundaries.',
+    },
+    goto: { mode: 'javabasics', scenario: 'autoboxing-npe' },
+  },
+  {
+    id: 'java-hashcode', cat: 'java', lang: 'js',
+    code: `// Point redéfinit equals() mais PAS hashCode()
+Point p1 = new Point(1, 2);
+Point p2 = new Point(1, 2);
+set.add(p1);
+p1.equals(p2)      // true
+set.contains(p2)   // … ?`,
+    question: { fr: 'p1.equals(p2) est true — que renvoie set.contains(p2) ?', en: 'p1.equals(p2) is true — what does set.contains(p2) return?' },
+    choices: [
+      { fr: 'true — equals suffit', en: 'true — equals is enough' },
+      { fr: 'false 💥 — le HashSet cherche dans le mauvais seau', en: 'false 💥 — the HashSet looks in the wrong bucket' },
+      { fr: '💥 exception', en: '💥 exception' },
+      { fr: 'ça dépend de l\'ordre d\'insertion', en: 'it depends on insertion order' },
+    ],
+    answer: 1,
+    explain: {
+      fr: 'Le HashSet localise par hashCode() D\'ABORD : sans redéfinition, p1 et p2 héritent de hashCode d\'Object (distincts) → mauvais seau, equals jamais appelé. Le contrat : equals égaux ⇒ hashCode égaux. Un record génère les deux.',
+      en: 'The HashSet locates by hashCode() FIRST: without an override, p1 and p2 inherit Object\'s hashCode (distinct) → wrong bucket, equals never called. The contract: equal equals ⇒ equal hashCodes. A record generates both.',
+    },
+    goto: { mode: 'javabasics', scenario: 'equals-hashcode' },
+  },
+  {
     id: 'gen-bst', cat: 'general', lang: 'js',
     code: `//        50
 //      /    \\

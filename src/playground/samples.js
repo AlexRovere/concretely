@@ -237,6 +237,39 @@ int main(void) {
     return 0;
 }`,
   },
+  java: {
+    engine: 'java',
+    lang: 'java',
+    sample: `// Compilé (jdk 25) et exécuté via l'API de godbolt.org.
+// ⚠ la classe ne doit PAS être public (le fichier s'appelle <source>).
+import java.util.List;
+
+class Main {
+    record User(String nom, int age) {}
+
+    public static void main(String[] args) {
+        // Le piège du cache Integer :
+        Integer a = 127, b = 127, c = 128, d = 128;
+        System.out.println("127 == : " + (a == b) + "  /  128 == : " + (c == d));
+
+        // Records + streams :
+        var equipe = List.of(new User("Ada", 36), new User("Grace", 85), new User("Alan", 41));
+        var doyenne = equipe.stream()
+            .filter(u -> u.age() > 40)
+            .map(User::nom)
+            .toList();
+        System.out.println("plus de 40 ans : " + doyenne);
+
+        // Text block + switch expression :
+        int n = 7;
+        String parite = switch (n % 2) {
+            case 0 -> "pair";
+            default -> "impair";
+        };
+        System.out.println(n + " est " + parite);
+    }
+}`,
+  },
   sql: {
     engine: 'sql',
     lang: 'sql',

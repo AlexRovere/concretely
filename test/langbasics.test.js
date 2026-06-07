@@ -17,6 +17,7 @@ import { PYBASICS_SCENARIOS } from '../src/pybasics.js';
 import { CBASICS_SCENARIOS } from '../src/cbasics.js';
 import { OSBASICS_SCENARIOS } from '../src/osbasics.js';
 import { K8SBASICS_SCENARIOS } from '../src/k8sbasics.js';
+import { JAVABASICS_SCENARIOS } from '../src/javabasics.js';
 
 function steps(ops) {
   const out = [];
@@ -158,7 +159,7 @@ test('every basics scenario is well-formed and terminates', () => {
     ...LINUXBASICS_SCENARIOS, ...SQLBASICS_SCENARIOS, ...HTTPFLOW_SCENARIOS,
     ...CORS_SCENARIOS, ...HTTPCACHE_SCENARIOS, ...DOCKERBASICS_SCENARIOS,
     ...PYBASICS_SCENARIOS, ...CBASICS_SCENARIOS, ...OSBASICS_SCENARIOS,
-    ...K8SBASICS_SCENARIOS,
+    ...K8SBASICS_SCENARIOS, ...JAVABASICS_SCENARIOS,
   ]) {
     assert.ok(s.code.length > 10, s.id);
     assert.ok(s.ops.length > 0, s.id);

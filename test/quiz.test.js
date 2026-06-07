@@ -37,6 +37,7 @@ import { summaryOf as cmSummary, cMemoryScenarioById } from '../src/cmemory.js';
 import { summaryOf as scSummary, schedulerScenarioById } from '../src/scheduler.js';
 import { summaryOf as osSummary, osBasicsScenarioById } from '../src/osbasics.js';
 import { summaryOf as k8Summary, k8sBasicsScenarioById } from '../src/k8sbasics.js';
+import { summaryOf as jvSummary, javaBasicsScenarioById } from '../src/javabasics.js';
 import { buildTree, traverse, BST_DEMO } from '../src/bst.js';
 import { SORTS } from '../src/sorting/algorithms.js';
 
@@ -345,6 +346,18 @@ test('k8s-*: the Kubernetes quiz answers match the k8sbasics model', () => {
   assert.equal(quizQuestionById('k8s-oom').answer, 1);
 });
 
+test('java-*: the Java quiz answers match the javabasics model', () => {
+  const ic = javaBasicsScenarioById('integer-cache').ops;
+  assert.equal(ic.find((o) => o.eval === 'a == b  // 127').value, 'true');
+  assert.equal(ic.find((o) => o.eval === 'c == d  // 128').value, 'false');
+  assert.equal(quizQuestionById('java-cache').answer, 1);
+  assert.ok(jvSummary(javaBasicsScenarioById('autoboxing-npe').ops).crashes.includes('int t = total;'));
+  assert.equal(quizQuestionById('java-npe').answer, 2);
+  const eh = javaBasicsScenarioById('equals-hashcode').ops;
+  assert.equal(eh.find((o) => o.eval === 'set.contains(p2)').value, 'false');
+  assert.equal(quizQuestionById('java-hashcode').answer, 1);
+});
+
 test('rb-symbols: strings differ, symbols are interned, per the model', () => {
   const { stringIds, symbolIds } = rbSummary(rubyBasicsScenarioById('symbols').ops);
   assert.notEqual(stringIds[0], stringIds[1]);
@@ -383,7 +396,7 @@ test('every question is well-formed (choices, answer, code, goto)', () => {
 
 test('category filter returns the right subsets', () => {
   assert.equal(quizQuestions('all').length, QUIZ_QUESTIONS.length);
-  const cats = ['general', 'js', 'ts', 'vue', 'swift', 'ruby', 'kotlin', 'go', 'rust', 'git', 'linux', 'sql', 'web', 'docker', 'python', 'c', 'os', 'k8s'];
+  const cats = ['general', 'js', 'ts', 'vue', 'swift', 'ruby', 'kotlin', 'go', 'rust', 'git', 'linux', 'sql', 'web', 'docker', 'python', 'c', 'os', 'k8s', 'java'];
   let sum = 0;
   for (const c of cats) {
     const qs = quizQuestions(c);
