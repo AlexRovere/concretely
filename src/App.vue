@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, nextTick } from 'vue'
+import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { useI18n } from '@/composables/useI18n'
 import SortingPanel from '@/components/panels/SortingPanel.vue'
 import PathfindingPanel from '@/components/panels/PathfindingPanel.vue'
@@ -143,8 +143,22 @@ const visibleTabs = computed(() => [
   ...TABS.filter((tb) => tb.cat === '*' && !tb.not?.includes(cat.value))
 ])
 
+// Mobile: auto-hide the sticky header on scroll down, reveal on scroll up
+// (the transform only applies ≤920px — see visualizers.css).
+const navHidden = ref(false)
+let lastY = 0
+function onScroll() {
+  const y = window.scrollY
+  if (Math.abs(y - lastY) < 6) return // ignore sub-pixel jitter / iOS bounce
+  navHidden.value = y > lastY && y > 90
+  lastY = y
+}
+onMounted(() => window.addEventListener('scroll', onScroll, { passive: true }))
+onUnmounted(() => window.removeEventListener('scroll', onScroll))
+
 // Mobile: the tab list is a swipeable strip — keep the active tab in view.
 watch([mode, cat], async () => {
+  navHidden.value = false // a tab/category jump must never leave the nav hidden
   await nextTick()
   document
     .querySelector('.tabs .tab.active')
@@ -187,7 +201,7 @@ function onLocale(e: Event) {
 </script>
 
 <template>
-  <header>
+  <header :class="{ 'nav-hidden': navHidden }">
     <h1>Concretely</h1>
     <label class="cat-pick">
       <select id="category" :value="cat" @change="onCat">

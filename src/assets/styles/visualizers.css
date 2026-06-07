@@ -857,7 +857,14 @@ canvas {
 /* Tablette et moins : les onglets deviennent une bande défilable d'une seule
    ligne (full-bleed) au lieu de faire enfler le header sticky sur N rangées. */
 @media (max-width: 920px) {
-  header { gap: 0.55rem 0.7rem; padding: 0.6rem 0.9rem; }
+  header {
+    gap: 0.55rem 0.7rem;
+    padding: 0.6rem 0.9rem;
+    /* la nav s'efface au scroll vers le bas, réapparaît dès qu'on remonte */
+    transition: transform 0.25s ease, background-color 0.18s ease,
+      border-color 0.18s ease, color 0.18s ease;
+  }
+  header.nav-hidden { transform: translateY(-100%); }
   h1 { font-size: 1.15rem; }
   .tabs {
     order: 10;            /* dernière rangée du header */
