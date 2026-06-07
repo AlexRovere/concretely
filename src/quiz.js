@@ -626,6 +626,104 @@ let x = x + 1;   // … ?`,
     goto: { mode: 'rustbasics', scenario: 'mutability' },
   },
   {
+    id: 'lx-quotes', cat: 'linux', lang: 'bash',
+    code: `nom="Ada Lovelace"
+echo "$nom"   # … ?
+echo '$nom'   # … ?`,
+    question: { fr: 'Que sortent les deux echo ?', en: 'What do the two echo print?' },
+    choices: [
+      { fr: 'Ada Lovelace · puis · Ada Lovelace', en: 'Ada Lovelace · then · Ada Lovelace' },
+      { fr: 'Ada Lovelace · puis · $nom littéral', en: 'Ada Lovelace · then · literal $nom' },
+      { fr: '$nom littéral · puis · Ada Lovelace', en: 'literal $nom · then · Ada Lovelace' },
+      { fr: 'erreur — variable non définie', en: 'error — undefined variable' },
+    ],
+    answer: 1,
+    explain: {
+      fr: 'Doubles quotes : expansion (en un seul mot). Simples quotes : AUCUNE expansion. Et sans quotes du tout, le word splitting coupe en deux arguments.',
+      en: 'Double quotes: expansion (as one word). Single quotes: NO expansion. And with no quotes at all, word splitting cuts it into two arguments.',
+    },
+    goto: { mode: 'linuxbasics', scenario: 'quoting' },
+  },
+  {
+    id: 'lx-exit', cat: 'linux', lang: 'bash',
+    code: `false
+echo $?              # … ?
+false && echo "A"
+false || echo "B"`,
+    question: { fr: 'Que vaut $? — et lequel de A/B s\'affiche ?', en: 'What is $? — and which of A/B prints?' },
+    choices: [
+      { fr: '$? = 0 · A s\'affiche', en: '$? = 0 · A prints' },
+      { fr: '$? = 1 · B s\'affiche', en: '$? = 1 · B prints' },
+      { fr: '$? = 1 · A s\'affiche', en: '$? = 1 · A prints' },
+      { fr: '$? = 0 · B s\'affiche', en: '$? = 0 · B prints' },
+    ],
+    answer: 1,
+    explain: {
+      fr: '$? = code de retour de la dernière commande (false → 1). && n\'exécute la suite QUE si succès ; || est le « sinon ».',
+      en: '$? = exit code of the last command (false → 1). && only runs the next part on success; || is the "otherwise".',
+    },
+    goto: { mode: 'linuxbasics', scenario: 'exit-codes' },
+  },
+  {
+    id: 'lx-redirect', cat: 'linux', lang: 'bash',
+    code: `cmd > f 2>&1    # version 1
+cmd 2>&1 > f    # version 2
+# laquelle capture stderr DANS f ?`,
+    question: { fr: 'Quelle version envoie stderr dans le fichier f ?', en: 'Which version sends stderr into file f?' },
+    choices: [
+      { fr: 'la version 1 — l\'ordre compte', en: 'version 1 — order matters' },
+      { fr: 'la version 2', en: 'version 2' },
+      { fr: 'les deux, c\'est équivalent', en: 'both, they are equivalent' },
+      { fr: 'aucune — il faut |&', en: 'neither — you need |&' },
+    ],
+    answer: 0,
+    explain: {
+      fr: 'Les redirections s\'appliquent de gauche à droite : en version 2, 2>&1 copie stderr vers l\'ANCIEN stdout (le terminal) AVANT que > f ne redirige stdout.',
+      en: 'Redirections apply left to right: in version 2, 2>&1 duplicates stderr onto the OLD stdout (the terminal) BEFORE > f redirects stdout.',
+    },
+    goto: { mode: 'linuxbasics', scenario: 'redirections' },
+  },
+  {
+    id: 'gr-soft', cat: 'git', lang: 'bash',
+    code: `git add app.js
+git commit -m "v2"      # → C2
+git reset --soft HEAD~1
+# où est passé le contenu v2 ?`,
+    question: { fr: 'Après `reset --soft HEAD~1`, où se trouve v2 ?', en: 'After `reset --soft HEAD~1`, where is v2?' },
+    choices: [
+      { fr: 'perdu — tout est revenu à v1', en: 'lost — everything is back to v1' },
+      { fr: 'dans le working tree seulement (non stagé)', en: 'in the working tree only (unstaged)' },
+      { fr: 'dans l\'index ET le working tree — prêt à re-commiter', en: 'in the index AND the working tree — ready to re-commit' },
+      { fr: 'dans un commit orphelin', en: 'in an orphaned commit' },
+    ],
+    answer: 2,
+    explain: {
+      fr: '--soft ne recule QUE HEAD : l\'index et le working tree gardent v2. Parfait pour refaire un commit. (--mixed vide l\'index, --hard perd tout.)',
+      en: '--soft only moves HEAD back: the index and working tree keep v2. Perfect to redo a commit. (--mixed clears the index, --hard loses everything.)',
+    },
+    goto: { mode: 'gitreset', scenario: 'reset-soft' },
+  },
+  {
+    id: 'gd-ff', cat: 'git', lang: 'bash',
+    code: `git switch -c feature   # depuis main (C2)
+git commit -m "feat B"  # C3 — main n'a PAS bougé
+git switch main
+git merge feature       # … ?`,
+    question: { fr: 'Que fait ce merge quand main n\'a pas avancé ?', en: 'What does this merge do when main has not moved?' },
+    choices: [
+      { fr: 'il crée un commit de merge à 2 parents', en: 'it creates a 2-parent merge commit' },
+      { fr: 'FAST-FORWARD : le pointeur glisse sur C3, aucun commit créé', en: 'FAST-FORWARD: the pointer slides to C3, no commit created' },
+      { fr: 'il rejoue C3 en C3\'', en: "it replays C3 as C3'" },
+      { fr: 'conflit obligatoire', en: 'a conflict is guaranteed' },
+    ],
+    answer: 1,
+    explain: {
+      fr: 'main est un ancêtre direct de feature : Git avance simplement le pointeur (fast-forward). Un commit de merge n\'apparaît que si les branches ont DIVERGÉ (ou avec --no-ff).',
+      en: 'main is a direct ancestor of feature: Git simply moves the pointer forward (fast-forward). A merge commit only appears when branches have DIVERGED (or with --no-ff).',
+    },
+    goto: { mode: 'gitdag', scenario: 'fast-forward' },
+  },
+  {
     id: 'gen-bst', cat: 'general', lang: 'js',
     code: `//        50
 //      /    \\

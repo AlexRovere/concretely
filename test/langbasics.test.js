@@ -7,6 +7,7 @@ import { KOTLINBASICS_SCENARIOS, kotlinBasicsScenarioById } from '../src/kotlinb
 import { TSBASICS_SCENARIOS, tsBasicsScenarioById } from '../src/tsbasics.js';
 import { GOBASICS_SCENARIOS, goBasicsScenarioById } from '../src/gobasics.js';
 import { RUSTBASICS_SCENARIOS, rustBasicsScenarioById } from '../src/rustbasics.js';
+import { LINUXBASICS_SCENARIOS, linuxBasicsScenarioById } from '../src/linuxbasics.js';
 
 function steps(ops) {
   const out = [];
@@ -127,10 +128,25 @@ test('rust: move, borrow checker, Option, immutability + overflow', () => {
   assert.ok(mu.crashes.includes('compteur + 1'), 'u8 overflow panics in debug');
 });
 
+test('shell: quoting, exit codes, the 2>&1 order trap, globbing', () => {
+  const qt = traceSummaryOf(linuxBasicsScenarioById('quoting').ops);
+  assert.ok(qt.crashes.includes('touch $nom'), 'unquoted var word-splits');
+  const qtOps = linuxBasicsScenarioById('quoting').ops;
+  assert.equal(qtOps.find((o) => o.eval === 'echo "$nom"').value, 'Ada Lovelace');
+  assert.equal(qtOps.find((o) => o.eval === "echo '$nom'").value, '$nom');
+  const ec = linuxBasicsScenarioById('exit-codes').ops;
+  assert.equal(ec.find((o) => o.eval === 'echo $?').value, '1');
+  const rd = traceSummaryOf(linuxBasicsScenarioById('redirections').ops);
+  assert.ok(rd.crashes.includes('cmd 2>&1 > f'), 'wrong order leaves stderr on the tty');
+  const gl = linuxBasicsScenarioById('globbing').ops;
+  assert.equal(gl.find((o) => o.eval === 'echo *').value, '*', 'unmatched glob stays literal');
+});
+
 test('every basics scenario is well-formed and terminates', () => {
   for (const s of [
     ...JSBASICS_SCENARIOS, ...SWIFTBASICS_SCENARIOS, ...KOTLINBASICS_SCENARIOS,
     ...TSBASICS_SCENARIOS, ...GOBASICS_SCENARIOS, ...RUSTBASICS_SCENARIOS,
+    ...LINUXBASICS_SCENARIOS,
   ]) {
     assert.ok(s.code.length > 10, s.id);
     assert.ok(s.ops.length > 0, s.id);

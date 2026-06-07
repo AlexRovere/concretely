@@ -15,6 +15,7 @@ test('every category except swift has a playground (engine + sample)', () => {
     assert.ok(c.sample.length > 50, `${cat}: sample too short`);
   }
   assert.equal(playgroundFor('swift'), null, 'no browser Swift compiler — no playground');
+  assert.equal(playgroundFor('linux'), null, 'no shell in the browser — no playground');
   assert.equal(Object.keys(PLAYGROUNDS).length, 9);
 });
 

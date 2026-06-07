@@ -366,5 +366,167 @@ export default {
         },
       ],
     },
+    {
+      id: 'config',
+      title: { fr: 'Config & hygiène', en: 'Config & hygiene' },
+      items: [
+        {
+          id: 'git-config-basics',
+          title: { fr: 'Identité : global vs local', en: 'Identity: global vs local' },
+          code: `git config --global user.name "Alex"          # pour tous les dépôts\ngit config --global user.email alex@perso.dev\ngit config user.email alex@boulot.com          # ce dépôt SEULEMENT (prioritaire)\ngit config --list --show-origin               # qui définit quoi, et dans quel fichier`,
+          note: {
+            fr: `Le local (.git/config) gagne toujours sur le global (~/.gitconfig) : pratique pour un email pro sur les dépôts du boulot. --show-origin révèle d'où vient chaque valeur quand un réglage surprend.`,
+            en: `Local (.git/config) always wins over global (~/.gitconfig): handy for a work email on work repos. --show-origin reveals where each value comes from when a setting surprises you.`,
+          },
+        },
+        {
+          id: 'git-aliases',
+          title: { fr: 'Les alias indispensables', en: 'The essential aliases' },
+          code: `git config --global alias.st "status -sb"\ngit config --global alias.lg "log --oneline --graph --all"\ngit config --global alias.undo "reset --soft HEAD~1"   # défait le commit, garde tout\n# ensuite : git st, git lg, git undo`,
+          note: {
+            fr: `Les alias vivent dans ~/.gitconfig : trois lettres pour les commandes tapées 50 fois par jour. git undo est le plus rentable — il annule un commit raté sans rien perdre.`,
+            en: `Aliases live in ~/.gitconfig: three letters for commands typed 50 times a day. git undo pays off the most — it cancels a botched commit without losing anything.`,
+          },
+        },
+        {
+          id: 'git-ignore-debug',
+          title: { fr: '.gitignore qui ne marche pas', en: '.gitignore not working' },
+          code: `git check-ignore -v dist/app.js   # quelle règle (et quel fichier) ignore — ou pas\ngit rm --cached dist/app.js       # désindexe SANS supprimer du disque\ngit rm -r --cached dist/          # idem pour tout un dossier\ngit commit -m "chore: retire dist du suivi"`,
+          note: {
+            fr: `Le piège classique : .gitignore n'agit que sur les fichiers NON suivis. Un fichier déjà commité reste suivi — il faut le désindexer avec rm --cached pour que la règle s'applique enfin.`,
+            en: `The classic trap: .gitignore only affects UNtracked files. A file already committed stays tracked — you must unindex it with rm --cached for the rule to finally apply.`,
+          },
+        },
+        {
+          id: 'git-ignore-global',
+          title: { fr: 'Le .gitignore global', en: 'The global .gitignore' },
+          code: `git config --global core.excludesFile ~/.gitignore_global\n# dans ~/.gitignore_global : le bruit de TA machine, pas du projet\n# .DS_Store\n# .idea/\n# *.swp`,
+          note: {
+            fr: `Les fichiers de ton OS ou de ton éditeur (.DS_Store, .idea) n'ont rien à faire dans le .gitignore de chaque projet : c'est ton problème, pas celui de l'équipe. Le global les filtre partout, une fois pour toutes.`,
+            en: `Your OS or editor files (.DS_Store, .idea) don't belong in every project's .gitignore: that's your problem, not the team's. The global one filters them everywhere, once and for all.`,
+          },
+        },
+        {
+          id: 'git-autosquash',
+          title: { fr: 'fixup + autosquash : reviews propres', en: 'fixup + autosquash: clean reviews' },
+          code: `git commit --fixup abc1234        # "ce commit corrige abc1234"\n# ... d'autres commits, d'autres fixups ...\ngit rebase -i --autosquash main   # Git range les fixup! au bon endroit, déjà en squash\ngit config --global rebase.autoSquash true   # en faire le défaut`,
+          note: {
+            fr: `Pendant une review, on corrige des commits déjà poussés : --fixup cible le commit fautif, et --autosquash réordonne et fusionne tout automatiquement au rebase final. Zéro tri manuel dans l'éditeur.`,
+            en: `During a review you fix commits already pushed: --fixup targets the guilty commit, and --autosquash reorders and merges everything automatically at the final rebase. Zero manual sorting in the editor.`,
+          },
+        },
+        {
+          id: 'git-conventional',
+          title: { fr: 'Conventional commits', en: 'Conventional commits' },
+          code: `git commit -m "feat(auth): ajoute la connexion par SSO"\ngit commit -m "fix(api): timeout sur les requêtes lentes"\ngit commit -m "chore: met à jour les dépendances"\n# breaking change : un ! avant les deux-points\ngit commit -m "feat(api)!: supprime l'endpoint v1"`,
+          note: {
+            fr: `Un format machine-lisible : feat déclenche une version mineure, fix un patch, ! une majeure — les changelogs et le versioning (semantic-release) se génèrent tout seuls. Le scope entre parenthèses situe la zone touchée.`,
+            en: `A machine-readable format: feat triggers a minor version, fix a patch, ! a major — changelogs and versioning (semantic-release) generate themselves. The scope in parentheses pins down the touched area.`,
+          },
+        },
+      ],
+    },
+    {
+      id: 'collab',
+      title: { fr: 'Collaboration & PR', en: 'Collaboration & PRs' },
+      items: [
+        {
+          id: 'git-pr-update',
+          title: { fr: 'Mettre à jour sa branche de PR', en: 'Update your PR branch' },
+          code: `git fetch origin\ngit rebase origin/main            # rejoue ta branche sur le main à jour\n# conflits ? corriger, git add ., git rebase --continue\ngit push --force-with-lease       # le rebase a réécrit les SHA : push forcé obligatoire`,
+          note: {
+            fr: `Rebaser plutôt que merger main dans la PR garde un historique linéaire et une review lisible. Le force-with-lease est inévitable après rebase — mais jamais --force seul.`,
+            en: `Rebasing instead of merging main into the PR keeps a linear history and a readable review. force-with-lease is unavoidable after a rebase — but never plain --force.`,
+          },
+        },
+        {
+          id: 'git-conflits',
+          title: { fr: 'Résoudre un conflit pas à pas', en: 'Resolve a conflict step by step' },
+          code: `git status                # liste les fichiers "both modified"\n# dans le fichier : <<<<<<< HEAD (ta version) ... ======= ... >>>>>>> (la leur)\n# garder/combiner ce qu'il faut, supprimer les marqueurs\ngit add fichier-resolu.js\ngit rebase --continue     # (ou git merge --continue)\ngit rebase --abort        # en secours : tout annuler et repartir de zéro`,
+          note: {
+            fr: `Un conflit n'est pas une erreur : Git demande juste un arbitrage humain entre deux versions. --abort est toujours là — on ne reste jamais coincé au milieu d'un rebase.`,
+            en: `A conflict isn't an error: Git just asks for a human call between two versions. --abort is always there — you're never stuck in the middle of a rebase.`,
+          },
+        },
+        {
+          id: 'git-rerere',
+          title: { fr: 'rerere : Git rejoue tes résolutions', en: 'rerere: Git replays your resolutions' },
+          code: `git config --global rerere.enabled true\n# REuse REcorded REsolution : Git mémorise chaque conflit résolu\n# et le résout TOUT SEUL s'il réapparaît (rebase répétés, branches longues)`,
+          note: {
+            fr: `Sur une branche longue rebasée plusieurs fois, les mêmes conflits reviennent à chaque fois. rerere les enregistre la première fois et les rejoue ensuite — à activer une fois et oublier.`,
+            en: `On a long-lived branch rebased several times, the same conflicts come back every time. rerere records them the first time and replays them afterwards — enable once and forget.`,
+          },
+        },
+        {
+          id: 'git-range-diff',
+          title: { fr: 'Comparer deux versions d\'une branche', en: 'Compare two versions of a branch' },
+          code: `git range-diff main feature@{1} feature   # avant vs après le rebase\n# = quels commits ont changé, lesquels sont identiques (=), modifiés (!)\ngit range-diff main..v2-old main..v2-new  # ou entre deux branches explicites`,
+          note: {
+            fr: `Après un rebase, diff classique ne sait plus comparer : les SHA ont tous changé. range-diff apparie les commits deux à deux et montre ce qui a VRAIMENT changé — l'outil rêvé pour re-reviewer une PR rebasée.`,
+            en: `After a rebase, a classic diff can't compare anymore: all SHAs changed. range-diff pairs commits two by two and shows what REALLY changed — the dream tool for re-reviewing a rebased PR.`,
+          },
+        },
+        {
+          id: 'git-blame-ignore',
+          title: { fr: 'Blame sans le bruit du reformatage', en: 'Blame without reformatting noise' },
+          code: `# lister les SHA des commits "prettier sur tout le repo" :\necho abc1234def... >> .git-blame-ignore-revs\ngit blame --ignore-revs-file .git-blame-ignore-revs app.js\ngit config blame.ignoreRevsFile .git-blame-ignore-revs   # l'appliquer par défaut`,
+          note: {
+            fr: `Un commit de reformatage massif "écrase" le blame : chaque ligne pointe vers lui au lieu du vrai auteur. Le fichier d'exclusion rend le blame à nouveau utile — GitHub le lit aussi automatiquement.`,
+            en: `A massive reformatting commit "smashes" blame: every line points to it instead of the real author. The ignore file makes blame useful again — GitHub also reads it automatically.`,
+          },
+        },
+      ],
+    },
+    {
+      id: 'internals',
+      title: { fr: 'Sous le capot', en: 'Under the hood' },
+      items: [
+        {
+          id: 'git-objects',
+          title: { fr: 'Les 4 objets de Git', en: 'Git\'s 4 object types' },
+          code: `git cat-file -p HEAD          # le commit : tree + parent + auteur + message\ngit cat-file -p HEAD^{tree}   # le tree : la liste des fichiers (blobs) et dossiers\ngit cat-file -t abc1234       # le type d'un objet : blob, tree, commit ou tag`,
+          note: {
+            fr: `Tout Git tient en 4 objets : blob (contenu d'un fichier), tree (un dossier), commit (un instantané + métadonnées), tag (une étiquette annotée). Un commit ne stocke PAS un diff mais un instantané complet — les diffs sont calculés à la volée.`,
+            en: `All of Git fits in 4 objects: blob (file content), tree (a directory), commit (a snapshot + metadata), tag (an annotated label). A commit does NOT store a diff but a full snapshot — diffs are computed on the fly.`,
+          },
+        },
+        {
+          id: 'git-refs',
+          title: { fr: 'HEAD, refs et la grammaire des révisions', en: 'HEAD, refs and revision grammar' },
+          code: `cat .git/HEAD                 # ref: refs/heads/main → HEAD pointe une branche\ngit rev-parse HEAD~2          # ~2 : 2 commits en arrière (1er parent à chaque fois)\ngit rev-parse HEAD^2          # ^2 : le 2e PARENT (d'un commit de merge)\ngit log @{u}..                # @{u} = la branche distante suivie (upstream)`,
+          note: {
+            fr: `Une branche n'est qu'un fichier de 41 octets contenant un SHA ; HEAD est un pointeur vers cette branche. ~ remonte la lignée, ^ choisit entre les parents d'un merge — HEAD~2 et HEAD^2 sont des commits très différents.`,
+            en: `A branch is just a 41-byte file containing a SHA; HEAD is a pointer to that branch. ~ walks up the lineage, ^ picks between a merge's parents — HEAD~2 and HEAD^2 are very different commits.`,
+          },
+        },
+        {
+          id: 'git-detached',
+          title: { fr: 'Le detached HEAD démystifié', en: 'Detached HEAD demystified' },
+          code: `git checkout abc1234          # HEAD pointe un commit, plus une branche → "detached"\n# explorer, compiler, tester : aucun risque tant qu'on ne commite pas\ngit switch -c fix/depuis-ici  # garder d'éventuels commits : créer une branche ICI\ngit switch -                  # ou repartir simplement sur la branche précédente`,
+          note: {
+            fr: `Ce n'est pas une erreur : HEAD pointe directement un commit au lieu d'une branche, parfait pour inspecter le passé. Seul danger : commiter puis partir — ces commits sans branche finiront ramassés (le reflog les garde ~90 jours).`,
+            en: `It's not an error: HEAD points directly at a commit instead of a branch, perfect for inspecting the past. Only danger: committing then leaving — those branchless commits will get collected (the reflog keeps them ~90 days).`,
+          },
+        },
+        {
+          id: 'git-gc-prune',
+          title: { fr: 'Ce que ramasse le garbage collector', en: 'What the garbage collector reaps' },
+          code: `git gc                # compacte les objets en packfiles, nettoie le superflu\ngit count-objects -vH # combien d'objets, quelle taille\n# un objet n'est supprimé que s'il est ORPHELIN (aucune ref, aucun reflog)\n# ET expiré du reflog (~90 jours) — gc --aggressive : rarement utile, très lent`,
+          note: {
+            fr: `gc tourne déjà tout seul lors des commandes courantes : le lancer à la main est rarement nécessaire. Tant qu'un commit est dans le reflog, il est protégé — c'est pour ça que reflog sauve des reset --hard.`,
+            en: `gc already runs by itself during common commands: running it manually is rarely needed. As long as a commit is in the reflog it's protected — that's why reflog rescues you from reset --hard.`,
+          },
+        },
+        {
+          id: 'git-maintenance',
+          title: { fr: 'git maintenance : l\'entretien automatique', en: 'git maintenance: automatic upkeep' },
+          code: `git maintenance start    # planifie l'entretien en arrière-plan (cron/scheduler)\n# tâches : prefetch (fetch horaire silencieux), commit-graph (accélère log/merge),\n# gc incrémental, repack — sans jamais bloquer ton travail\ngit maintenance unregister   # désactiver pour ce dépôt`,
+          note: {
+            fr: `Sur les gros dépôts, log --graph et fetch deviennent lents. maintenance start (Git 2.31+) délègue l'optimisation au système : le prefetch horaire rend aussi les git fetch quasi instantanés.`,
+            en: `On large repos, log --graph and fetch get slow. maintenance start (Git 2.31+) delegates optimization to the system: the hourly prefetch also makes git fetch nearly instant.`,
+          },
+        },
+      ],
+    },
   ],
 };

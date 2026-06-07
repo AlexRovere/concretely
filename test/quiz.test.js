@@ -24,6 +24,8 @@ import { summaryOf as rbSummary, rubyBasicsScenarioById } from '../src/rubybasic
 import { summaryOf as tbSummary, tsBasicsScenarioById } from '../src/tsbasics.js';
 import { summaryOf as gbSummary, goBasicsScenarioById } from '../src/gobasics.js';
 import { summaryOf as rsSummary, rustBasicsScenarioById } from '../src/rustbasics.js';
+import { summaryOf as lxSummary, linuxBasicsScenarioById } from '../src/linuxbasics.js';
+import { summaryOf as grSummary, gitResetScenarioById } from '../src/gitreset.js';
 import { buildTree, traverse, BST_DEMO } from '../src/bst.js';
 import { SORTS } from '../src/sorting/algorithms.js';
 
@@ -201,6 +203,40 @@ test('rust-*: the Rust quiz answers match the rustbasics model', () => {
   assert.equal(quizQuestionById('rust-mut').answer, 1);
 });
 
+test('lx-*: the Linux quiz answers match the linuxbasics model', () => {
+  const qt = linuxBasicsScenarioById('quoting').ops;
+  assert.equal(qt.find((o) => o.eval === "echo '$nom'").value, '$nom', 'single quotes are literal');
+  assert.ok(lxSummary(qt).crashes.includes('touch $nom'), 'word splitting strikes');
+  assert.equal(quizQuestionById('lx-quotes').answer, 1);
+  const ec = linuxBasicsScenarioById('exit-codes').ops;
+  assert.equal(ec.find((o) => o.eval === 'echo $?').value, '1');
+  assert.equal(ec.find((o) => o.branch === 'false || echo "plan B"')?.taken, true, '|| runs on failure');
+  assert.equal(quizQuestionById('lx-exit').answer, 1);
+  const rd = linuxBasicsScenarioById('redirections').ops;
+  assert.ok(rd.some((o) => o.eval === 'cmd > f 2>&1'), 'the working order');
+  assert.ok(lxSummary(rd).crashes.includes('cmd 2>&1 > f'), 'the trap order');
+  assert.equal(quizQuestionById('lx-redirect').answer, 0);
+});
+
+test('gr-soft: HEAD back on C1, index AND working tree keep v2', () => {
+  const { head, index, workingTree } = grSummary(gitResetScenarioById('reset-soft').ops);
+  assert.equal(head.id, 'C1');
+  assert.equal(index['app.js'], 'v2');
+  assert.equal(workingTree['app.js'], 'v2');
+  assert.equal(quizQuestionById('gr-soft').answer, 2);
+  // and --hard really loses everything, as the explain claims
+  const hard = grSummary(gitResetScenarioById('reset-hard').ops);
+  assert.equal(hard.workingTree['app.js'], 'v1');
+});
+
+test('gd-ff: the merge fast-forwards, no merge commit created', () => {
+  const { branches, commits } = gdSummary(gitDagScenarioById('fast-forward').ops);
+  assert.equal(branches.main, branches.feature, 'pointers end on the same commit');
+  assert.equal(Object.keys(commits).length, 3, 'no new commit');
+  assert.ok(Object.values(commits).every((c) => c.parents.length < 2), 'no 2-parent merge commit');
+  assert.equal(quizQuestionById('gd-ff').answer, 1);
+});
+
 test('rb-symbols: strings differ, symbols are interned, per the model', () => {
   const { stringIds, symbolIds } = rbSummary(rubyBasicsScenarioById('symbols').ops);
   assert.notEqual(stringIds[0], stringIds[1]);
@@ -239,7 +275,7 @@ test('every question is well-formed (choices, answer, code, goto)', () => {
 
 test('category filter returns the right subsets', () => {
   assert.equal(quizQuestions('all').length, QUIZ_QUESTIONS.length);
-  const cats = ['general', 'js', 'ts', 'vue', 'swift', 'ruby', 'kotlin', 'go', 'rust', 'git'];
+  const cats = ['general', 'js', 'ts', 'vue', 'swift', 'ruby', 'kotlin', 'go', 'rust', 'git', 'linux'];
   let sum = 0;
   for (const c of cats) {
     const qs = quizQuestions(c);
