@@ -10,7 +10,8 @@ import { indentWithTab } from '@codemirror/commands';
 import { StreamLanguage, HighlightStyle, syntaxHighlighting } from '@codemirror/language';
 import { javascript } from '@codemirror/lang-javascript';
 import { ruby } from '@codemirror/legacy-modes/mode/ruby';
-import { kotlin } from '@codemirror/legacy-modes/mode/clike';
+import { kotlin, c } from '@codemirror/legacy-modes/mode/clike';
+import { python } from '@codemirror/legacy-modes/mode/python';
 import { shell } from '@codemirror/legacy-modes/mode/shell';
 import { go } from '@codemirror/legacy-modes/mode/go';
 import { rust } from '@codemirror/legacy-modes/mode/rust';
@@ -26,6 +27,8 @@ const LANGS = {
   go: () => StreamLanguage.define(go),
   rust: () => StreamLanguage.define(rust),
   sql: () => StreamLanguage.define(standardSQL),
+  python: () => StreamLanguage.define(python),
+  c: () => StreamLanguage.define(c),
 };
 
 const theme = EditorView.theme({

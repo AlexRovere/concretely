@@ -59,6 +59,16 @@ async function runText(code) {
       const { runRuby } = await import('@/playground/runruby.js');
       const { logs: out } = await runRuby(code, { onLoading: () => { loading.value = true; } });
       logs.value = out;
+    } else if (engine.value === 'python') {
+      const { runPython } = await import('@/playground/runpython.js');
+      const { logs: out, netError } = await runPython(code, { onLoading: () => { loading.value = true; } });
+      logs.value = out;
+      if (netError) logs.value.push({ kind: 'crash', text: t('pg.netError') });
+    } else if (engine.value === 'c') {
+      const { runC } = await import('@/playground/runc.js');
+      const { logs: out, netError } = await runC(code);
+      logs.value = out;
+      if (netError) logs.value.push({ kind: 'crash', text: t('pg.netError') });
     } else if (engine.value === 'sql') {
       const { runSql } = await import('@/playground/runsql.js');
       const { logs: out, netError } = await runSql(code, { onLoading: () => { loading.value = true; } });
@@ -160,7 +170,7 @@ onUnmounted(() => {
     <div ref="editorEl" class="pg-editor"></div>
 
     <p v-if="loading" class="pg-loading">
-      {{ t(engine === 'ruby' ? 'pg.rubyLoading' : engine === 'sql' ? 'pg.sqlLoading' : 'pg.tsLoading') }}
+      {{ t(engine === 'ruby' ? 'pg.rubyLoading' : engine === 'sql' ? 'pg.sqlLoading' : engine === 'python' ? 'pg.pyLoading' : 'pg.tsLoading') }}
     </p>
 
     <template v-if="engine === 'vue'">

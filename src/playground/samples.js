@@ -187,6 +187,56 @@ fn main() {
     // println!("{:?}", v);  // ← décommente : erreur, v a été déplacé
 }`,
   },
+  python: {
+    engine: 'python',
+    lang: 'python',
+    sample: `# Du VRAI CPython (Pyodide / WebAssembly) dans ton navigateur.
+import sys
+print(sys.version.split()[0])
+
+# Comprehensions + f-strings :
+carres = [n * n for n in range(1, 6)]
+print(f"carrés : {carres}")
+
+# Le piège de l'aliasing :
+a = [1, 2, 3]
+b = a           # PAS une copie !
+b.append(99)
+print(f"a vaut {a} — b = a ne copie rien")
+
+# Le piège de l'argument par défaut mutable :
+def ajoute(x, acc=[]):
+    acc.append(x)
+    return acc
+
+print(ajoute(1))   # [1]
+print(ajoute(2))   # [1, 2] 😱 — la liste survit entre les appels`,
+  },
+  c: {
+    engine: 'c',
+    lang: 'c',
+    sample: `// Compilé (gcc -O2 -Wall) et exécuté via l'API de godbolt.org.
+#include <stdio.h>
+#include <string.h>
+
+int main(void) {
+    // Un pointeur n'est qu'une adresse :
+    int x = 42;
+    int *p = &x;
+    *p = 7;
+    printf("x vaut %d (modifié via le pointeur)\\n", x);
+
+    // Les tableaux décayent en pointeurs :
+    int arr[8] = {0};
+    printf("sizeof(arr) dans main : %zu octets\\n", sizeof(arr));
+
+    // Les chaînes : des octets + un \\0 terminal
+    char s[] = "salut";
+    printf("strlen(\\"%s\\") = %zu (et sizeof = %zu)\\n",
+           s, strlen(s), sizeof(s));
+    return 0;
+}`,
+  },
   sql: {
     engine: 'sql',
     lang: 'sql',

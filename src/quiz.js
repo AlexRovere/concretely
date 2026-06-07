@@ -896,6 +896,232 @@ docker rm -f db
     goto: { mode: 'dockerbasics', scenario: 'volumes' },
   },
   {
+    id: 'py-default', cat: 'python', lang: 'bash',
+    code: `def ajoute(x, acc=[]):
+    acc.append(x)
+    return acc
+
+ajoute(1)   # [1]
+ajoute(2)   # … ?`,
+    question: { fr: 'Que renvoie le second appel `ajoute(2)` ?', en: 'What does the second call `ajoute(2)` return?' },
+    choices: ['[2]', '[1, 2]', '[]', { fr: 'TypeError', en: 'TypeError' }],
+    answer: 1,
+    explain: {
+      fr: 'L\'argument par défaut est évalué UNE fois, à la définition : la même liste survit entre les appels. L\'idiome : acc=None puis acc = acc if acc is not None else [].',
+      en: 'The default argument is evaluated ONCE, at definition time: the same list survives across calls. The idiom: acc=None then acc = acc if acc is not None else [].',
+    },
+    goto: { mode: 'pybasics', scenario: 'mutable-default' },
+  },
+  {
+    id: 'py-is', cat: 'python', lang: 'bash',
+    code: `a = 256
+b = 256
+a is b   # … ?
+a = 257
+b = 257
+a is b   # … ?`,
+    question: { fr: 'Que valent les deux `a is b` ?', en: 'What do the two `a is b` evaluate to?' },
+    choices: [
+      { fr: 'True puis True', en: 'True then True' },
+      { fr: 'True puis False 😱', en: 'True then False 😱' },
+      { fr: 'False puis False', en: 'False then False' },
+      { fr: 'False puis True', en: 'False then True' },
+    ],
+    answer: 1,
+    explain: {
+      fr: 'CPython interne les petits entiers (-5 à 256) : même objet → is vaut True. Au-delà, deux objets distincts. is compare l\'IDENTITÉ — réserve-le à None.',
+      en: 'CPython interns small ints (-5 to 256): same object → is is True. Beyond, two distinct objects. is compares IDENTITY — keep it for None.',
+    },
+    goto: { mode: 'pybasics', scenario: 'is-vs-eq' },
+  },
+  {
+    id: 'py-late', cat: 'python', lang: 'bash',
+    code: `fonctions = [lambda: i for i in range(3)]
+[f() for f in fonctions]   # … ?`,
+    question: { fr: 'Que renvoie la liste d\'appels ?', en: 'What does the call list return?' },
+    choices: ['[0, 1, 2]', '[2, 2, 2]', '[0, 0, 0]', { fr: 'NameError', en: 'NameError' }],
+    answer: 1,
+    explain: {
+      fr: 'La closure capture la VARIABLE i, pas sa valeur du moment : toutes voient le i final (2). Le fix : lambda i=i: i — l\'argument par défaut fige la valeur.',
+      en: 'The closure captures the VARIABLE i, not its current value: they all see the final i (2). The fix: lambda i=i: i — the default argument freezes the value.',
+    },
+    goto: { mode: 'pybasics', scenario: 'late-binding' },
+  },
+  {
+    id: 'c-sizeof', cat: 'c', lang: 'js',
+    code: `int arr[8];
+sizeof(arr)        // dans main : 32
+
+void f(int arr[]) {
+    sizeof(arr)    // … ?
+}`,
+    question: { fr: 'Que vaut sizeof(arr) DANS la fonction f ?', en: 'What is sizeof(arr) INSIDE function f?' },
+    choices: ['32', { fr: '8 — la taille d\'un POINTEUR', en: '8 — the size of a POINTER' }, '0', { fr: 'erreur de compilation', en: 'compile error' }],
+    answer: 1,
+    explain: {
+      fr: 'En paramètre, un tableau DÉCAYE en pointeur : sizeof donne 8 octets (64 bits), pas la taille du tableau. Il faut passer la longueur séparément.',
+      en: 'As a parameter, an array DECAYS into a pointer: sizeof yields 8 bytes (64-bit), not the array size. You must pass the length separately.',
+    },
+    goto: { mode: 'cbasics', scenario: 'array-decay' },
+  },
+  {
+    id: 'c-dangling', cat: 'c', lang: 'js',
+    code: `int* compteur(void) {
+    int n = 42;
+    return &n;   // ⚠
+}
+int *ptr = compteur();
+*ptr   // … ?`,
+    question: { fr: 'Que vaut `*ptr` après le retour de compteur() ?', en: 'What is `*ptr` after compteur() returns?' },
+    choices: [
+      { fr: '42 — la valeur a été copiée', en: '42 — the value was copied' },
+      { fr: '0', en: '0' },
+      { fr: '💥 indéfini — n est MORTE avec la pile', en: '💥 undefined — n DIED with the stack' },
+      { fr: '❌ ne compile pas', en: '❌ does not compile' },
+    ],
+    answer: 2,
+    explain: {
+      fr: 'Le frame de compteur() est dépilé au return : n n\'existe plus, ptr pendouille. Le prochain appel réutilisera cette mémoire — valeur poubelle ou segfault.',
+      en: 'compteur()\'s frame is popped at return: n no longer exists, ptr dangles. The next call reuses that memory — garbage value or segfault.',
+    },
+    goto: { mode: 'cmemory', scenario: 'stack-lifetime' },
+  },
+  {
+    id: 'c-leak', cat: 'c', lang: 'js',
+    code: `int *p = malloc(16);   // bloc b1
+int *b = malloc(64);   // bloc b2
+free(p);
+return 0;              // … b2 ?`,
+    question: { fr: 'Que devient le bloc b2 à la fin du programme ?', en: 'What happens to block b2 when the program ends?' },
+    choices: [
+      { fr: 'libéré automatiquement par le compilateur', en: 'freed automatically by the compiler' },
+      { fr: 'FUITE — personne ne l\'a free', en: 'LEAK — nobody freed it' },
+      { fr: 'il devient un dangling pointer', en: 'it becomes a dangling pointer' },
+      { fr: '💥 double free', en: '💥 double free' },
+    ],
+    answer: 1,
+    explain: {
+      fr: 'Le tas ne se libère pas tout seul : chaque malloc exige son free. Ici l\'OS récupère tout à la fin du process, mais dans un serveur qui tourne, c\'est la fuite qui grossit. Valgrind/ASan la voient.',
+      en: 'The heap never frees itself: every malloc demands its free. The OS reclaims everything at process exit, but in a long-running server this is the growing leak. Valgrind/ASan catch it.',
+    },
+    goto: { mode: 'cmemory', scenario: 'heap-malloc' },
+  },
+  {
+    id: 'os-convoy', cat: 'os', lang: 'bash',
+    code: `# FIFO, 1 CPU :
+# P1 « gros calcul »            arrive à t=0, 6 ticks de CPU
+# P2 « commande interactive »   arrive à t=1, 1 tick de CPU`,
+    question: { fr: 'En FIFO, quand P2 (1 tick de travail !) finit-elle ?', en: 'Under FIFO, when does P2 (1 tick of work!) finish?' },
+    choices: [
+      { fr: 't=2 — elle est courte', en: 't=2 — it is short' },
+      { fr: 't=7 — elle attend TOUT le gros calcul', en: 't=7 — it waits through the WHOLE long burst' },
+      { fr: 't=4', en: 't=4' },
+      { fr: 'jamais', en: 'never' },
+    ],
+    answer: 1,
+    explain: {
+      fr: 'L\'effet convoi : sans préemption, la tâche courte attend la fin du gros burst (P1 finit à 6, P2 à 7). En round-robin, P2 finit dès t=3 — la réactivité du time-sharing.',
+      en: 'The convoy effect: without preemption, the short task waits for the whole long burst (P1 ends at 6, P2 at 7). Under round-robin, P2 finishes by t=3 — time-sharing responsiveness.',
+    },
+    goto: { mode: 'scheduler', scenario: 'convoy' },
+  },
+  {
+    id: 'os-deadlock', cat: 'os', lang: 'bash',
+    code: `# T1 : lock(A) puis lock(B)
+# T2 : lock(B) puis lock(A)
+# T1 tient A et attend B…
+# T2 tient B et attend A…`,
+    question: { fr: 'Que se passe-t-il — et quel est LE fix ?', en: 'What happens — and what is THE fix?' },
+    choices: [
+      { fr: 'l\'OS détecte et débloque tout seul', en: 'the OS detects and resolves it' },
+      { fr: 'interblocage éternel — fix : un ORDRE GLOBAL des verrous', en: 'eternal deadlock — fix: a GLOBAL lock ORDER' },
+      { fr: 'T1 gagne toujours (priorité)', en: 'T1 always wins (priority)' },
+      { fr: 'ça finit par passer', en: 'it eventually goes through' },
+    ],
+    answer: 1,
+    explain: {
+      fr: 'Chacun attend l\'autre, pour toujours : un cycle d\'attentes. Imposer « toujours A avant B » rend le cycle impossible — casser UNE des conditions de Coffman suffit.',
+      en: 'Each waits for the other, forever: a cycle of waits. Enforcing "always A before B" makes the cycle impossible — breaking ONE Coffman condition is enough.',
+    },
+    goto: { mode: 'osbasics', scenario: 'deadlock' },
+  },
+  {
+    id: 'os-sigkill', cat: 'os', lang: 'bash',
+    code: `kill -TERM 1234   # rien ne se passe…
+kill -9 1234      # … ?`,
+    question: { fr: 'Pourquoi `kill -9` marche-t-il « toujours » ?', en: 'Why does `kill -9` "always" work?' },
+    choices: [
+      { fr: 'il est plus prioritaire dans la file', en: 'it has higher queue priority' },
+      { fr: 'SIGKILL ne peut être NI capté NI ignoré — le noyau tue direct', en: 'SIGKILL can be NEITHER caught NOR ignored — the kernel kills directly' },
+      { fr: 'il envoie le signal plusieurs fois', en: 'it sends the signal repeatedly' },
+      { fr: 'légende — il ne marche pas mieux', en: 'a myth — it works no better' },
+    ],
+    answer: 1,
+    explain: {
+      fr: 'SIGTERM est une demande polie (handler possible, nettoyage). SIGKILL est exécuté par le noyau, sans que le processus puisse réagir — donc AUCUN nettoyage : -TERM d\'abord, -9 en dernier recours.',
+      en: 'SIGTERM is a polite request (handler possible, cleanup). SIGKILL is enforced by the kernel with no chance to react — so NO cleanup: -TERM first, -9 as a last resort.',
+    },
+    goto: { mode: 'osbasics', scenario: 'signaux' },
+  },
+  {
+    id: 'k8s-delete', cat: 'k8s', lang: 'bash',
+    code: `kubectl get pods         # 3/3 Running
+kubectl delete pod web-7d4b9-x2k1f
+kubectl get pods         # … ?`,
+    question: { fr: 'Que montre le dernier `get pods` ?', en: 'What does the last `get pods` show?' },
+    choices: [
+      { fr: '2/3 — le pod est supprimé', en: '2/3 — the pod is gone' },
+      { fr: '3/3 — un pod TOUT NEUF a été recréé', en: '3/3 — a BRAND NEW pod was recreated' },
+      { fr: 'une erreur — suppression interdite', en: 'an error — deletion forbidden' },
+      { fr: '0/3 — tout le deployment tombe', en: '0/3 — the whole deployment goes down' },
+    ],
+    answer: 1,
+    explain: {
+      fr: 'Le ReplicaSet compare en boucle état réel et état voulu (3 replicas) : il recrée aussitôt. On ne tue pas un pod, on modifie son PROPRIÉTAIRE (le Deployment).',
+      en: 'The ReplicaSet reconciles actual vs desired state (3 replicas) in a loop: it recreates immediately. You do not kill a pod, you change its OWNER (the Deployment).',
+    },
+    goto: { mode: 'k8sbasics', scenario: 'self-healing' },
+  },
+  {
+    id: 'k8s-svc', cat: 'k8s', lang: 'bash',
+    code: `# depuis un pod du même namespace :
+curl http://api   # … ?
+# (les pods derrière changent d'IP sans arrêt)`,
+    question: { fr: 'Pourquoi `curl http://api` marche-t-il alors que les pods changent d\'IP ?', en: 'Why does `curl http://api` work while pod IPs keep changing?' },
+    choices: [
+      { fr: 'les pods gardent leur IP en réalité', en: 'pods actually keep their IPs' },
+      { fr: 'le Service donne un nom DNS stable + load-balancing sur les pods du selector', en: 'the Service provides a stable DNS name + load-balancing over the selector\'s pods' },
+      { fr: 'kubectl met à jour /etc/hosts', en: 'kubectl updates /etc/hosts' },
+      { fr: 'ça ne marche pas — il faut l\'IP', en: 'it does not work — you need the IP' },
+    ],
+    answer: 1,
+    explain: {
+      fr: 'Le DNS interne résout <service>.<namespace>.svc vers une IP virtuelle stable ; les endpoints suivent les pods vivants. Ne JAMAIS viser un pod par son nom.',
+      en: 'Internal DNS resolves <service>.<namespace>.svc to a stable virtual IP; endpoints track live pods. NEVER target a pod by name.',
+    },
+    goto: { mode: 'k8sbasics', scenario: 'services' },
+  },
+  {
+    id: 'k8s-oom', cat: 'k8s', lang: 'bash',
+    code: `resources:
+  requests: { memory: 128Mi, cpu: 100m }
+  limits:   { memory: 256Mi, cpu: 500m }
+# le conteneur dépasse 256Mi… / sature le CPU…`,
+    question: { fr: 'Dépasser la limite MÉMOIRE vs saturer le CPU : que fait k8s ?', en: 'Exceeding the MEMORY limit vs maxing the CPU: what does k8s do?' },
+    choices: [
+      { fr: 'les deux tuent le conteneur', en: 'both kill the container' },
+      { fr: 'mémoire : OOMKilled (137) · CPU : juste THROTTLÉ', en: 'memory: OOMKilled (137) · CPU: just THROTTLED' },
+      { fr: 'les deux throttlent', en: 'both throttle' },
+      { fr: 'k8s augmente les limites tout seul', en: 'k8s raises the limits automatically' },
+    ],
+    answer: 1,
+    explain: {
+      fr: 'La mémoire ne se rationne pas a posteriori : dépassement = OOMKilled, exit 137, redémarrage. Le CPU, lui, est compressible : le conteneur est ralenti, pas tué.',
+      en: 'Memory cannot be clawed back: exceeding = OOMKilled, exit 137, restart. CPU is compressible: the container is slowed down, not killed.',
+    },
+    goto: { mode: 'k8sbasics', scenario: 'resources-oom' },
+  },
+  {
     id: 'gen-bst', cat: 'general', lang: 'js',
     code: `//        50
 //      /    \\

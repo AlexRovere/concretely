@@ -806,6 +806,27 @@ canvas {
 .sj-null { color: var(--warn); font-style: italic; }
 .sj-empty { color: var(--muted); text-align: center; }
 
+/* Mémoire C : pile & tas */
+.cm-stage { display: grid; grid-template-columns: 1fr 1fr; gap: 0.9rem; margin: 0.75rem 0; }
+@media (max-width: 760px) { .cm-stage { grid-template-columns: 1fr; } }
+.cm-zone { background: var(--inset); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem; min-height: 180px; }
+.cm-frames { display: flex; flex-direction: column; gap: 0.5rem; }
+.cm-frame { background: var(--chip); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 6px; padding: 0.4rem 0.6rem; }
+.cm-fn { font-family: var(--mono); font-size: 0.8rem; color: var(--accent); margin-bottom: 0.2rem; }
+.cm-var { font-family: var(--mono); font-size: 0.8rem; color: var(--ink-2); }
+.cm-var b { color: var(--ink); font-weight: 600; }
+.cm-ptr { color: var(--info); margin-left: 0.4rem; }
+.cm-ptr.dead { color: var(--ko); }
+.cm-addr { color: var(--muted); font-size: 0.7rem; margin-left: 0.5rem; }
+.cm-blocks { display: flex; flex-direction: column; gap: 0.4rem; }
+.cm-block { font-family: var(--mono); font-size: 0.8rem; background: var(--ok-bg); border: 1px solid var(--ok); border-radius: 6px; padding: 0.35rem 0.6rem; color: var(--ink-2); }
+.cm-block b { color: var(--ok); }
+.cm-block.freed { background: var(--inset); border-color: var(--border); opacity: 0.55; text-decoration: line-through; }
+.cm-block.freed b { color: var(--muted); }
+.cm-freed { color: var(--ko); margin-left: 0.5rem; text-decoration: none; }
+.cm-journal { margin-top: 0.5rem; min-height: 2rem; }
+.cm-crash { color: var(--ko); }
+
 /* ------------------------------------------------- search palette (Ctrl+K) */
 
 .sp-overlay {

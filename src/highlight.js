@@ -49,7 +49,7 @@ function escapeHtml(s) {
  * @returns {string} HTML
  */
 export function highlight(code, lang = 'js') {
-  const hashComment = lang === 'ruby' || lang === 'php' || lang === 'git' || lang === 'bash';
+  const hashComment = lang === 'ruby' || lang === 'php' || lang === 'git' || lang === 'bash' || lang === 'python';
   const dashComment = lang === 'sql';
   const n = code.length;
   let i = 0;

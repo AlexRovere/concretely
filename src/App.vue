@@ -53,11 +53,21 @@ import HttpFlowPanel from '@/components/panels/HttpFlowPanel.vue'
 import CorsPanel from '@/components/panels/CorsPanel.vue'
 import HttpCachePanel from '@/components/panels/HttpCachePanel.vue'
 import DockerBasicsPanel from '@/components/panels/DockerBasicsPanel.vue'
+import PyBasicsPanel from '@/components/panels/PyBasicsPanel.vue'
+import CBasicsPanel from '@/components/panels/CBasicsPanel.vue'
+import CMemoryPanel from '@/components/panels/CMemoryPanel.vue'
+import SchedulerPanel from '@/components/panels/SchedulerPanel.vue'
+import OsBasicsPanel from '@/components/panels/OsBasicsPanel.vue'
+import K8sBasicsPanel from '@/components/panels/K8sBasicsPanel.vue'
 
 const { t, locale, setLocale, LOCALES } = useI18n()
 useTheme() // applies the persisted theme + code palette/font on startup
 
-const CATEGORIES = ['general', 'js', 'ts', 'vue', 'swift', 'ruby', 'kotlin', 'go', 'rust', 'git', 'linux', 'sql', 'web', 'docker']
+// Languages first, then tools/infra.
+const CATEGORIES = [
+  'general', 'js', 'ts', 'python', 'vue', 'swift', 'ruby', 'kotlin', 'go', 'rust', 'c',
+  'sql', 'git', 'linux', 'os', 'web', 'docker', 'k8s'
+]
 
 // `cat: '*'` = always-visible tab (appended last); `not` lists categories
 // where such a tab is hidden (no Swift compiler runs in a browser).
@@ -104,8 +114,14 @@ const TABS: { mode: string; key: string; cat: string; not?: string[] }[] = [
   { mode: 'cors', key: 'tabs.cors', cat: 'web' },
   { mode: 'httpcache', key: 'tabs.httpcache', cat: 'web' },
   { mode: 'dockerbasics', key: 'tabs.dockerbasics', cat: 'docker' },
+  { mode: 'pybasics', key: 'tabs.pybasics', cat: 'python' },
+  { mode: 'cbasics', key: 'tabs.cbasics', cat: 'c' },
+  { mode: 'cmemory', key: 'tabs.cmemory', cat: 'c' },
+  { mode: 'scheduler', key: 'tabs.scheduler', cat: 'os' },
+  { mode: 'osbasics', key: 'tabs.osbasics', cat: 'os' },
+  { mode: 'k8sbasics', key: 'tabs.k8sbasics', cat: 'k8s' },
   { mode: 'cheatsheet', key: 'tabs.cheatsheet', cat: '*' },
-  { mode: 'playground', key: 'tabs.playground', cat: '*', not: ['swift', 'web', 'docker'] },
+  { mode: 'playground', key: 'tabs.playground', cat: '*', not: ['swift', 'web', 'docker', 'os', 'k8s'] },
   { mode: 'quiz', key: 'tabs.quiz', cat: '*' },
   { mode: 'bst', key: 'tabs.bst', cat: 'general' },
   { mode: 'dp', key: 'tabs.dp', cat: 'general' },
@@ -158,6 +174,12 @@ const panels: Record<string, unknown> = {
   cors: CorsPanel,
   httpcache: HttpCachePanel,
   dockerbasics: DockerBasicsPanel,
+  pybasics: PyBasicsPanel,
+  cbasics: CBasicsPanel,
+  cmemory: CMemoryPanel,
+  scheduler: SchedulerPanel,
+  osbasics: OsBasicsPanel,
+  k8sbasics: K8sBasicsPanel,
   bst: BstPanel,
   dp: DpPanel,
   regex: RegexPanel

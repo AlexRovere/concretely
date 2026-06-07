@@ -12,12 +12,16 @@ import linux from './linux.js';
 import sql from './sql.js';
 import web from './web.js';
 import docker from './docker.js';
+import python from './python.js';
+import c from './c.js';
+import os from './os.js';
+import k8s from './k8s.js';
 
 /**
  * Cheatsheet registry — one sheet per filter category.
  * Sheet shape: { id, lang, sections: [{ id, title:{fr,en}, items:[{ id, title:{fr,en}, code, note:{fr,en} }] }] }
  */
-export const CHEATSHEETS = { general, js, ts, vue, swift, ruby, kotlin, go, rust, git, linux, sql, web, docker };
+export const CHEATSHEETS = { general, js, ts, vue, swift, ruby, kotlin, go, rust, git, linux, sql, web, docker, python, c, os, k8s };
 
 export function cheatsheetFor(cat) {
   return CHEATSHEETS[cat] ?? null;

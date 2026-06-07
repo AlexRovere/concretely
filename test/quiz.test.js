@@ -31,6 +31,12 @@ import { summaryOf as sjSummary } from '../src/sqljoins.js';
 import { corsScenarioById } from '../src/cors.js';
 import { httpCacheScenarioById } from '../src/httpcache.js';
 import { summaryOf as dkSummary, dockerBasicsScenarioById } from '../src/dockerbasics.js';
+import { pyBasicsScenarioById } from '../src/pybasics.js';
+import { cBasicsScenarioById } from '../src/cbasics.js';
+import { summaryOf as cmSummary, cMemoryScenarioById } from '../src/cmemory.js';
+import { summaryOf as scSummary, schedulerScenarioById } from '../src/scheduler.js';
+import { summaryOf as osSummary, osBasicsScenarioById } from '../src/osbasics.js';
+import { summaryOf as k8Summary, k8sBasicsScenarioById } from '../src/k8sbasics.js';
 import { buildTree, traverse, BST_DEMO } from '../src/bst.js';
 import { SORTS } from '../src/sorting/algorithms.js';
 
@@ -288,6 +294,57 @@ test('dk-*: the Docker quiz answers match the dockerbasics model', () => {
   assert.equal(quizQuestionById('dk-volume').answer, 1);
 });
 
+test('py-*: the Python quiz answers match the pybasics model', () => {
+  const md = pyBasicsScenarioById('mutable-default').ops;
+  assert.equal(md.find((o) => o.eval === 'ajoute(2)').value, '[1, 2]');
+  assert.equal(quizQuestionById('py-default').choices[quizQuestionById('py-default').answer], '[1, 2]');
+  const ie = pyBasicsScenarioById('is-vs-eq').ops;
+  assert.equal(ie.find((o) => o.eval === 'a is b  # a = b = 256').value, 'True');
+  assert.equal(ie.find((o) => o.eval === 'a is b  # a = b = 257').value, 'False');
+  assert.equal(quizQuestionById('py-is').answer, 1);
+  const lb = pyBasicsScenarioById('late-binding').ops;
+  assert.equal(lb.find((o) => o.eval === '[f() for f in fonctions]').value, '[2, 2, 2]');
+  assert.equal(quizQuestionById('py-late').choices[quizQuestionById('py-late').answer], '[2, 2, 2]');
+});
+
+test('c-*: the C quiz answers match the cbasics + cmemory models', () => {
+  const ad = cBasicsScenarioById('array-decay').ops;
+  assert.equal(ad.find((o) => o.eval === 'sizeof(arr)  // dans f()').value, '8');
+  assert.equal(quizQuestionById('c-sizeof').answer, 1);
+  const sl = cmSummary(cMemoryScenarioById('stack-lifetime'));
+  assert.deepEqual(sl.crashes, ['*ptr']);
+  assert.equal(quizQuestionById('c-dangling').answer, 2);
+  const hm = cmSummary(cMemoryScenarioById('heap-malloc'));
+  assert.deepEqual(hm.leaks, ['b2'], 'the forgotten buffer leaks');
+  assert.equal(quizQuestionById('c-leak').answer, 1);
+  assert.ok(cmSummary(cMemoryScenarioById('use-after-free')).crashes.includes('*p'));
+});
+
+test('os-*: the OS quiz answers match the scheduler + osbasics models', () => {
+  const convoy = scSummary(schedulerScenarioById('convoy'));
+  assert.equal(convoy.finishedAt.P2, 7, 'P2 waits through the whole burst');
+  assert.match(quizQuestionById('os-convoy').choices[quizQuestionById('os-convoy').answer].fr, /t=7/);
+  const rr = scSummary(schedulerScenarioById('round-robin'));
+  assert.ok(rr.finishedAt.P2 <= 3, 'round-robin makes P2 finish early');
+  const dl = osSummary(osBasicsScenarioById('deadlock').ops);
+  assert.ok(dl.crashes.includes('T1 ⇄ T2'));
+  assert.equal(quizQuestionById('os-deadlock').answer, 1);
+  const sg = osBasicsScenarioById('signaux').ops;
+  assert.equal(sg.find((o) => o.eval === 'kill -9 1234').value, 'SIGKILL');
+  assert.equal(quizQuestionById('os-sigkill').answer, 1);
+});
+
+test('k8s-*: the Kubernetes quiz answers match the k8sbasics model', () => {
+  assert.ok(k8Summary(k8sBasicsScenarioById('self-healing').ops).crashes.includes('kubectl delete pod web-7d4b9-x2k1f'));
+  assert.equal(quizQuestionById('k8s-delete').answer, 1);
+  const sv = k8sBasicsScenarioById('services').ops;
+  assert.equal(sv.find((o) => o.eval === 'curl http://api').value, '200 OK');
+  assert.equal(quizQuestionById('k8s-svc').answer, 1);
+  const oom = k8sBasicsScenarioById('resources-oom').ops;
+  assert.ok(oom.some((o) => o.crash === 'memory limit dépassée' && o.message.includes('OOMKilled')));
+  assert.equal(quizQuestionById('k8s-oom').answer, 1);
+});
+
 test('rb-symbols: strings differ, symbols are interned, per the model', () => {
   const { stringIds, symbolIds } = rbSummary(rubyBasicsScenarioById('symbols').ops);
   assert.notEqual(stringIds[0], stringIds[1]);
@@ -326,7 +383,7 @@ test('every question is well-formed (choices, answer, code, goto)', () => {
 
 test('category filter returns the right subsets', () => {
   assert.equal(quizQuestions('all').length, QUIZ_QUESTIONS.length);
-  const cats = ['general', 'js', 'ts', 'vue', 'swift', 'ruby', 'kotlin', 'go', 'rust', 'git', 'linux', 'sql', 'web', 'docker'];
+  const cats = ['general', 'js', 'ts', 'vue', 'swift', 'ruby', 'kotlin', 'go', 'rust', 'git', 'linux', 'sql', 'web', 'docker', 'python', 'c', 'os', 'k8s'];
   let sum = 0;
   for (const c of cats) {
     const qs = quizQuestions(c);
