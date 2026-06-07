@@ -14,6 +14,7 @@ import { kotlin } from '@codemirror/legacy-modes/mode/clike';
 import { shell } from '@codemirror/legacy-modes/mode/shell';
 import { go } from '@codemirror/legacy-modes/mode/go';
 import { rust } from '@codemirror/legacy-modes/mode/rust';
+import { standardSQL } from '@codemirror/legacy-modes/mode/sql';
 import { tags } from '@lezer/highlight';
 
 const LANGS = {
@@ -24,6 +25,7 @@ const LANGS = {
   shell: () => StreamLanguage.define(shell),
   go: () => StreamLanguage.define(go),
   rust: () => StreamLanguage.define(rust),
+  sql: () => StreamLanguage.define(standardSQL),
 };
 
 const theme = EditorView.theme({

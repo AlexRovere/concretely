@@ -187,6 +187,31 @@ fn main() {
     // println!("{:?}", v);  // ← décommente : erreur, v a été déplacé
 }`,
   },
+  sql: {
+    engine: 'sql',
+    lang: 'sql',
+    sample: `-- Du VRAI SQLite (sql.js / WebAssembly) dans ton navigateur.
+CREATE TABLE users (id INTEGER PRIMARY KEY, nom TEXT);
+CREATE TABLE orders (id INTEGER PRIMARY KEY, user_id INTEGER, produit TEXT, montant REAL);
+
+INSERT INTO users VALUES (1, 'Ada'), (2, 'Alan'), (3, 'Grace');
+INSERT INTO orders VALUES
+  (10, 1, 'clavier', 89.0),
+  (11, 1, 'écran', 249.0),
+  (12, 2, 'souris', 25.0),
+  (13, 9, 'webcam', 59.0);   -- user 9 n'existe pas (orphelin)
+
+-- LEFT JOIN : Grace apparaît, rembourrée de NULL
+SELECT u.nom, o.produit
+FROM users u LEFT JOIN orders o ON o.user_id = u.id;
+
+-- Agrégat + HAVING (filtre les GROUPES, pas les lignes)
+SELECT u.nom, COUNT(o.id) AS commandes, SUM(o.montant) AS total
+FROM users u LEFT JOIN orders o ON o.user_id = u.id
+GROUP BY u.nom
+HAVING COUNT(o.id) >= 1
+ORDER BY total DESC;`,
+  },
   linux: {
     engine: 'sh',
     lang: 'shell',

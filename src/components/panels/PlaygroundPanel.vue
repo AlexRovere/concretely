@@ -59,6 +59,11 @@ async function runText(code) {
       const { runRuby } = await import('@/playground/runruby.js');
       const { logs: out } = await runRuby(code, { onLoading: () => { loading.value = true; } });
       logs.value = out;
+    } else if (engine.value === 'sql') {
+      const { runSql } = await import('@/playground/runsql.js');
+      const { logs: out, netError } = await runSql(code, { onLoading: () => { loading.value = true; } });
+      logs.value = out;
+      if (netError) logs.value.push({ kind: 'crash', text: t('pg.netError') });
     } else if (engine.value === 'kotlin') {
       const { runKotlin } = await import('@/playground/runkotlin.js');
       const { logs: out, netError } = await runKotlin(code);
@@ -154,7 +159,9 @@ onUnmounted(() => {
 
     <div ref="editorEl" class="pg-editor"></div>
 
-    <p v-if="loading" class="pg-loading">{{ t(engine === 'ruby' ? 'pg.rubyLoading' : 'pg.tsLoading') }}</p>
+    <p v-if="loading" class="pg-loading">
+      {{ t(engine === 'ruby' ? 'pg.rubyLoading' : engine === 'sql' ? 'pg.sqlLoading' : 'pg.tsLoading') }}
+    </p>
 
     <template v-if="engine === 'vue'">
       <h3 class="rec-h">{{ t('pg.preview') }}</h3>

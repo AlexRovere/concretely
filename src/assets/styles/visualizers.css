@@ -787,6 +787,25 @@ canvas {
 .fs-here { color: var(--muted); font-weight: 400; font-size: 0.75rem; }
 .fs-size { color: var(--muted); font-size: 0.72rem; }
 
+/* Visualiseur de JOINs SQL */
+.sj-query { font-family: var(--mono); font-size: 0.85rem; color: var(--ink-2); margin: 0 0 0.75rem; }
+.sj-query b { color: var(--accent); }
+.sj-stage { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.9rem; }
+@media (max-width: 760px) { .sj-stage { grid-template-columns: 1fr; } }
+.sj-table { border-collapse: collapse; font-family: var(--mono); font-size: 0.82rem; width: 100%; }
+.sj-table th {
+  text-align: left; color: var(--muted); font-weight: 600;
+  border-bottom: 1px solid var(--border); padding: 0.25rem 0.6rem;
+}
+.sj-table td { border-bottom: 1px solid var(--border); padding: 0.28rem 0.6rem; color: var(--ink-2); }
+.sj-table tr.hot td { background: var(--chip-hot); }
+.sj-table tr.ok td { background: var(--ok-bg); color: var(--ok); }
+.sj-table tr.ko td { background: var(--ko-bg); color: var(--ko); }
+.sj-table tr.faded td { opacity: 0.35; text-decoration: line-through; }
+.sj-table tr.sj-left-pad td, .sj-table tr.sj-right-pad td { background: var(--warn-bg); }
+.sj-null { color: var(--warn); font-style: italic; }
+.sj-empty { color: var(--muted); text-align: center; }
+
 /* ------------------------------------------------- search palette (Ctrl+K) */
 
 .sp-overlay {

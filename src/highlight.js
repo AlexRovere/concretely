@@ -50,6 +50,7 @@ function escapeHtml(s) {
  */
 export function highlight(code, lang = 'js') {
   const hashComment = lang === 'ruby' || lang === 'php' || lang === 'git' || lang === 'bash';
+  const dashComment = lang === 'sql';
   const n = code.length;
   let i = 0;
   let out = '';
@@ -68,8 +69,9 @@ export function highlight(code, lang = 'js') {
       i = j;
       continue;
     }
-    // line comment ( // , and # for ruby/php )
-    if ((c === '/' && code[i + 1] === '/') || (hashComment && c === '#')) {
+    // line comment ( // , # for ruby/php/bash, -- for sql )
+    if ((c === '/' && code[i + 1] === '/') || (hashComment && c === '#')
+      || (dashComment && c === '-' && code[i + 1] === '-')) {
       let j = code.indexOf('\n', i);
       if (j === -1) j = n;
       emit('comment', code.slice(i, j));

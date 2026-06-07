@@ -724,6 +724,57 @@ git merge feature       # … ?`,
     goto: { mode: 'gitdag', scenario: 'fast-forward' },
   },
   {
+    id: 'sql-null', cat: 'sql', lang: 'sql',
+    code: `SELECT * FROM produits
+WHERE remise = NULL;   -- … ?`,
+    question: { fr: 'Que renvoie `WHERE remise = NULL` ?', en: 'What does `WHERE remise = NULL` return?' },
+    choices: [
+      { fr: 'les lignes où remise est NULL', en: 'the rows where remise is NULL' },
+      { fr: 'ZÉRO ligne — toujours', en: 'ZERO rows — always' },
+      { fr: 'toutes les lignes', en: 'all rows' },
+      { fr: 'une erreur de syntaxe', en: 'a syntax error' },
+    ],
+    answer: 1,
+    explain: {
+      fr: 'NULL n\'est égal à RIEN, pas même à NULL : la comparaison vaut NULL (ni vrai ni faux) → la ligne est filtrée. Il faut IS NULL.',
+      en: 'NULL equals NOTHING, not even NULL: the comparison evaluates to NULL (neither true nor false) → the row is filtered out. You need IS NULL.',
+    },
+    goto: { mode: 'sqlbasics', scenario: 'null-logic' },
+  },
+  {
+    id: 'sql-notin', cat: 'sql', lang: 'sql',
+    code: `SELECT 1 WHERE 1 NOT IN (2, NULL);
+-- combien de lignes ?`,
+    question: { fr: 'Que renvoie `1 NOT IN (2, NULL)` ?', en: 'What does `1 NOT IN (2, NULL)` return?' },
+    choices: [
+      { fr: 'TRUE — 1 n\'est ni 2 ni NULL', en: 'TRUE — 1 is neither 2 nor NULL' },
+      { fr: 'NULL → zéro ligne, le piège classique', en: 'NULL → zero rows, the classic trap' },
+      { fr: 'FALSE', en: 'FALSE' },
+      { fr: 'une erreur', en: 'an error' },
+    ],
+    answer: 1,
+    explain: {
+      fr: 'NOT IN se développe en 1 ≠ 2 AND 1 ≠ NULL ; or 1 ≠ NULL vaut NULL → tout vaut NULL → aucune ligne. Préfère NOT EXISTS quand des NULL peuvent traîner.',
+      en: 'NOT IN expands to 1 ≠ 2 AND 1 ≠ NULL; but 1 ≠ NULL is NULL → the whole thing is NULL → no rows. Prefer NOT EXISTS when NULLs may lurk.',
+    },
+    goto: { mode: 'sqlbasics', scenario: 'null-logic' },
+  },
+  {
+    id: 'sql-left', cat: 'sql', lang: 'sql',
+    code: `-- users : Ada, Alan, Grace (sans commande)
+-- orders : 2×Ada, 1×Alan, 1 orpheline (user 9)
+SELECT u.nom, o.produit
+FROM users u LEFT JOIN orders o ON u.id = o.user_id;`,
+    question: { fr: 'Combien de lignes renvoie ce LEFT JOIN ?', en: 'How many rows does this LEFT JOIN return?' },
+    choices: ['3', '4', '5', '2'],
+    answer: 1,
+    explain: {
+      fr: '3 correspondances (Ada×2, Alan×1) + Grace rembourrée de NULL = 4. La webcam orpheline est éliminée (elle reviendrait avec RIGHT ou FULL).',
+      en: '3 matches (Ada×2, Alan×1) + Grace padded with NULL = 4. The orphan webcam is dropped (it would come back with RIGHT or FULL).',
+    },
+    goto: { mode: 'sqljoins', scenario: 'left' },
+  },
+  {
     id: 'gen-bst', cat: 'general', lang: 'js',
     code: `//        50
 //      /    \\

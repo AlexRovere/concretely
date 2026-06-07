@@ -9,12 +9,13 @@ import go from './go.js';
 import rust from './rust.js';
 import git from './git.js';
 import linux from './linux.js';
+import sql from './sql.js';
 
 /**
  * Cheatsheet registry — one sheet per filter category.
  * Sheet shape: { id, lang, sections: [{ id, title:{fr,en}, items:[{ id, title:{fr,en}, code, note:{fr,en} }] }] }
  */
-export const CHEATSHEETS = { general, js, ts, vue, swift, ruby, kotlin, go, rust, git, linux };
+export const CHEATSHEETS = { general, js, ts, vue, swift, ruby, kotlin, go, rust, git, linux, sql };
 
 export function cheatsheetFor(cat) {
   return CHEATSHEETS[cat] ?? null;

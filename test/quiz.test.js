@@ -26,6 +26,8 @@ import { summaryOf as gbSummary, goBasicsScenarioById } from '../src/gobasics.js
 import { summaryOf as rsSummary, rustBasicsScenarioById } from '../src/rustbasics.js';
 import { summaryOf as lxSummary, linuxBasicsScenarioById } from '../src/linuxbasics.js';
 import { summaryOf as grSummary, gitResetScenarioById } from '../src/gitreset.js';
+import { summaryOf as sqSummary, sqlBasicsScenarioById } from '../src/sqlbasics.js';
+import { summaryOf as sjSummary } from '../src/sqljoins.js';
 import { buildTree, traverse, BST_DEMO } from '../src/bst.js';
 import { SORTS } from '../src/sorting/algorithms.js';
 
@@ -237,6 +239,29 @@ test('gd-ff: the merge fast-forwards, no merge commit created', () => {
   assert.equal(quizQuestionById('gd-ff').answer, 1);
 });
 
+test('sql-*: the SQL quiz answers match the sqlbasics + sqljoins models', () => {
+  const nl = sqlBasicsScenarioById('null-logic').ops;
+  assert.equal(nl.find((o) => o.eval === 'NULL = NULL').value, 'NULL');
+  assert.equal(nl.find((o) => o.eval === '1 NOT IN (2, NULL)').value, 'NULL');
+  assert.equal(quizQuestionById('sql-null').answer, 1);
+  assert.equal(quizQuestionById('sql-notin').answer, 1);
+  // the LEFT JOIN count is re-derived from the join model itself
+  const left = sjSummary('left');
+  assert.equal(quizQuestionById('sql-left').choices[quizQuestionById('sql-left').answer],
+    String(left.rows.length));
+  assert.ok(left.rows.some((r) => r.nom === 'Grace' && r.produit === null));
+  // and the WHERE-on-right-column trap really is modeled
+  assert.ok(sqSummary(sqlBasicsScenarioById('left-join-trap').ops).crashes.includes('WHERE o.montant > 0'));
+});
+
+test('sqljoins: the four join types produce 3 / 4 / 4 / 5 rows', () => {
+  assert.equal(sjSummary('inner').rows.length, 3);
+  assert.equal(sjSummary('left').rows.length, 4);
+  assert.equal(sjSummary('right').rows.length, 4);
+  assert.equal(sjSummary('full').rows.length, 5);
+  assert.ok(sjSummary('right').rows.some((r) => r.nom === null && r.produit === 'webcam'));
+});
+
 test('rb-symbols: strings differ, symbols are interned, per the model', () => {
   const { stringIds, symbolIds } = rbSummary(rubyBasicsScenarioById('symbols').ops);
   assert.notEqual(stringIds[0], stringIds[1]);
@@ -275,7 +300,7 @@ test('every question is well-formed (choices, answer, code, goto)', () => {
 
 test('category filter returns the right subsets', () => {
   assert.equal(quizQuestions('all').length, QUIZ_QUESTIONS.length);
-  const cats = ['general', 'js', 'ts', 'vue', 'swift', 'ruby', 'kotlin', 'go', 'rust', 'git', 'linux'];
+  const cats = ['general', 'js', 'ts', 'vue', 'swift', 'ruby', 'kotlin', 'go', 'rust', 'git', 'linux', 'sql'];
   let sum = 0;
   for (const c of cats) {
     const qs = quizQuestions(c);
