@@ -43,11 +43,14 @@ import { useTheme } from '@/composables/useTheme'
 import JsBasicsPanel from '@/components/panels/JsBasicsPanel.vue'
 import SwiftBasicsPanel from '@/components/panels/SwiftBasicsPanel.vue'
 import KotlinBasicsPanel from '@/components/panels/KotlinBasicsPanel.vue'
+import TsBasicsPanel from '@/components/panels/TsBasicsPanel.vue'
+import GoBasicsPanel from '@/components/panels/GoBasicsPanel.vue'
+import RustBasicsPanel from '@/components/panels/RustBasicsPanel.vue'
 
 const { t, locale, setLocale, LOCALES } = useI18n()
 useTheme() // applies the persisted theme + code palette/font on startup
 
-const CATEGORIES = ['general', 'js', 'vue', 'swift', 'ruby', 'kotlin', 'git']
+const CATEGORIES = ['general', 'js', 'ts', 'vue', 'swift', 'ruby', 'kotlin', 'go', 'rust', 'git']
 
 // `cat: '*'` = always-visible tab (appended last); `not` lists categories
 // where such a tab is hidden (no Swift compiler runs in a browser).
@@ -84,6 +87,9 @@ const TABS: { mode: string; key: string; cat: string; not?: string[] }[] = [
   { mode: 'debounce', key: 'tabs.debounce', cat: 'vue' },
   { mode: 'gitdag', key: 'tabs.gitdag', cat: 'git' },
   { mode: 'gitreset', key: 'tabs.gitreset', cat: 'git' },
+  { mode: 'tsbasics', key: 'tabs.tsbasics', cat: 'ts' },
+  { mode: 'gobasics', key: 'tabs.gobasics', cat: 'go' },
+  { mode: 'rustbasics', key: 'tabs.rustbasics', cat: 'rust' },
   { mode: 'cheatsheet', key: 'tabs.cheatsheet', cat: '*' },
   { mode: 'playground', key: 'tabs.playground', cat: '*', not: ['swift'] },
   { mode: 'quiz', key: 'tabs.quiz', cat: '*' },
@@ -128,6 +134,9 @@ const panels: Record<string, unknown> = {
   jsbasics: JsBasicsPanel,
   swiftbasics: SwiftBasicsPanel,
   kotlinbasics: KotlinBasicsPanel,
+  tsbasics: TsBasicsPanel,
+  gobasics: GoBasicsPanel,
+  rustbasics: RustBasicsPanel,
   bst: BstPanel,
   dp: DpPanel,
   regex: RegexPanel

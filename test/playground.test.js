@@ -3,11 +3,11 @@ import assert from 'node:assert/strict';
 import { PLAYGROUNDS, playgroundFor } from '../src/playground/samples.js';
 import { parseGitCommands, runGitOps, renderDagSvg } from '../src/playground/gitrepl.js';
 
-const ENGINES = new Set(['js', 'vue', 'ruby', 'kotlin', 'git']);
-const LANGS = new Set(['js', 'ruby', 'kotlin', 'shell']);
+const ENGINES = new Set(['js', 'vue', 'ruby', 'kotlin', 'git', 'ts', 'go', 'rust']);
+const LANGS = new Set(['js', 'ruby', 'kotlin', 'shell', 'ts', 'go', 'rust']);
 
 test('every category except swift has a playground (engine + sample)', () => {
-  for (const cat of ['general', 'js', 'vue', 'ruby', 'kotlin', 'git']) {
+  for (const cat of ['general', 'js', 'ts', 'vue', 'ruby', 'kotlin', 'go', 'rust', 'git']) {
     const c = playgroundFor(cat);
     assert.ok(c, cat);
     assert.ok(ENGINES.has(c.engine), `${cat}: engine ${c.engine}`);
@@ -15,7 +15,7 @@ test('every category except swift has a playground (engine + sample)', () => {
     assert.ok(c.sample.length > 50, `${cat}: sample too short`);
   }
   assert.equal(playgroundFor('swift'), null, 'no browser Swift compiler — no playground');
-  assert.equal(Object.keys(PLAYGROUNDS).length, 6);
+  assert.equal(Object.keys(PLAYGROUNDS).length, 9);
 });
 
 test('git REPL: parses the shipped sample without any error', () => {

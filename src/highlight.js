@@ -19,6 +19,10 @@ const KEYWORDS = new Set([
   // kotlin
   'suspend', 'when', 'data', 'sealed', 'companion', 'by', 'lateinit', 'init',
   'is', 'as', 'object', 'inner', 'open', 'inline', 'reified',
+  // rust
+  'impl', 'trait', 'match', 'pub', 'use', 'crate', 'mod', 'unsafe', 'dyn', 'move',
+  // typescript
+  'readonly', 'keyof', 'declare', 'satisfies', 'infer', 'any', 'unknown', 'never',
   // control flow
   'if', 'else', 'elif', 'elsif', 'unless', 'for', 'foreach', 'while', 'do', 'loop',
   'switch', 'case', 'default', 'break', 'continue', 'return', 'goto', 'yield',

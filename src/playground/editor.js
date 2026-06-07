@@ -12,13 +12,18 @@ import { javascript } from '@codemirror/lang-javascript';
 import { ruby } from '@codemirror/legacy-modes/mode/ruby';
 import { kotlin } from '@codemirror/legacy-modes/mode/clike';
 import { shell } from '@codemirror/legacy-modes/mode/shell';
+import { go } from '@codemirror/legacy-modes/mode/go';
+import { rust } from '@codemirror/legacy-modes/mode/rust';
 import { tags } from '@lezer/highlight';
 
 const LANGS = {
   js: () => javascript(),
+  ts: () => javascript({ typescript: true }),
   ruby: () => StreamLanguage.define(ruby),
   kotlin: () => StreamLanguage.define(kotlin),
   shell: () => StreamLanguage.define(shell),
+  go: () => StreamLanguage.define(go),
+  rust: () => StreamLanguage.define(rust),
 };
 
 const theme = EditorView.theme({

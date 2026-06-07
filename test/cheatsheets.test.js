@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import { CHEATSHEETS, cheatsheetFor, allCheatItems } from '../src/cheatsheets/index.js';
 import { buildSearchEntries, buildSearchIndex } from '../src/search.js';
 
-const CATS = ['general', 'js', 'vue', 'swift', 'ruby', 'kotlin', 'git'];
-const LANGS = new Set(['js', 'swift', 'ruby', 'kotlin', 'git', 'bash']);
+const CATS = ['general', 'js', 'ts', 'vue', 'swift', 'ruby', 'kotlin', 'go', 'rust', 'git'];
+const LANGS = new Set(['js', 'ts', 'swift', 'ruby', 'kotlin', 'go', 'rust', 'git', 'bash']);
 
 test('every filter category has its cheatsheet', () => {
   for (const c of CATS) {
@@ -33,7 +33,7 @@ test('every item is well-formed, bilingual, with real code', () => {
       }
     }
   }
-  assert.ok(ids.size >= 200, `only ${ids.size} items total`);
+  assert.ok(ids.size >= 300, `only ${ids.size} items total`);
 });
 
 test('allCheatItems flattens everything with its sheet/section context', () => {

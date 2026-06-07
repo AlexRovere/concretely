@@ -1,7 +1,9 @@
 /**
  * Playground configuration per category — pure data.
  * engine: 'js' (sandboxed Worker) | 'vue' (iframe preview) | 'ruby'
- * (ruby.wasm) | 'kotlin' (JetBrains compiler API) | 'git' (gitdag model).
+ * (ruby.wasm) | 'kotlin' (JetBrains compiler API) | 'ts' (typescript
+ * transpile → Worker) | 'go' (play.golang.org API) | 'rust'
+ * (play.rust-lang.org API) | 'git' (gitdag model).
  * `lang` feeds the CodeMirror language; samples are French-commented and
  * never translated. Swift has NO playground (no in-browser compiler).
  */
@@ -96,6 +98,93 @@ fun main() {
         else -> "impair"
     }
     println("$n est $parite")
+}`,
+  },
+  ts: {
+    engine: 'ts',
+    lang: 'ts',
+    sample: `// TypeScript transpilé dans ton navigateur, puis exécuté en Worker.
+interface Utilisateur {
+  nom: string;
+  age: number;
+}
+
+// Générique contraint : T doit avoir un .age
+function plusVieux<T extends { age: number }>(liste: T[]): T {
+  return liste.reduce((a, b) => (b.age > a.age ? b : a));
+}
+
+const equipe: Utilisateur[] = [
+  { nom: 'Ada', age: 36 },
+  { nom: 'Grace', age: 85 },
+  { nom: 'Alan', age: 41 },
+];
+console.log('doyenne :', plusVieux(equipe).nom);
+
+// Narrowing : le type se précise branche par branche
+function affiche(x: string | number) {
+  if (typeof x === 'string') console.log(x.toUpperCase());
+  else console.log(x.toFixed(2));
+}
+affiche('salut');
+affiche(3.14159);`,
+  },
+  go: {
+    engine: 'go',
+    lang: 'go',
+    sample: `// Compilé et exécuté sur les serveurs du Go Playground.
+package main
+
+import (
+	"fmt"
+	"sync"
+)
+
+func main() {
+	// Les slices partagent leur backing array :
+	a := []int{1, 2, 3}
+	b := a[:2]
+	b[0] = 99
+	fmt.Println("a[0] vaut", a[0], "— b n'était pas une copie !")
+
+	// Goroutines + WaitGroup :
+	var wg sync.WaitGroup
+	resultats := make(chan string, 3)
+	for _, nom := range []string{"Ada", "Grace", "Alan"} {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			resultats <- "salut " + nom
+		}()
+	}
+	wg.Wait()
+	close(resultats)
+	for msg := range resultats {
+		fmt.Println(msg)
+	}
+}`,
+  },
+  rust: {
+    engine: 'rust',
+    lang: 'rust',
+    sample: `// Compilé et exécuté sur les serveurs de play.rust-lang.org.
+fn main() {
+    // Itérateurs : paresseux jusqu'au collect
+    let carres: Vec<i32> = (1..=5).map(|n| n * n).collect();
+    println!("carrés : {:?}", carres);
+
+    // Option<T> : pas de null — le compilateur force à décider
+    let premier_pair = carres.iter().find(|n| *n % 2 == 0);
+    match premier_pair {
+        Some(n) => println!("premier carré pair : {n}"),
+        None => println!("aucun carré pair"),
+    }
+
+    // Ownership : v est DÉPLACÉ dans la closure
+    let v = vec![1, 2, 3];
+    let somme = move || v.iter().sum::<i32>();
+    println!("somme : {}", somme());
+    // println!("{:?}", v);  // ← décommente : erreur, v a été déplacé
 }`,
   },
   git: {

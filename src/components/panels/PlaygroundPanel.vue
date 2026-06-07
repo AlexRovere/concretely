@@ -18,7 +18,7 @@ const engine = computed(() => conf.value.engine);
 const editorEl = ref(null);
 const logs = ref([]);
 const running = ref(false);
-const rubyLoading = ref(false);
+const loading = ref(false); // a heavy engine chunk (ruby.wasm, typescript) is downloading
 const dagSvg = ref('');
 const vueSrc = ref(null); // { id, srcdoc }
 let editor = null;
@@ -40,19 +40,35 @@ async function runText(code) {
       const { logs: out, timedOut } = await runJs(code);
       logs.value = out;
       if (timedOut) logs.value.push({ kind: 'crash', text: t('pg.timeout') });
+    } else if (engine.value === 'ts') {
+      const { runTs } = await import('@/playground/runts.js');
+      const { logs: out, timedOut, netError } = await runTs(code, { onLoading: () => { loading.value = true; } });
+      logs.value = out;
+      if (timedOut) logs.value.push({ kind: 'crash', text: t('pg.timeout') });
+      if (netError) logs.value.push({ kind: 'crash', text: t('pg.netError') });
     } else if (engine.value === 'ruby') {
       const { runRuby } = await import('@/playground/runruby.js');
-      const { logs: out } = await runRuby(code, { onLoading: () => { rubyLoading.value = true; } });
+      const { logs: out } = await runRuby(code, { onLoading: () => { loading.value = true; } });
       logs.value = out;
     } else if (engine.value === 'kotlin') {
       const { runKotlin } = await import('@/playground/runkotlin.js');
       const { logs: out, netError } = await runKotlin(code);
       logs.value = out;
       if (netError) logs.value.push({ kind: 'crash', text: t('pg.netError') });
+    } else if (engine.value === 'go') {
+      const { runGo } = await import('@/playground/rungo.js');
+      const { logs: out, netError } = await runGo(code);
+      logs.value = out;
+      if (netError) logs.value.push({ kind: 'crash', text: t('pg.netError') });
+    } else if (engine.value === 'rust') {
+      const { runRust } = await import('@/playground/runrust.js');
+      const { logs: out, netError } = await runRust(code);
+      logs.value = out;
+      if (netError) logs.value.push({ kind: 'crash', text: t('pg.netError') });
     }
   } finally {
     running.value = false;
-    rubyLoading.value = false;
+    loading.value = false;
   }
 }
 
@@ -128,7 +144,7 @@ onUnmounted(() => {
 
     <div ref="editorEl" class="pg-editor"></div>
 
-    <p v-if="rubyLoading" class="pg-loading">{{ t('pg.rubyLoading') }}</p>
+    <p v-if="loading" class="pg-loading">{{ t(engine === 'ruby' ? 'pg.rubyLoading' : 'pg.tsLoading') }}</p>
 
     <template v-if="engine === 'vue'">
       <h3 class="rec-h">{{ t('pg.preview') }}</h3>

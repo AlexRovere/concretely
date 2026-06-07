@@ -21,6 +21,9 @@ import { summaryOf as bbSummary, bubblingScenarioById } from '../src/bubbling.js
 import { summaryOf as sbSummary, swiftBasicsScenarioById } from '../src/swiftbasics.js';
 import { summaryOf as kbSummary, kotlinBasicsScenarioById } from '../src/kotlinbasics.js';
 import { summaryOf as rbSummary, rubyBasicsScenarioById } from '../src/rubybasics.js';
+import { summaryOf as tbSummary, tsBasicsScenarioById } from '../src/tsbasics.js';
+import { summaryOf as gbSummary, goBasicsScenarioById } from '../src/gobasics.js';
+import { summaryOf as rsSummary, rustBasicsScenarioById } from '../src/rustbasics.js';
 import { buildTree, traverse, BST_DEMO } from '../src/bst.js';
 import { SORTS } from '../src/sorting/algorithms.js';
 
@@ -163,6 +166,41 @@ test('kb-*: the Kotlin quiz answers match the kotlinbasics model', () => {
   assert.equal(quizQuestionById('kb-bangbang').answer, 1);
 });
 
+test('ts-*: the TypeScript quiz answers match the tsbasics model', () => {
+  assert.ok(tbSummary(tsBasicsScenarioById('erasure').ops).errors.includes('u instanceof User'));
+  assert.equal(quizQuestionById('ts-erasure').answer, 2);
+  const st = tsBasicsScenarioById('structural').ops;
+  assert.ok(tbSummary(st).errors.includes('salue({ x: 1, y: 2, z: 3 })'));
+  assert.ok(st.some((o) => o.eval === 'salue(p)'), 'the variable workaround compiles');
+  assert.equal(quizQuestionById('ts-excess').answer, 2);
+  const au = tbSummary(tsBasicsScenarioById('any-unknown').ops);
+  assert.ok(au.errors.includes('inconnu.toUpperCase()'), 'unknown refuses to compile');
+  assert.ok(au.crashes.includes('nimporte.toUpperCase()'), 'any crashes at runtime');
+  assert.equal(quizQuestionById('ts-any').answer, 1);
+});
+
+test('go-*: the Go quiz answers match the gobasics model', () => {
+  const zv = gbSummary(goBasicsScenarioById('zero-values').ops);
+  assert.ok(zv.crashes.includes('m["go"] = 1'), 'writing a nil map panics');
+  assert.equal(quizQuestionById('go-nilmap').answer, 0);
+  const sl = goBasicsScenarioById('slices').ops;
+  assert.equal(sl.find((o) => o.eval === 'a[0]').value, '99', 'shared backing array');
+  assert.equal(quizQuestionById('go-slice').answer, 1);
+  const { logs } = gbSummary(goBasicsScenarioById('defer').ops);
+  assert.equal(quizQuestionById('go-defer').choices[quizQuestionById('go-defer').answer], logs.join(', '));
+});
+
+test('rust-*: the Rust quiz answers match the rustbasics model', () => {
+  assert.ok(rsSummary(rustBasicsScenarioById('ownership').ops).errors.includes('println!("{}", s)'));
+  assert.equal(quizQuestionById('rust-move').answer, 1);
+  assert.ok(rsSummary(rustBasicsScenarioById('no-null').ops).crashes.includes('rien.unwrap()'));
+  assert.equal(quizQuestionById('rust-unwrap').answer, 3);
+  const mu = rustBasicsScenarioById('mutability').ops;
+  assert.ok(rsSummary(mu).errors.includes('x = 6'), 'immutable by default');
+  assert.equal(mu.find((o) => o.eval === 'let x = x + 1').value, '6', 'shadowing works');
+  assert.equal(quizQuestionById('rust-mut').answer, 1);
+});
+
 test('rb-symbols: strings differ, symbols are interned, per the model', () => {
   const { stringIds, symbolIds } = rbSummary(rubyBasicsScenarioById('symbols').ops);
   assert.notEqual(stringIds[0], stringIds[1]);
@@ -201,7 +239,7 @@ test('every question is well-formed (choices, answer, code, goto)', () => {
 
 test('category filter returns the right subsets', () => {
   assert.equal(quizQuestions('all').length, QUIZ_QUESTIONS.length);
-  const cats = ['general', 'js', 'vue', 'swift', 'ruby', 'kotlin', 'git'];
+  const cats = ['general', 'js', 'ts', 'vue', 'swift', 'ruby', 'kotlin', 'go', 'rust', 'git'];
   let sum = 0;
   for (const c of cats) {
     const qs = quizQuestions(c);

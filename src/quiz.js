@@ -457,6 +457,175 @@ name!!.length`,
     goto: { mode: 'rubybasics', scenario: 'symbols' },
   },
   {
+    id: 'ts-erasure', cat: 'ts', lang: 'js',
+    code: `interface User { name: string }
+const u: User = { name: 'Ada' }
+if (u instanceof User) { … }   // … ?`,
+    question: { fr: 'Que fait `u instanceof User` quand User est une interface ?', en: 'What does `u instanceof User` do when User is an interface?' },
+    choices: [
+      { fr: 'true — u implémente User', en: 'true — u implements User' },
+      { fr: 'false', en: 'false' },
+      { fr: '❌ ça ne compile pas — les interfaces sont EFFACÉES', en: '❌ it does not compile — interfaces are ERASED' },
+      { fr: '💥 crash à l\'exécution', en: '💥 runtime crash' },
+    ],
+    answer: 2,
+    explain: {
+      fr: 'Les types n\'existent qu\'à la compilation : à l\'exécution, User a disparu. Pour tester une forme, écris un type guard (`"name" in u`).',
+      en: 'Types only exist at compile time: at runtime, User is gone. To test a shape, write a type guard (`"name" in u`).',
+    },
+    goto: { mode: 'tsbasics', scenario: 'erasure' },
+  },
+  {
+    id: 'ts-excess', cat: 'ts', lang: 'js',
+    code: `interface Point { x: number; y: number }
+function salue(p: Point) { … }
+
+salue({ x: 1, y: 2, z: 3 })   // … ?
+const p = { x: 1, y: 2, z: 3 }
+salue(p)                      // … ?`,
+    question: { fr: 'Littéral direct vs variable : lesquels compilent ?', en: 'Direct literal vs variable: which ones compile?' },
+    choices: [
+      { fr: 'les deux compilent', en: 'both compile' },
+      { fr: 'aucun ne compile (z est en trop)', en: 'neither compiles (z is extra)' },
+      { fr: 'le littéral est refusé, la variable passe', en: 'the literal is rejected, the variable passes' },
+      { fr: 'le littéral passe, la variable est refusée', en: 'the literal passes, the variable is rejected' },
+    ],
+    answer: 2,
+    explain: {
+      fr: 'Un LITTÉRAL direct subit l\'excess-property check (z refusé). Via une variable, le typage structurel accepte : p a au moins x et y.',
+      en: 'A direct LITERAL gets the excess-property check (z rejected). Through a variable, structural typing accepts: p has at least x and y.',
+    },
+    goto: { mode: 'tsbasics', scenario: 'structural' },
+  },
+  {
+    id: 'ts-any', cat: 'ts', lang: 'js',
+    code: `const nimporte: any = 42
+nimporte.toUpperCase()   // … ?`,
+    question: { fr: 'Que fait `.toUpperCase()` sur un `any` qui contient 42 ?', en: 'What does `.toUpperCase()` do on an `any` holding 42?' },
+    choices: [
+      { fr: '❌ ne compile pas', en: '❌ does not compile' },
+      { fr: '💥 compile… et TypeError à l\'exécution', en: '💥 compiles… then TypeError at runtime' },
+      { fr: 'renvoie "42"', en: 'returns "42"' },
+      { fr: 'renvoie undefined', en: 'returns undefined' },
+    ],
+    answer: 1,
+    explain: {
+      fr: 'any désactive TOUTE vérification : le compilateur laisse passer, le runtime crashe. unknown, lui, aurait refusé de compiler sans narrowing.',
+      en: 'any turns off ALL checking: the compiler lets it through, the runtime crashes. unknown would have refused to compile without narrowing.',
+    },
+    goto: { mode: 'tsbasics', scenario: 'any-unknown' },
+  },
+  {
+    id: 'go-nilmap', cat: 'go', lang: 'go',
+    code: `var m map[string]int
+fmt.Println(m["go"])   // … ?
+m["go"] = 1            // … ?`,
+    question: { fr: 'Lire puis écrire dans une map nil : que se passe-t-il ?', en: 'Reading then writing a nil map: what happens?' },
+    choices: [
+      { fr: 'lecture : 0 · écriture : 💥 panic', en: 'read: 0 · write: 💥 panic' },
+      { fr: 'les deux paniquent', en: 'both panic' },
+      { fr: 'les deux marchent (map auto-créée)', en: 'both work (map auto-created)' },
+      { fr: '❌ ne compile pas', en: '❌ does not compile' },
+    ],
+    answer: 0,
+    explain: {
+      fr: 'Lire une map nil renvoie la zero value (0) — mais y ÉCRIRE panique. Il faut make(map[string]int) d\'abord.',
+      en: 'Reading a nil map returns the zero value (0) — but WRITING to it panics. You need make(map[string]int) first.',
+    },
+    goto: { mode: 'gobasics', scenario: 'zero-values' },
+  },
+  {
+    id: 'go-slice', cat: 'go', lang: 'go',
+    code: `a := []int{1, 2, 3}
+b := a[:2]
+b[0] = 99
+fmt.Println(a[0])   // … ?`,
+    question: { fr: 'Après b[0] = 99, que vaut a[0] ?', en: 'After b[0] = 99, what is a[0]?' },
+    choices: ['1', '99', '0', { fr: '💥 panic', en: '💥 panic' }],
+    answer: 1,
+    explain: {
+      fr: 'Un slicing ne copie RIEN : a et b partagent le même backing array. Pour une vraie copie : copy(dst, src).',
+      en: 'Slicing copies NOTHING: a and b share the same backing array. For a real copy: copy(dst, src).',
+    },
+    goto: { mode: 'gobasics', scenario: 'slices' },
+  },
+  {
+    id: 'go-defer', cat: 'go', lang: 'go',
+    code: `fmt.Println("ouverture")
+defer fmt.Println("defer A")
+defer fmt.Println("defer B")
+fmt.Println("travail")`,
+    question: { fr: 'Dans quel ordre les lignes sortent-elles ?', en: 'In what order do the lines come out?' },
+    choices: [
+      'ouverture, defer A, defer B, travail',
+      'ouverture, travail, defer A, defer B',
+      'ouverture, travail, defer B, defer A',
+      'defer A, defer B, ouverture, travail',
+    ],
+    answer: 2,
+    explain: {
+      fr: 'Les defer partent à la sortie de la fonction, en ordre INVERSE (LIFO) : B puis A — exactement comme en Swift.',
+      en: 'defer calls run at function exit, in REVERSE order (LIFO): B then A — exactly like Swift.',
+    },
+    goto: { mode: 'gobasics', scenario: 'defer' },
+  },
+  {
+    id: 'rust-move', cat: 'rust', lang: 'rust',
+    code: `let s = String::from("salut");
+let t = s;
+println!("{}", s);   // … ?`,
+    question: { fr: 'Utiliser s après `let t = s` : que se passe-t-il ?', en: 'Using s after `let t = s`: what happens?' },
+    choices: [
+      { fr: 'affiche "salut" — s et t pointent dessus', en: 'prints "salut" — s and t both point to it' },
+      { fr: '❌ erreur de COMPILATION — s a été déplacée', en: '❌ COMPILE error — s was moved' },
+      { fr: '💥 panique à l\'exécution', en: '💥 runtime panic' },
+      { fr: 'affiche une chaîne vide', en: 'prints an empty string' },
+    ],
+    answer: 1,
+    explain: {
+      fr: 'L\'affectation DÉPLACE la String (un seul propriétaire). Le borrow checker refuse "value borrowed here after move". Un i32, lui, serait copié.',
+      en: 'Assignment MOVES the String (single owner). The borrow checker refuses: "value borrowed here after move". An i32 would be copied instead.',
+    },
+    goto: { mode: 'rustbasics', scenario: 'ownership' },
+  },
+  {
+    id: 'rust-unwrap', cat: 'rust', lang: 'rust',
+    code: `let rien: Option<i32> = None;
+rien.unwrap();   // … ?`,
+    question: { fr: 'Que fait `.unwrap()` sur None ?', en: 'What does `.unwrap()` do on None?' },
+    choices: [
+      { fr: 'renvoie 0', en: 'returns 0' },
+      { fr: 'renvoie null', en: 'returns null' },
+      { fr: '❌ ne compile pas', en: '❌ does not compile' },
+      { fr: '💥 panic à l\'exécution', en: '💥 runtime panic' },
+    ],
+    answer: 3,
+    explain: {
+      fr: 'unwrap est le pari Rust : ça compile, mais None → panic. Préfère unwrap_or, match ou l\'opérateur ?.',
+      en: 'unwrap is the Rust bet: it compiles, but None → panic. Prefer unwrap_or, match or the ? operator.',
+    },
+    goto: { mode: 'rustbasics', scenario: 'no-null' },
+  },
+  {
+    id: 'rust-mut', cat: 'rust', lang: 'rust',
+    code: `let x = 5;
+x = 6;           // … ?
+let x = x + 1;   // … ?`,
+    question: { fr: '`x = 6` puis `let x = x + 1` : que dit le compilateur ?', en: '`x = 6` then `let x = x + 1`: what does the compiler say?' },
+    choices: [
+      { fr: 'les deux passent', en: 'both pass' },
+      { fr: 'x = 6 refusé (immuable) · let x = x + 1 OK (shadowing)', en: 'x = 6 rejected (immutable) · let x = x + 1 OK (shadowing)' },
+      { fr: 'les deux sont refusés', en: 'both rejected' },
+      { fr: 'x = 6 OK · le shadowing est interdit', en: 'x = 6 OK · shadowing is forbidden' },
+    ],
+    answer: 1,
+    explain: {
+      fr: 'Sans mut, réaffecter est une erreur ("cannot assign twice"). Mais RE-DÉCLARER avec let (shadowing) est idiomatique.',
+      en: 'Without mut, reassigning is an error ("cannot assign twice"). But RE-DECLARING with let (shadowing) is idiomatic.',
+    },
+    goto: { mode: 'rustbasics', scenario: 'mutability' },
+  },
+  {
     id: 'gen-bst', cat: 'general', lang: 'js',
     code: `//        50
 //      /    \\

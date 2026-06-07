@@ -4,6 +4,9 @@ import { simulateTrace, traceSummaryOf } from '../src/evaltrace.js';
 import { JSBASICS_SCENARIOS, jsBasicsScenarioById } from '../src/jsbasics.js';
 import { SWIFTBASICS_SCENARIOS, swiftBasicsScenarioById } from '../src/swiftbasics.js';
 import { KOTLINBASICS_SCENARIOS, kotlinBasicsScenarioById } from '../src/kotlinbasics.js';
+import { TSBASICS_SCENARIOS, tsBasicsScenarioById } from '../src/tsbasics.js';
+import { GOBASICS_SCENARIOS, goBasicsScenarioById } from '../src/gobasics.js';
+import { RUSTBASICS_SCENARIOS, rustBasicsScenarioById } from '../src/rustbasics.js';
 
 function steps(ops) {
   const out = [];
@@ -79,8 +82,56 @@ test('kotlin equality: == structural true, === referential false', () => {
   assert.equal(ops.find((o) => o.eval === 'a === b').value, 'false');
 });
 
+/* ----------------------------------------------------- TS / Go / Rust */
+
+test('typescript: erasure, structural typing, any vs unknown', () => {
+  const er = traceSummaryOf(tsBasicsScenarioById('erasure').ops);
+  assert.ok(er.errors.includes('u instanceof User'), 'instanceof on an interface is a compile error');
+  const erOps = tsBasicsScenarioById('erasure').ops;
+  assert.equal(erOps.find((o) => o.eval === 'typeof u').value, '"object"');
+  const st = traceSummaryOf(tsBasicsScenarioById('structural').ops);
+  assert.deepEqual(st.errors, ['salue({ x: 1, y: 2, z: 3 })'], 'only the direct literal is refused');
+  const au = traceSummaryOf(tsBasicsScenarioById('any-unknown').ops);
+  assert.ok(au.errors.includes('inconnu.toUpperCase()'));
+  assert.ok(au.crashes.includes('nimporte.toUpperCase()'));
+  const nw = tsBasicsScenarioById('narrowing').ops;
+  assert.equal(nw.find((o) => o.branch === "typeof x === 'string'")?.taken, true);
+});
+
+test('go: zero values, nil map, slice aliasing, strictness, defer LIFO', () => {
+  const zvOps = goBasicsScenarioById('zero-values').ops;
+  assert.equal(zvOps.find((o) => o.eval === 'var s string').value, '""');
+  assert.equal(zvOps.find((o) => o.eval === 'var n int').value, '0');
+  assert.ok(traceSummaryOf(zvOps).crashes.includes('m["go"] = 1'));
+  const slOps = goBasicsScenarioById('slices').ops;
+  assert.equal(slOps.find((o) => o.eval === 'a[0]').value, '99');
+  const strict = traceSummaryOf(goBasicsScenarioById('strict').ops);
+  assert.ok(strict.errors.includes('x := 42'), 'unused variable is a compile error');
+  assert.ok(strict.errors.includes('if 1 { }'), 'no truthiness');
+  const { logs } = traceSummaryOf(goBasicsScenarioById('defer').ops);
+  assert.deepEqual(logs, ['ouverture', 'travail', 'defer B', 'defer A']);
+});
+
+test('rust: move, borrow checker, Option, immutability + overflow', () => {
+  const ow = traceSummaryOf(rustBasicsScenarioById('ownership').ops);
+  assert.ok(ow.errors.includes('println!("{}", s)'), 'use after move is a compile error');
+  const owOps = rustBasicsScenarioById('ownership').ops;
+  assert.equal(owOps.find((o) => o.eval === 'a + b').value, '10', 'Copy types still work');
+  const bw = traceSummaryOf(rustBasicsScenarioById('borrow').ops);
+  assert.ok(bw.errors.includes('v.push(4)'), 'mutating while borrowed is refused');
+  const nn = traceSummaryOf(rustBasicsScenarioById('no-null').ops);
+  assert.ok(nn.errors.includes('let n: i32 = null'));
+  assert.ok(nn.crashes.includes('rien.unwrap()'));
+  const mu = traceSummaryOf(rustBasicsScenarioById('mutability').ops);
+  assert.ok(mu.errors.includes('x = 6'));
+  assert.ok(mu.crashes.includes('compteur + 1'), 'u8 overflow panics in debug');
+});
+
 test('every basics scenario is well-formed and terminates', () => {
-  for (const s of [...JSBASICS_SCENARIOS, ...SWIFTBASICS_SCENARIOS, ...KOTLINBASICS_SCENARIOS]) {
+  for (const s of [
+    ...JSBASICS_SCENARIOS, ...SWIFTBASICS_SCENARIOS, ...KOTLINBASICS_SCENARIOS,
+    ...TSBASICS_SCENARIOS, ...GOBASICS_SCENARIOS, ...RUSTBASICS_SCENARIOS,
+  ]) {
     assert.ok(s.code.length > 10, s.id);
     assert.ok(s.ops.length > 0, s.id);
     const all = steps(s.ops);

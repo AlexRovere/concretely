@@ -1,16 +1,19 @@
 import general from './general.js';
 import js from './js.js';
+import ts from './ts.js';
 import vue from './vue.js';
 import swift from './swift.js';
 import ruby from './ruby.js';
 import kotlin from './kotlin.js';
+import go from './go.js';
+import rust from './rust.js';
 import git from './git.js';
 
 /**
  * Cheatsheet registry — one sheet per filter category.
  * Sheet shape: { id, lang, sections: [{ id, title:{fr,en}, items:[{ id, title:{fr,en}, code, note:{fr,en} }] }] }
  */
-export const CHEATSHEETS = { general, js, vue, swift, ruby, kotlin, git };
+export const CHEATSHEETS = { general, js, ts, vue, swift, ruby, kotlin, go, rust, git };
 
 export function cheatsheetFor(cat) {
   return CHEATSHEETS[cat] ?? null;
