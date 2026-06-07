@@ -28,6 +28,9 @@ import { summaryOf as lxSummary, linuxBasicsScenarioById } from '../src/linuxbas
 import { summaryOf as grSummary, gitResetScenarioById } from '../src/gitreset.js';
 import { summaryOf as sqSummary, sqlBasicsScenarioById } from '../src/sqlbasics.js';
 import { summaryOf as sjSummary } from '../src/sqljoins.js';
+import { corsScenarioById } from '../src/cors.js';
+import { httpCacheScenarioById } from '../src/httpcache.js';
+import { summaryOf as dkSummary, dockerBasicsScenarioById } from '../src/dockerbasics.js';
 import { buildTree, traverse, BST_DEMO } from '../src/bst.js';
 import { SORTS } from '../src/sorting/algorithms.js';
 
@@ -262,6 +265,29 @@ test('sqljoins: the four join types produce 3 / 4 / 4 / 5 rows', () => {
   assert.ok(sjSummary('right').rows.some((r) => r.nom === null && r.produit === 'webcam'));
 });
 
+test('web-*: the HTTP quiz answers match the cors + httpcache models', () => {
+  const sr = corsScenarioById('simple-request').ops;
+  const blocked = sr.find((o) => o.branch === 'Access-Control-Allow-Origin présent ?');
+  assert.equal(blocked.taken, false);
+  assert.match(blocked.else, /EU LIEU/i, 'the request did reach the server');
+  assert.equal(quizQuestionById('web-block').answer, 1);
+  assert.ok(corsScenarioById('preflight').ops.some((o) => o.eval === 'OPTIONS /api/users'));
+  assert.equal(quizQuestionById('web-preflight').answer, 1);
+  const etag = httpCacheScenarioById('etag').ops;
+  assert.match(etag.find((o) => o.eval === '304 Not Modified').value, /vide/i, '304 carries no body');
+  assert.equal(quizQuestionById('web-304').answer, 2);
+});
+
+test('dk-*: the Docker quiz answers match the dockerbasics model', () => {
+  assert.ok(dkSummary(dockerBasicsScenarioById('layers-cache').ops).crashes.includes('COPY . .'));
+  assert.equal(quizQuestionById('dk-layers').answer, 1);
+  const ce = dockerBasicsScenarioById('cmd-entrypoint').ops;
+  assert.equal(ce.find((o) => o.eval === 'docker run img --help').value, 'node --help');
+  assert.equal(quizQuestionById('dk-cmd').answer, 1);
+  assert.ok(dkSummary(dockerBasicsScenarioById('volumes').ops).crashes.includes('docker rm db'));
+  assert.equal(quizQuestionById('dk-volume').answer, 1);
+});
+
 test('rb-symbols: strings differ, symbols are interned, per the model', () => {
   const { stringIds, symbolIds } = rbSummary(rubyBasicsScenarioById('symbols').ops);
   assert.notEqual(stringIds[0], stringIds[1]);
@@ -300,7 +326,7 @@ test('every question is well-formed (choices, answer, code, goto)', () => {
 
 test('category filter returns the right subsets', () => {
   assert.equal(quizQuestions('all').length, QUIZ_QUESTIONS.length);
-  const cats = ['general', 'js', 'ts', 'vue', 'swift', 'ruby', 'kotlin', 'go', 'rust', 'git', 'linux', 'sql'];
+  const cats = ['general', 'js', 'ts', 'vue', 'swift', 'ruby', 'kotlin', 'go', 'rust', 'git', 'linux', 'sql', 'web', 'docker'];
   let sum = 0;
   for (const c of cats) {
     const qs = quizQuestions(c);

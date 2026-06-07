@@ -49,11 +49,15 @@ import RustBasicsPanel from '@/components/panels/RustBasicsPanel.vue'
 import LinuxBasicsPanel from '@/components/panels/LinuxBasicsPanel.vue'
 import SqlBasicsPanel from '@/components/panels/SqlBasicsPanel.vue'
 import SqlJoinsPanel from '@/components/panels/SqlJoinsPanel.vue'
+import HttpFlowPanel from '@/components/panels/HttpFlowPanel.vue'
+import CorsPanel from '@/components/panels/CorsPanel.vue'
+import HttpCachePanel from '@/components/panels/HttpCachePanel.vue'
+import DockerBasicsPanel from '@/components/panels/DockerBasicsPanel.vue'
 
 const { t, locale, setLocale, LOCALES } = useI18n()
 useTheme() // applies the persisted theme + code palette/font on startup
 
-const CATEGORIES = ['general', 'js', 'ts', 'vue', 'swift', 'ruby', 'kotlin', 'go', 'rust', 'git', 'linux', 'sql']
+const CATEGORIES = ['general', 'js', 'ts', 'vue', 'swift', 'ruby', 'kotlin', 'go', 'rust', 'git', 'linux', 'sql', 'web', 'docker']
 
 // `cat: '*'` = always-visible tab (appended last); `not` lists categories
 // where such a tab is hidden (no Swift compiler runs in a browser).
@@ -96,8 +100,12 @@ const TABS: { mode: string; key: string; cat: string; not?: string[] }[] = [
   { mode: 'linuxbasics', key: 'tabs.linuxbasics', cat: 'linux' },
   { mode: 'sqlbasics', key: 'tabs.sqlbasics', cat: 'sql' },
   { mode: 'sqljoins', key: 'tabs.sqljoins', cat: 'sql' },
+  { mode: 'httpflow', key: 'tabs.httpflow', cat: 'web' },
+  { mode: 'cors', key: 'tabs.cors', cat: 'web' },
+  { mode: 'httpcache', key: 'tabs.httpcache', cat: 'web' },
+  { mode: 'dockerbasics', key: 'tabs.dockerbasics', cat: 'docker' },
   { mode: 'cheatsheet', key: 'tabs.cheatsheet', cat: '*' },
-  { mode: 'playground', key: 'tabs.playground', cat: '*', not: ['swift'] },
+  { mode: 'playground', key: 'tabs.playground', cat: '*', not: ['swift', 'web', 'docker'] },
   { mode: 'quiz', key: 'tabs.quiz', cat: '*' },
   { mode: 'bst', key: 'tabs.bst', cat: 'general' },
   { mode: 'dp', key: 'tabs.dp', cat: 'general' },
@@ -146,6 +154,10 @@ const panels: Record<string, unknown> = {
   linuxbasics: LinuxBasicsPanel,
   sqlbasics: SqlBasicsPanel,
   sqljoins: SqlJoinsPanel,
+  httpflow: HttpFlowPanel,
+  cors: CorsPanel,
+  httpcache: HttpCachePanel,
+  dockerbasics: DockerBasicsPanel,
   bst: BstPanel,
   dp: DpPanel,
   regex: RegexPanel

@@ -775,6 +775,127 @@ FROM users u LEFT JOIN orders o ON u.id = o.user_id;`,
     goto: { mode: 'sqljoins', scenario: 'left' },
   },
   {
+    id: 'web-block', cat: 'web', lang: 'bash',
+    code: `# app.exemple.com fait un GET vers api.autre.com
+# la réponse n'a PAS de Access-Control-Allow-Origin
+fetch('https://api.autre.com/users')
+# → TypeError: Failed to fetch`,
+    question: { fr: 'La requête bloquée par CORS : le serveur l\'a-t-il reçue ?', en: 'The CORS-blocked request: did the server receive it?' },
+    choices: [
+      { fr: 'non — le navigateur ne l\'a jamais envoyée', en: 'no — the browser never sent it' },
+      { fr: 'OUI — seule la LECTURE de la réponse est bloquée', en: 'YES — only READING the response is blocked' },
+      { fr: 'oui, mais le serveur a répondu 403', en: 'yes, but the server answered 403' },
+      { fr: 'impossible à savoir', en: 'impossible to know' },
+    ],
+    answer: 1,
+    explain: {
+      fr: 'Une requête « simple » part sans permission préalable : le serveur l\'exécute. CORS n\'empêche que le JS de LIRE la réponse — c\'est pour ça que CORS ne protège pas une API.',
+      en: 'A "simple" request leaves without prior permission: the server executes it. CORS only stops the JS from READING the response — which is why CORS does not protect an API.',
+    },
+    goto: { mode: 'cors', scenario: 'simple-request' },
+  },
+  {
+    id: 'web-preflight', cat: 'web', lang: 'bash',
+    code: `fetch('https://api.autre.com/users/42', {
+  method: 'PUT',
+  headers: { 'Content-Type': 'application/json' },
+  body: '...'
+})`,
+    question: { fr: 'Que fait le navigateur AVANT d\'envoyer ce PUT cross-origin ?', en: 'What does the browser do BEFORE sending this cross-origin PUT?' },
+    choices: [
+      { fr: 'rien — il envoie le PUT directement', en: 'nothing — it sends the PUT directly' },
+      { fr: 'un OPTIONS de permission (preflight)', en: 'a permission OPTIONS (preflight)' },
+      { fr: 'un GET de test', en: 'a test GET' },
+      { fr: 'il le refuse sans rien envoyer', en: 'it refuses without sending anything' },
+    ],
+    answer: 1,
+    explain: {
+      fr: 'PUT + Content-Type JSON n\'est pas une requête « simple » : le navigateur demande d\'abord la permission via OPTIONS (Access-Control-Request-Method), et met le verdict en cache (Max-Age).',
+      en: 'PUT + JSON Content-Type is not a "simple" request: the browser first asks permission via OPTIONS (Access-Control-Request-Method), and caches the verdict (Max-Age).',
+    },
+    goto: { mode: 'cors', scenario: 'preflight' },
+  },
+  {
+    id: 'web-304', cat: 'web', lang: 'bash',
+    code: `GET /app.css
+If-None-Match: "abc123"
+
+HTTP/1.1 304 Not Modified`,
+    question: { fr: 'Que signifie ce 304 ?', en: 'What does this 304 mean?' },
+    choices: [
+      { fr: 'erreur — la ressource a disparu', en: 'error — the resource is gone' },
+      { fr: 'le serveur renvoie le fichier complet', en: 'the server resends the full file' },
+      { fr: '« ta copie est bonne » — corps vide, le cache local est réutilisé', en: '"your copy is fine" — empty body, the local cache is reused' },
+      { fr: 'la requête doit être rejouée', en: 'the request must be retried' },
+    ],
+    answer: 2,
+    explain: {
+      fr: 'L\'ETag correspond : le serveur répond 304 SANS corps. On paie la latence de l\'aller-retour, mais pas le transfert. (max-age frais = même pas d\'aller-retour.)',
+      en: 'The ETag matches: the server answers 304 with NO body. You pay the round-trip latency, but not the transfer. (A fresh max-age = no round-trip at all.)',
+    },
+    goto: { mode: 'httpcache', scenario: 'etag' },
+  },
+  {
+    id: 'dk-layers', cat: 'docker', lang: 'bash',
+    code: `# Dockerfile A          # Dockerfile B
+COPY . .                 COPY package*.json ./
+RUN npm install          RUN npm install
+                         COPY . .`,
+    question: { fr: 'Pourquoi le Dockerfile B rebuild-il tellement plus vite ?', en: 'Why does Dockerfile B rebuild so much faster?' },
+    choices: [
+      { fr: 'npm install est parallélisé', en: 'npm install is parallelized' },
+      { fr: 'le cache de couches : npm install ne repart que si package.json change', en: 'layer caching: npm install only reruns when package.json changes' },
+      { fr: 'B copie moins de fichiers', en: 'B copies fewer files' },
+      { fr: 'aucune différence réelle', en: 'no real difference' },
+    ],
+    answer: 1,
+    explain: {
+      fr: 'Chaque instruction est une couche cachée, et une couche invalidée invalide toutes les suivantes. En A, le moindre fichier modifié invalide COPY . . → npm install repart. En B, il ne repart que si package*.json change.',
+      en: 'Every instruction is a cached layer, and an invalidated layer invalidates all the following ones. In A, any changed file busts COPY . . → npm install reruns. In B, it only reruns when package*.json changes.',
+    },
+    goto: { mode: 'dockerbasics', scenario: 'layers-cache' },
+  },
+  {
+    id: 'dk-cmd', cat: 'docker', lang: 'bash',
+    code: `ENTRYPOINT ["node"]
+CMD ["server.js"]
+
+docker run mon-image --help   # … ?`,
+    question: { fr: 'Que lance ce docker run ?', en: 'What does this docker run execute?' },
+    choices: [
+      { fr: 'node server.js --help', en: 'node server.js --help' },
+      { fr: 'node --help — les args remplacent CMD', en: 'node --help — the args replace CMD' },
+      { fr: '--help tout seul', en: '--help alone' },
+      { fr: 'une erreur', en: 'an error' },
+    ],
+    answer: 1,
+    explain: {
+      fr: 'Les arguments de docker run REMPLACENT CMD et s\'ajoutent à ENTRYPOINT. CMD = défauts remplaçables, ENTRYPOINT = l\'exécutable fixe (--entrypoint pour le forcer).',
+      en: 'docker run arguments REPLACE CMD and are appended to ENTRYPOINT. CMD = replaceable defaults, ENTRYPOINT = the fixed executable (--entrypoint to override).',
+    },
+    goto: { mode: 'dockerbasics', scenario: 'cmd-entrypoint' },
+  },
+  {
+    id: 'dk-volume', cat: 'docker', lang: 'bash',
+    code: `docker run -d --name db postgres
+# … la base se remplit …
+docker rm -f db
+# où sont les données ?`,
+    question: { fr: 'Après `docker rm`, que deviennent les données de la base ?', en: 'After `docker rm`, what happens to the database data?' },
+    choices: [
+      { fr: 'elles survivent dans l\'image', en: 'they survive in the image' },
+      { fr: 'PERDUES — la couche d\'écriture meurt avec le conteneur', en: 'LOST — the writable layer dies with the container' },
+      { fr: 'Docker les sauvegarde automatiquement', en: 'Docker backs them up automatically' },
+      { fr: 'elles restent dans /var/lib/docker pour toujours', en: 'they stay in /var/lib/docker forever' },
+    ],
+    answer: 1,
+    explain: {
+      fr: 'Tout ce qui est écrit dans le conteneur vit dans sa couche d\'écriture éphémère. Pour des données durables : un volume (-v pgdata:/var/lib/postgresql/data), qui survit au conteneur.',
+      en: 'Everything written inside the container lives in its ephemeral writable layer. For durable data: a volume (-v pgdata:/var/lib/postgresql/data), which outlives the container.',
+    },
+    goto: { mode: 'dockerbasics', scenario: 'volumes' },
+  },
+  {
     id: 'gen-bst', cat: 'general', lang: 'js',
     code: `//        50
 //      /    \\

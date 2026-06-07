@@ -8,6 +8,11 @@ import { TSBASICS_SCENARIOS, tsBasicsScenarioById } from '../src/tsbasics.js';
 import { GOBASICS_SCENARIOS, goBasicsScenarioById } from '../src/gobasics.js';
 import { RUSTBASICS_SCENARIOS, rustBasicsScenarioById } from '../src/rustbasics.js';
 import { LINUXBASICS_SCENARIOS, linuxBasicsScenarioById } from '../src/linuxbasics.js';
+import { SQLBASICS_SCENARIOS } from '../src/sqlbasics.js';
+import { HTTPFLOW_SCENARIOS } from '../src/httpflow.js';
+import { CORS_SCENARIOS } from '../src/cors.js';
+import { HTTPCACHE_SCENARIOS } from '../src/httpcache.js';
+import { DOCKERBASICS_SCENARIOS } from '../src/dockerbasics.js';
 
 function steps(ops) {
   const out = [];
@@ -146,7 +151,8 @@ test('every basics scenario is well-formed and terminates', () => {
   for (const s of [
     ...JSBASICS_SCENARIOS, ...SWIFTBASICS_SCENARIOS, ...KOTLINBASICS_SCENARIOS,
     ...TSBASICS_SCENARIOS, ...GOBASICS_SCENARIOS, ...RUSTBASICS_SCENARIOS,
-    ...LINUXBASICS_SCENARIOS,
+    ...LINUXBASICS_SCENARIOS, ...SQLBASICS_SCENARIOS, ...HTTPFLOW_SCENARIOS,
+    ...CORS_SCENARIOS, ...HTTPCACHE_SCENARIOS, ...DOCKERBASICS_SCENARIOS,
   ]) {
     assert.ok(s.code.length > 10, s.id);
     assert.ok(s.ops.length > 0, s.id);
