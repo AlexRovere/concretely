@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import { useI18n } from '@/composables/useI18n'
 import SortingPanel from '@/components/panels/SortingPanel.vue'
 import PathfindingPanel from '@/components/panels/PathfindingPanel.vue'
@@ -142,6 +142,14 @@ const visibleTabs = computed(() => [
   ...TABS.filter((tb) => tb.cat === cat.value),
   ...TABS.filter((tb) => tb.cat === '*' && !tb.not?.includes(cat.value))
 ])
+
+// Mobile: the tab list is a swipeable strip — keep the active tab in view.
+watch([mode, cat], async () => {
+  await nextTick()
+  document
+    .querySelector('.tabs .tab.active')
+    ?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' })
+})
 
 // The quiz's "watch it animated" button jumps straight to a topic tab.
 function onGoto(target: string) {

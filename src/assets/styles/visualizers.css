@@ -699,7 +699,8 @@ canvas {
 }
 .cs-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+  /* min(330px, 100%) : la carte ne force jamais le conteneur à déborder sur mobile */
+  grid-template-columns: repeat(auto-fill, minmax(min(330px, 100%), 1fr));
   gap: 0.8rem;
 }
 .cs-card {
@@ -849,4 +850,66 @@ canvas {
   color: var(--muted);
   font-size: 0.72rem;
   padding: 0.45rem 1rem;
+}
+
+/* ------------------------------------------------------------ responsive */
+
+/* Tablette et moins : les onglets deviennent une bande défilable d'une seule
+   ligne (full-bleed) au lieu de faire enfler le header sticky sur N rangées. */
+@media (max-width: 920px) {
+  header { gap: 0.55rem 0.7rem; padding: 0.6rem 0.9rem; }
+  h1 { font-size: 1.15rem; }
+  .tabs {
+    order: 10;            /* dernière rangée du header */
+    flex: 1 1 100%;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    margin: 0 -0.9rem;    /* full-bleed dans le padding du header */
+    padding: 0.15rem 0.9rem;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab { flex-shrink: 0; white-space: nowrap; }
+  /* Le popover s'ancre au header (sticky → positionné) plutôt qu'au bouton ⚙️,
+     pour ne jamais déborder du bord gauche des petits écrans. */
+  .settings { position: static; }
+  .settings-pop { right: 0.75rem; width: min(17.5rem, calc(100vw - 1.5rem)); }
+}
+
+@media (max-width: 760px) {
+  main { padding: 0.85rem 0.6rem 2rem; }
+  .panel { padding: 0.95rem 0.8rem; border-radius: 12px; }
+  .controls { gap: 0.6rem 0.75rem; }
+  .vr-stage { grid-template-columns: 1fr; }
+  .dp-grid th, .dp-grid td { width: 2rem; height: 2rem; font-size: 0.78rem; }
+  .code-box pre { padding: 0.75rem; }
+  .pg-preview { height: 200px; }
+  .sp-overlay { padding-top: 5vh; }
+  .sp-box { width: 94vw; }
+  .sp-list { max-height: 60vh; }
+  .sp-section { display: none; }   /* le chemin de section est du bonus desktop */
+}
+
+@media (max-width: 480px) {
+  header { padding: 0.5rem 0.75rem; gap: 0.45rem 0.55rem; }
+  .tabs { margin: 0 -0.75rem; padding: 0.15rem 0.75rem; }
+  h1 { font-size: 1.05rem; }
+  #category, #locale { padding: 0.3rem 0.4rem; }
+  .qz-final { padding: 1.5rem 0; }
+  .qz-grade { font-size: 2.4rem; }
+}
+
+/* Écrans tactiles : pas de clavier physique (l'indice Ctrl K disparaît),
+   cibles tactiles plus grandes, et champs ≥ 16px pour empêcher le zoom
+   automatique d'iOS Safari au focus. */
+@media (pointer: coarse) {
+  .search-btn kbd { display: none; }
+  .tab { padding: 0.5rem 1rem; }
+  button { padding-top: 0.55rem; padding-bottom: 0.55rem; }
+  .icon-btn { padding: 0.5rem 0.6rem; }
+  .search-btn { padding: 0.5rem 0.65rem; }
+  select, #category, #locale, .lang-select, .sp-input, .cs-search input, #ds-value {
+    font-size: 16px;
+  }
 }
