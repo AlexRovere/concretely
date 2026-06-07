@@ -2,12 +2,13 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { PLAYGROUNDS, playgroundFor } from '../src/playground/samples.js';
 import { parseGitCommands, runGitOps, renderDagSvg } from '../src/playground/gitrepl.js';
+import { runShell } from '../src/playground/shellfs.js';
 
-const ENGINES = new Set(['js', 'vue', 'ruby', 'kotlin', 'git', 'ts', 'go', 'rust']);
+const ENGINES = new Set(['js', 'vue', 'ruby', 'kotlin', 'git', 'ts', 'go', 'rust', 'sh']);
 const LANGS = new Set(['js', 'ruby', 'kotlin', 'shell', 'ts', 'go', 'rust']);
 
 test('every category except swift has a playground (engine + sample)', () => {
-  for (const cat of ['general', 'js', 'ts', 'vue', 'ruby', 'kotlin', 'go', 'rust', 'git']) {
+  for (const cat of ['general', 'js', 'ts', 'vue', 'ruby', 'kotlin', 'go', 'rust', 'git', 'linux']) {
     const c = playgroundFor(cat);
     assert.ok(c, cat);
     assert.ok(ENGINES.has(c.engine), `${cat}: engine ${c.engine}`);
@@ -15,8 +16,15 @@ test('every category except swift has a playground (engine + sample)', () => {
     assert.ok(c.sample.length > 50, `${cat}: sample too short`);
   }
   assert.equal(playgroundFor('swift'), null, 'no browser Swift compiler — no playground');
-  assert.equal(playgroundFor('linux'), null, 'no shell in the browser — no playground');
-  assert.equal(Object.keys(PLAYGROUNDS).length, 9);
+  assert.equal(Object.keys(PLAYGROUNDS).length, 10);
+});
+
+test('shell: the shipped linux sample runs without any crash', () => {
+  const r = runShell(PLAYGROUNDS.linux.sample);
+  assert.deepEqual(r.logs.filter((l) => l.kind === 'crash'), []);
+  const out = r.logs.filter((l) => l.kind === 'log').map((l) => l.text);
+  assert.ok(out.includes('2'), 'the .js pipe count');
+  assert.ok(out.includes('   2 pomme'), 'sort | uniq -c');
 });
 
 test('git REPL: parses the shipped sample without any error', () => {

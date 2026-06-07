@@ -3,6 +3,7 @@ import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { playgroundFor } from '@/playground/samples.js';
 import { runJs } from '@/playground/runjs.js';
 import { parseGitCommands, runGitOps, renderDagSvg } from '@/playground/gitrepl.js';
+import { runShell, renderFsTree } from '@/playground/shellfs.js';
 import { useI18n } from '@/composables/useI18n';
 
 const props = defineProps({
@@ -20,6 +21,7 @@ const logs = ref([]);
 const running = ref(false);
 const loading = ref(false); // a heavy engine chunk (ruby.wasm, typescript) is downloading
 const dagSvg = ref('');
+const fsHtml = ref(''); // live FS tree of the simulated shell
 const vueSrc = ref(null); // { id, srcdoc }
 let editor = null;
 const docs = new Map(); // per-category buffer, survives category switches
@@ -29,8 +31,15 @@ function run() {
   const code = editor.getCode();
   logs.value = [];
   if (engine.value === 'git') return runGit(code);
+  if (engine.value === 'sh') return runSh(code);
   if (engine.value === 'vue') return runVue(code);
   runText(code);
+}
+
+function runSh(code) {
+  const result = runShell(code);
+  fsHtml.value = renderFsTree(result);
+  logs.value = result.logs;
 }
 
 async function runText(code) {
@@ -102,6 +111,7 @@ function resetSample() {
 function clearOutput() {
   logs.value = [];
   dagSvg.value = '';
+  fsHtml.value = '';
   vueSrc.value = null;
 }
 
@@ -161,6 +171,11 @@ onUnmounted(() => {
     <template v-if="engine === 'git'">
       <h3 class="rec-h">{{ t('gd.graph') }}</h3>
       <div class="gd-wrap pg-dag" v-html="dagSvg"></div>
+    </template>
+
+    <template v-if="engine === 'sh'">
+      <h3 class="rec-h">{{ t('pg.fs') }}</h3>
+      <div class="gd-wrap pg-fs" v-html="fsHtml"></div>
     </template>
 
     <h3 class="rec-h">{{ t('pg.console') }}</h3>

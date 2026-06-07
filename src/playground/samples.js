@@ -187,6 +187,33 @@ fn main() {
     // println!("{:?}", v);  // ← décommente : erreur, v a été déplacé
 }`,
   },
+  linux: {
+    engine: 'sh',
+    lang: 'shell',
+    sample: `# Un petit shell simulé : le système de fichiers se dessine en dessous.
+mkdir -p projet/src
+cd projet
+echo "# Mon projet" > README.md
+echo "TODO: écrire des tests" >> README.md
+cat README.md
+
+touch src/main.js src/utils.js src/notes.txt
+ls src
+
+# Pipes : compte les fichiers .js
+ls src | grep .js | wc -l
+
+# Le glob est développé par le SHELL (pas par la commande) :
+echo src/*.js
+
+# sort | uniq -c : le combo classique
+echo "pomme" > fruits.txt
+echo "poire" >> fruits.txt
+echo "pomme" >> fruits.txt
+cat fruits.txt | sort | uniq -c
+
+# essaie aussi : rm -rf / 😈 (ici, c'est sans danger)`,
+  },
   git: {
     engine: 'git',
     lang: 'shell',

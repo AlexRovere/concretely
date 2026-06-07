@@ -93,7 +93,7 @@ const TABS: { mode: string; key: string; cat: string; not?: string[] }[] = [
   { mode: 'rustbasics', key: 'tabs.rustbasics', cat: 'rust' },
   { mode: 'linuxbasics', key: 'tabs.linuxbasics', cat: 'linux' },
   { mode: 'cheatsheet', key: 'tabs.cheatsheet', cat: '*' },
-  { mode: 'playground', key: 'tabs.playground', cat: '*', not: ['swift', 'linux'] },
+  { mode: 'playground', key: 'tabs.playground', cat: '*', not: ['swift'] },
   { mode: 'quiz', key: 'tabs.quiz', cat: '*' },
   { mode: 'bst', key: 'tabs.bst', cat: 'general' },
   { mode: 'dp', key: 'tabs.dp', cat: 'general' },

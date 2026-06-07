@@ -779,6 +779,13 @@ canvas {
   border-radius: 8px;
 }
 .pg-dag { min-height: 4rem; }
+/* arbre du FS simulé (playground shell) */
+.pg-fs { padding: 0.6rem 0.8rem; }
+.fs-row { font-family: var(--mono); font-size: 0.82rem; line-height: 1.7; color: var(--ink-2); white-space: nowrap; }
+.fs-row.fs-dir { color: var(--info); }
+.fs-row.fs-cwd { color: var(--ok); font-weight: 600; }
+.fs-here { color: var(--muted); font-weight: 400; font-size: 0.75rem; }
+.fs-size { color: var(--muted); font-size: 0.72rem; }
 
 /* ------------------------------------------------- search palette (Ctrl+K) */
 
