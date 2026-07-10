@@ -26,9 +26,7 @@ test('chaque pattern est bien formé', () => {
   }
 });
 
-// Structural (Task 2) et Behavioral (Task 3) ne sont pas encore écrits :
-// réactivé en Task 3, une fois les 16 patterns présents.
-test.skip('répartition 4 / 5 / 7, total 16', () => {
+test('répartition 4 / 5 / 7, total 16', () => {
   assert.equal(patternsByFamily('creational').length, 4);
   assert.equal(patternsByFamily('structural').length, 5);
   assert.equal(patternsByFamily('behavioral').length, 7);
