@@ -60,13 +60,16 @@ import SchedulerPanel from '@/components/panels/SchedulerPanel.vue'
 import OsBasicsPanel from '@/components/panels/OsBasicsPanel.vue'
 import K8sBasicsPanel from '@/components/panels/K8sBasicsPanel.vue'
 import JavaBasicsPanel from '@/components/panels/JavaBasicsPanel.vue'
+import PatternsCreationalPanel from '@/components/panels/PatternsCreationalPanel.vue'
+import PatternsStructuralPanel from '@/components/panels/PatternsStructuralPanel.vue'
+import PatternsBehavioralPanel from '@/components/panels/PatternsBehavioralPanel.vue'
 
 const { t, locale, setLocale, LOCALES } = useI18n()
 useTheme() // applies the persisted theme + code palette/font on startup
 
 // Languages first, then tools/infra.
 const CATEGORIES = [
-  'general', 'js', 'ts', 'python', 'vue', 'swift', 'ruby', 'kotlin', 'java', 'go', 'rust', 'c',
+  'general', 'patterns', 'js', 'ts', 'python', 'vue', 'swift', 'ruby', 'kotlin', 'java', 'go', 'rust', 'c',
   'sql', 'git', 'linux', 'os', 'web', 'docker', 'k8s'
 ]
 
@@ -80,6 +83,9 @@ const TABS: { mode: string; key: string; cat: string; not?: string[] }[] = [
   { mode: 'jsbasics', key: 'tabs.jsbasics', cat: 'js' },
   { mode: 'eventloop', key: 'tabs.eventloop', cat: 'js' },
   { mode: 'datastructures', key: 'tabs.datastructures', cat: 'general' },
+  { mode: 'patternscreational', key: 'tabs.patternscreational', cat: 'patterns' },
+  { mode: 'patternsstructural', key: 'tabs.patternsstructural', cat: 'patterns' },
+  { mode: 'patternsbehavioral', key: 'tabs.patternsbehavioral', cat: 'patterns' },
   { mode: 'valueref', key: 'tabs.valueref', cat: 'js' },
   { mode: 'swiftbasics', key: 'tabs.swiftbasics', cat: 'swift' },
   { mode: 'swift', key: 'tabs.swift', cat: 'swift' },
@@ -123,7 +129,7 @@ const TABS: { mode: string; key: string; cat: string; not?: string[] }[] = [
   { mode: 'k8sbasics', key: 'tabs.k8sbasics', cat: 'k8s' },
   { mode: 'javabasics', key: 'tabs.javabasics', cat: 'java' },
   { mode: 'cheatsheet', key: 'tabs.cheatsheet', cat: '*' },
-  { mode: 'playground', key: 'tabs.playground', cat: '*', not: ['swift', 'web', 'docker', 'os', 'k8s'] },
+  { mode: 'playground', key: 'tabs.playground', cat: '*', not: ['swift', 'web', 'docker', 'os', 'k8s', 'patterns'] },
   { mode: 'quiz', key: 'tabs.quiz', cat: '*' },
   { mode: 'bst', key: 'tabs.bst', cat: 'general' },
   { mode: 'dp', key: 'tabs.dp', cat: 'general' },
@@ -185,7 +191,10 @@ const panels: Record<string, unknown> = {
   javabasics: JavaBasicsPanel,
   bst: BstPanel,
   dp: DpPanel,
-  regex: RegexPanel
+  regex: RegexPanel,
+  patternscreational: PatternsCreationalPanel,
+  patternsstructural: PatternsStructuralPanel,
+  patternsbehavioral: PatternsBehavioralPanel
 }
 
 const mode = ref<string>('sorting')
