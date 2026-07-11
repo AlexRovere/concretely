@@ -780,6 +780,39 @@ canvas {
 }
 .pat-fields p { color: var(--ink-2); font-size: 0.9rem; line-height: 1.5; margin: 0; }
 
+/* ------------------------------------------------------- comparison tables */
+.cmp-intro { color: var(--ink-2); margin-bottom: 1rem; }
+.cmp-scroll { overflow-x: auto; margin-bottom: 1.2rem; }
+.cmp-table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+.cmp-table th,
+.cmp-table td {
+  border: 1px solid var(--border);
+  padding: 0.5rem 0.7rem;
+  text-align: left;
+  vertical-align: top;
+}
+.cmp-table thead th { background: var(--inset); }
+.cmp-cand { font-family: var(--mono); white-space: nowrap; }
+.cmp-dim { background: var(--inset); font-weight: 600; white-space: nowrap; }
+.cmp-h { margin: 1.2rem 0 0.6rem; }
+.cmp-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 0.9rem;
+}
+.cmp-card {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.7rem;
+  background: var(--inset);
+}
+.cmp-card-head { margin-bottom: 0.4rem; }
+.cmp-card-head code { font-family: var(--mono); color: var(--accent); }
+.cmp-code { margin: 0 0 0.5rem; overflow-x: auto; }
+.cmp-when { font-size: 0.85rem; color: var(--ink-2); }
+.cmp-notes { margin: 0.4rem 0 0 1.1rem; color: var(--ink-2); }
+.cmp-notes li { margin-bottom: 0.3rem; }
+
 /* ---------------------------------------------------------- playground */
 
 .pg-controls { align-items: center; }
