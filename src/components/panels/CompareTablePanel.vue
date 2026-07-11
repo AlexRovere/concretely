@@ -27,7 +27,7 @@ const cmp = computed(() => comparisonFor(props.id));
         <thead>
           <tr>
             <th></th>
-            <th v-for="c in cmp.candidates" :key="c.id" class="cmp-cand">{{ c.label }}</th>
+            <th v-for="c in cmp.candidates" :key="c.id" scope="col" class="cmp-cand">{{ c.label }}</th>
           </tr>
         </thead>
         <tbody>
