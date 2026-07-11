@@ -1572,6 +1572,7 @@ export const PATTERNS = [
         '}',
       ].join('\n'),
       go: [
+        '// Go : composition/injection de fonction plutôt qu\'héritage',
         'type Report struct{ Body func() string }',
         'func (r Report) Header() string { return "=== Report ===" }',
         'func (r Report) Footer() string { return "=== End ===" }',
