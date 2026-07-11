@@ -121,8 +121,8 @@ class VM: ObservableObject {
   bindings: {
     id: 'bindings',
     intro: {
-      fr: 'SwiftUI expose plusieurs property wrappers pour relier une vue à son état. Ils diffèrent par ce qu\'ils possèdent et par le moment où la vue redessine.',
-      en: 'SwiftUI exposes several property wrappers to bind a view to its state. They differ in what they own and when the view redraws.',
+      fr: 'SwiftUI expose plusieurs property wrappers pour relier une vue à son état. Ils diffèrent par ce qu\'ils possèdent, ce qu\'ils observent et par le moment où la vue redessine.',
+      en: 'SwiftUI exposes several property wrappers to bind a view to its state. They differ in what they own, what they observe, and when the view redraws.',
     },
     candidates: [
       {
@@ -149,23 +149,116 @@ class VM: ObservableObject {
           en: 'Read and write state owned by a parent (not a copy).',
         },
       },
+      {
+        id: 'stateobject',
+        label: '@StateObject',
+        code: `final class VM: ObservableObject {
+  @Published var count = 0
+}
+struct V: View {
+  @StateObject private var vm = VM()
+  var body: some View { Button("\\(vm.count)") { vm.count += 1 } }
+}`,
+        when: {
+          fr: 'La vue crée et possède un ObservableObject qui doit survivre aux re-render.',
+          en: 'The view creates and owns an ObservableObject that must survive re-renders.',
+        },
+      },
+      {
+        id: 'observed',
+        label: '@ObservedObject',
+        code: `struct Child: View {
+  @ObservedObject var vm: VM
+  var body: some View { Button("\\(vm.count)") { vm.count += 1 } }
+}
+// vm reçu du parent, jamais créé ici`,
+        when: {
+          fr: 'Observer un ObservableObject possédé et transmis par un parent.',
+          en: 'Observe an ObservableObject owned and passed down by a parent.',
+        },
+      },
+      {
+        id: 'environment',
+        label: '@EnvironmentObject',
+        code: `struct Child: View {
+  @EnvironmentObject var session: Session
+  var body: some View { Text(session.userName) }
+}
+// injecté par un ancêtre : .environmentObject(session)`,
+        when: {
+          fr: 'Partager un objet à travers plusieurs niveaux de vues sans le passer explicitement.',
+          en: 'Share an object across several view levels without passing it explicitly.',
+        },
+      },
+      {
+        id: 'observable',
+        label: '@Observable + @State',
+        code: `@Observable final class VM {
+  var count = 0
+}
+struct V: View {
+  @State private var vm = VM()
+  var body: some View { Button("\\(vm.count)") { vm.count += 1 } }
+}`,
+        when: {
+          fr: 'iOS 17+ : remplace @StateObject/@ObservedObject avec un suivi plus fin des propriétés.',
+          en: 'iOS 17+: replaces @StateObject/@ObservedObject with finer-grained property tracking.',
+        },
+      },
     ],
     dimensions: [
       { id: 'role', label: { fr: 'Rôle', en: 'Role' }, cells: {
         state: { fr: 'Possède un état de valeur simple.', en: 'Owns a simple value state.' },
         binding: { fr: 'Référence en lecture/écriture vers l\'état d\'un parent.', en: 'Read/write reference to a parent state.' },
+        stateobject: { fr: 'Possède un ObservableObject.', en: 'Owns an ObservableObject.' },
+        observed: { fr: 'Observe un objet possédé ailleurs.', en: 'Observes an object owned elsewhere.' },
+        environment: { fr: 'Lit un objet injecté par un ancêtre.', en: 'Reads an object injected by an ancestor.' },
+        observable: { fr: 'Possède un type @Observable.', en: 'Owns an @Observable type.' },
       } },
       { id: 'observes', label: { fr: 'Type observé', en: 'Observed type' }, cells: {
         state: { fr: 'Une valeur.', en: 'A value.' },
         binding: { fr: 'Une valeur, via la source du parent.', en: 'A value, via the parent source.' },
+        stateobject: { fr: 'Un `ObservableObject` (class).', en: 'An `ObservableObject` (class).' },
+        observed: { fr: 'Un `ObservableObject` (class).', en: 'An `ObservableObject` (class).' },
+        environment: { fr: 'Un `ObservableObject` (class).', en: 'An `ObservableObject` (class).' },
+        observable: { fr: 'Une classe `@Observable`.', en: 'An `@Observable` class.' },
+      } },
+      { id: 'ownership', label: { fr: 'Propriété', en: 'Ownership' }, cells: {
+        state: { fr: 'Créé et gardé par la vue.', en: 'Created and kept by the view.' },
+        binding: { fr: 'Aucune : simple référence.', en: 'None: just a reference.' },
+        stateobject: { fr: 'Instancié une fois, survit aux re-render.', en: 'Instantiated once, survives re-renders.' },
+        observed: { fr: 'Ne possède pas : peut être recréé.', en: 'Does not own it: can be recreated.' },
+        environment: { fr: 'Fourni par un ancêtre.', en: 'Provided by an ancestor.' },
+        observable: { fr: 'L\'instance @Observable est gardée par @State.', en: 'The @Observable instance is kept by @State.' },
+      } },
+      { id: 'updates', label: { fr: 'Déclenche la mise à jour', en: 'Triggers update' }, cells: {
+        state: { fr: 'À chaque changement de la valeur.', en: 'On every change of the value.' },
+        binding: { fr: 'Via la source du parent.', en: 'Via the parent source.' },
+        stateobject: { fr: 'Sur `objectWillChange` / `@Published`.', en: 'On `objectWillChange` / `@Published`.' },
+        observed: { fr: 'Sur `objectWillChange` / `@Published`.', en: 'On `objectWillChange` / `@Published`.' },
+        environment: { fr: 'Sur `objectWillChange` / `@Published`.', en: 'On `objectWillChange` / `@Published`.' },
+        observable: { fr: 'Sur accès aux seules propriétés lues (granularité fine).', en: 'On access to only the properties actually read (fine-grained).' },
+      } },
+      { id: 'pitfall', label: { fr: 'Piège', en: 'Pitfall' }, cells: {
+        state: { fr: 'Aucun piège notable.', en: 'No notable pitfall.' },
+        binding: { fr: 'Aucun piège notable.', en: 'No notable pitfall.' },
+        stateobject: { fr: 'Aucun piège notable.', en: 'No notable pitfall.' },
+        observed: { fr: 'Reset de l\'état si l\'objet est créé inline dans le parent.', en: 'State resets if the object is created inline in the parent.' },
+        environment: { fr: 'Crash à l\'exécution si l\'objet d\'environnement est absent.', en: 'Runtime crash if the environment object is missing.' },
+        observable: { fr: 'Oublier `@State` recrée l\'instance à chaque render.', en: 'Forgetting `@State` recreates the instance on every render.' },
       } },
       { id: 'since', label: { fr: 'Disponible depuis', en: 'Available since' }, cells: {
         state: { fr: 'iOS 13.', en: 'iOS 13.' },
         binding: { fr: 'iOS 13.', en: 'iOS 13.' },
+        stateobject: { fr: 'iOS 14.', en: 'iOS 14.' },
+        observed: { fr: 'iOS 13.', en: 'iOS 13.' },
+        environment: { fr: 'iOS 13.', en: 'iOS 13.' },
+        observable: { fr: 'iOS 17.', en: 'iOS 17.' },
       } },
     ],
     notes: [
       { fr: 'Source de vérité unique : un seul wrapper possède l\'état, les autres le référencent.', en: 'Single source of truth: one wrapper owns the state, the others reference it.' },
+      { fr: 'Depuis iOS 17, `@Observable` + `@State` remplace le couple `@StateObject`/`@ObservedObject` et n\'observe que les propriétés réellement lues.', en: 'Since iOS 17, `@Observable` + `@State` replaces the `@StateObject`/`@ObservedObject` pair and observes only the properties actually read.' },
     ],
   },
 };
