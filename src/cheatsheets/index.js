@@ -17,12 +17,13 @@ import c from './c.js';
 import os from './os.js';
 import k8s from './k8s.js';
 import java from './java.js';
+import patterns from './patterns.js';
 
 /**
  * Cheatsheet registry — one sheet per filter category.
  * Sheet shape: { id, lang, sections: [{ id, title:{fr,en}, items:[{ id, title:{fr,en}, code, note:{fr,en} }] }] }
  */
-export const CHEATSHEETS = { general, js, ts, vue, swift, ruby, kotlin, go, rust, git, linux, sql, web, docker, python, c, os, k8s, java };
+export const CHEATSHEETS = { general, js, ts, vue, swift, ruby, kotlin, go, rust, git, linux, sql, web, docker, python, c, os, k8s, java, patterns };
 
 export function cheatsheetFor(cat) {
   return CHEATSHEETS[cat] ?? null;
