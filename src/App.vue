@@ -13,6 +13,8 @@ import BstPanel from '@/components/panels/BstPanel.vue'
 import DpPanel from '@/components/panels/DpPanel.vue'
 import RegexPanel from '@/components/panels/RegexPanel.vue'
 import SwiftStatePanel from '@/components/panels/SwiftStatePanel.vue'
+import SwiftTypesPanel from '@/components/panels/SwiftTypesPanel.vue'
+import SwiftBindingsPanel from '@/components/panels/SwiftBindingsPanel.vue'
 import SwiftConcurrencyPanel from '@/components/panels/SwiftConcurrencyPanel.vue'
 import MainThreadPanel from '@/components/panels/MainThreadPanel.vue'
 import ArcPanel from '@/components/panels/ArcPanel.vue'
@@ -90,6 +92,8 @@ const TABS: { mode: string; key: string; cat: string; not?: string[] }[] = [
   { mode: 'swiftbasics', key: 'tabs.swiftbasics', cat: 'swift' },
   { mode: 'swift', key: 'tabs.swift', cat: 'swift' },
   { mode: 'swiftstate', key: 'tabs.swiftstate', cat: 'swift' },
+  { mode: 'swifttypes', key: 'tabs.swifttypes', cat: 'swift' },
+  { mode: 'swiftbindings', key: 'tabs.swiftbindings', cat: 'swift' },
   { mode: 'swiftconcurrency', key: 'tabs.swiftconcurrency', cat: 'swift' },
   { mode: 'mainthread', key: 'tabs.mainthread', cat: 'swift' },
   { mode: 'arc', key: 'tabs.arc', cat: 'swift' },
@@ -146,6 +150,8 @@ const panels: Record<string, unknown> = {
   valueref: ValueRefPanel,
   swift: SwiftPanel,
   swiftstate: SwiftStatePanel,
+  swifttypes: SwiftTypesPanel,
+  swiftbindings: SwiftBindingsPanel,
   swiftconcurrency: SwiftConcurrencyPanel,
   mainthread: MainThreadPanel,
   arc: ArcPanel,
