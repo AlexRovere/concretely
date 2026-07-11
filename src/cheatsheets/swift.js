@@ -1,7 +1,20 @@
+import { comparisonFor } from '../swiftcompare.js';
+
 /**
  * Cheatsheet Swift / SwiftUI — sections triées par pertinence quotidienne.
  * { id, lang, sections: [{ id, title:{fr,en}, items:[{ id, title:{fr,en}, code, note:{fr,en} }] }] }
  */
+const compareSection = (cmpId, secId, titleFr, titleEn) => ({
+  id: secId,
+  title: { fr: titleFr, en: titleEn },
+  items: comparisonFor(cmpId).candidates.map((c) => ({
+    id: `cs-swift-${cmpId}-${c.id}`,
+    title: { fr: c.label, en: c.label },
+    code: c.code,
+    note: c.when,
+  })),
+});
+
 export default {
   id: 'swift',
   lang: 'swift',
@@ -577,5 +590,7 @@ let user = try result.get()        // pont vers le monde throws`,
         },
       ],
     },
+    compareSection('types', 'swift-types-compare', 'Types : struct / class / actor', 'Types: struct / class / actor'),
+    compareSection('bindings', 'swift-bindings-compare', 'Bindings SwiftUI', 'SwiftUI bindings'),
   ],
 };
