@@ -67,6 +67,7 @@ import PatternsStructuralPanel from '@/components/panels/PatternsStructuralPanel
 import PatternsBehavioralPanel from '@/components/panels/PatternsBehavioralPanel.vue'
 import MlKmeansPanel from '@/components/panels/MlKmeansPanel.vue'
 import MlGradientPanel from '@/components/panels/MlGradientPanel.vue'
+import MlKnnPanel from '@/components/panels/MlKnnPanel.vue'
 
 const { t, locale, setLocale, LOCALES } = useI18n()
 useTheme() // applies the persisted theme + code palette/font on startup
@@ -130,6 +131,7 @@ const TABS: { mode: string; key: string; cat: string; not?: string[] }[] = [
   { mode: 'pybasics', key: 'tabs.pybasics', cat: 'python' },
   { mode: 'mlkmeans', key: 'tabs.mlkmeans', cat: 'ml' },
   { mode: 'mlgradient', key: 'tabs.mlgradient', cat: 'ml' },
+  { mode: 'mlknn', key: 'tabs.mlknn', cat: 'ml' },
   { mode: 'cbasics', key: 'tabs.cbasics', cat: 'c' },
   { mode: 'cmemory', key: 'tabs.cmemory', cat: 'c' },
   { mode: 'scheduler', key: 'tabs.scheduler', cat: 'os' },
@@ -195,6 +197,7 @@ const panels: Record<string, unknown> = {
   pybasics: PyBasicsPanel,
   mlkmeans: MlKmeansPanel,
   mlgradient: MlGradientPanel,
+  mlknn: MlKnnPanel,
   cbasics: CBasicsPanel,
   cmemory: CMemoryPanel,
   scheduler: SchedulerPanel,

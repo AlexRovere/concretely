@@ -50,6 +50,15 @@ export class MlPlaneRenderer {
   _x(u) { return 8 + u * (this.side - 16); }
   _y(v) { return this.side - (8 + v * (this.side - 16)); }
 
+  // pixels client (event) → coordonnées unité [0,1] (inverse de _x/_y)
+  pointerToUnit(clientX, clientY) {
+    const rect = this.canvas.getBoundingClientRect();
+    const inner = this.side - 16;
+    const u = (clientX - rect.left - 8) / inner;
+    const v = 1 - (clientY - rect.top - 8) / inner;
+    return { x: Math.max(0, Math.min(1, u)), y: Math.max(0, Math.min(1, v)) };
+  }
+
   _color(cls) {
     return cls == null || cls < 0 ? UNASSIGNED : CLUSTER_HEX[cls % CLUSTER_HEX.length];
   }

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { mulberry32, blobs, linear, moons } from '../src/ml/datasets.js';
 import { kmeansSteps } from '../src/ml/kmeans.js';
 import { gradientSteps } from '../src/ml/gradient.js';
+import { knnClassify, knnRegionGrid } from '../src/ml/knn.js';
 
 test('mulberry32 is deterministic for a given seed', () => {
   const a = mulberry32(42);
@@ -80,4 +81,25 @@ test('gradientSteps loss is non-increasing and fits the trend', () => {
 test('gradientSteps is deterministic', () => {
   const pts = linear({ n: 30, seed: 4 });
   assert.deepEqual(gradientSteps(pts, { lr: 0.3, epochs: 20 }), gradientSteps(pts, { lr: 0.3, epochs: 20 }));
+});
+
+test('knnClassify votes the majority class of the k nearest', () => {
+  const pts = [
+    { x: 0.1, y: 0.1, label: 0 },
+    { x: 0.12, y: 0.12, label: 0 },
+    { x: 0.9, y: 0.9, label: 1 },
+  ];
+  assert.equal(knnClassify(pts, 3, 0.1, 0.1), 0); // near the two class-0 points
+  assert.equal(knnClassify(pts, 1, 0.88, 0.88), 1); // nearest is class 1
+  assert.equal(knnClassify([], 3, 0.5, 0.5), -1); // empty -> no class
+});
+
+test('knnRegionGrid is deterministic and shaped res*res', () => {
+  const pts = blobs({ k: 3, n: 90, seed: 6 });
+  const g1 = knnRegionGrid(pts, 5, 24);
+  const g2 = knnRegionGrid(pts, 5, 24);
+  assert.equal(g1.res, 24);
+  assert.equal(g1.cells.length, 24 * 24);
+  assert.deepEqual([...g1.cells], [...g2.cells]);
+  assert.ok([...g1.cells].every((c) => c >= 0 && c < 3)); // every cell classified
 });
