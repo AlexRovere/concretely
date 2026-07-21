@@ -1089,3 +1089,20 @@ canvas {
     font-size: 16px;
   }
 }
+
+/* --- ML visualizers -------------------------------------------------- */
+.panel-title {
+  margin: 0 0 0.75rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+.ml-canvas {
+  display: block;
+  width: 100%;
+  max-width: 480px;
+  aspect-ratio: 1 / 1;
+  margin: 0 auto;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel);
+}
