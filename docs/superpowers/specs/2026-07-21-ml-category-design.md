@@ -73,10 +73,10 @@ Objectif de couverture du projet : 80 % (les générateurs purs sont l'essentiel
 ## Phasage (multi-sessions)
 
 - ✅ **P0** (livré le 2026-07-21) — Scaffold catégorie + `ml.js` (cheatsheet complète) + `datasets.js` + `mlPlaneRenderer.js` + **K-means** bout-en-bout (générateur, renderer, panneau, i18n, câblage, tests). Valide toute l'architecture.
-- **P1** — Descente de gradient (+ mini-courbe de loss).
-- **P2** — kNN (+ interaction clic).
-- **P3** — Arbre de décision (+ diagramme SVG).
-- **P4** — Réseau de neurones (surface de décision + schéma SVG).
+- ✅ **P1** (livré le 2026-07-21) — Descente de gradient (+ mini-courbe de loss).
+- ✅ **P2** (livré le 2026-07-21) — kNN (+ interaction clic).
+- ✅ **P3** (livré le 2026-07-21) — Arbre de décision (+ diagramme SVG).
+- ✅ **P4** (livré le 2026-07-21) — Réseau de neurones (surface de décision + schéma SVG).
 
 Chaque phase est une PR autonome, testée et verte, sans régression sur les cheatsheets existantes.
 
