@@ -72,7 +72,7 @@ Objectif de couverture du projet : 80 % (les générateurs purs sont l'essentiel
 
 ## Phasage (multi-sessions)
 
-- **P0** — Scaffold catégorie + `ml.js` (cheatsheet complète) + `datasets.js` + `mlPlaneRenderer.js` + **K-means** bout-en-bout (générateur, renderer, panneau, i18n, câblage, tests). Valide toute l'architecture.
+- ✅ **P0** (livré le 2026-07-21) — Scaffold catégorie + `ml.js` (cheatsheet complète) + `datasets.js` + `mlPlaneRenderer.js` + **K-means** bout-en-bout (générateur, renderer, panneau, i18n, câblage, tests). Valide toute l'architecture.
 - **P1** — Descente de gradient (+ mini-courbe de loss).
 - **P2** — kNN (+ interaction clic).
 - **P3** — Arbre de décision (+ diagramme SVG).
