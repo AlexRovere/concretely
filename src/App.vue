@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
+import { parseHash, formatRoute, resolveRoute } from '@/hashRoute.js'
 import { useI18n } from '@/composables/useI18n'
 import SortingPanel from '@/components/panels/SortingPanel.vue'
 import PathfindingPanel from '@/components/panels/PathfindingPanel.vue'
@@ -228,6 +229,43 @@ const visibleTabs = computed(() => [
   ...TABS.filter((tb) => tb.cat === cat.value),
   ...TABS.filter((tb) => tb.cat === '*' && !tb.not?.includes(cat.value))
 ])
+
+// ---- Hash router: URL <-> (cat, mode) -----------------------------------
+// Visible tab modes of a category (topic tabs + universal ones).
+function modesForCat(c: string): string[] {
+  return [
+    ...TABS.filter((tb) => tb.cat === c),
+    ...TABS.filter((tb) => tb.cat === '*' && !tb.not?.includes(c))
+  ].map((tb) => tb.mode)
+}
+const nav = {
+  categories: CATEGORIES,
+  firstMode: (c: string) => modesForCat(c)[0] ?? null,
+  isValidMode: (c: string, m: string) => modesForCat(c).includes(m)
+}
+// Apply the current URL hash to the app state (invalid → default view).
+function applyHash() {
+  const resolved = resolveRoute(parseHash(window.location.hash), nav)
+  if (resolved.view === 'home') {
+    // R1: no home page yet — fall back to the default view.
+    cat.value = 'general'
+    mode.value = modesForCat('general')[0] ?? 'sorting'
+  } else {
+    cat.value = resolved.cat as string
+    mode.value = resolved.mode as string
+  }
+}
+// Reflect the app state back into the URL (guarded to avoid a write loop).
+function syncHash() {
+  const h = formatRoute({ view: 'panel', cat: cat.value, mode: mode.value })
+  if (window.location.hash !== h) window.location.hash = h
+}
+onMounted(() => {
+  applyHash()
+  window.addEventListener('hashchange', applyHash)
+})
+onUnmounted(() => window.removeEventListener('hashchange', applyHash))
+watch([cat, mode], syncHash)
 
 // Mobile: auto-hide the sticky header on scroll down, reveal on scroll up
 // (the transform only applies ≤920px — see visualizers.css).
