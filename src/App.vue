@@ -65,13 +65,14 @@ import JavaBasicsPanel from '@/components/panels/JavaBasicsPanel.vue'
 import PatternsCreationalPanel from '@/components/panels/PatternsCreationalPanel.vue'
 import PatternsStructuralPanel from '@/components/panels/PatternsStructuralPanel.vue'
 import PatternsBehavioralPanel from '@/components/panels/PatternsBehavioralPanel.vue'
+import MlKmeansPanel from '@/components/panels/MlKmeansPanel.vue'
 
 const { t, locale, setLocale, LOCALES } = useI18n()
 useTheme() // applies the persisted theme + code palette/font on startup
 
 // Languages first, then tools/infra.
 const CATEGORIES = [
-  'general', 'patterns', 'js', 'ts', 'python', 'vue', 'swift', 'ruby', 'kotlin', 'java', 'go', 'rust', 'c',
+  'general', 'patterns', 'js', 'ts', 'python', 'vue', 'swift', 'ruby', 'kotlin', 'java', 'go', 'rust', 'c', 'ml',
   'sql', 'git', 'linux', 'os', 'web', 'docker', 'k8s'
 ]
 
@@ -126,6 +127,7 @@ const TABS: { mode: string; key: string; cat: string; not?: string[] }[] = [
   { mode: 'httpcache', key: 'tabs.httpcache', cat: 'web' },
   { mode: 'dockerbasics', key: 'tabs.dockerbasics', cat: 'docker' },
   { mode: 'pybasics', key: 'tabs.pybasics', cat: 'python' },
+  { mode: 'mlkmeans', key: 'tabs.mlkmeans', cat: 'ml' },
   { mode: 'cbasics', key: 'tabs.cbasics', cat: 'c' },
   { mode: 'cmemory', key: 'tabs.cmemory', cat: 'c' },
   { mode: 'scheduler', key: 'tabs.scheduler', cat: 'os' },
@@ -189,6 +191,7 @@ const panels: Record<string, unknown> = {
   httpcache: HttpCachePanel,
   dockerbasics: DockerBasicsPanel,
   pybasics: PyBasicsPanel,
+  mlkmeans: MlKmeansPanel,
   cbasics: CBasicsPanel,
   cmemory: CMemoryPanel,
   scheduler: SchedulerPanel,
