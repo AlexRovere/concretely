@@ -284,6 +284,107 @@ premiers = (l for l in lire_lignes("log.txt") if "ERROR" in l)`,
       ],
     },
     {
+      id: 'errors',
+      title: { fr: 'Erreurs & exceptions', en: 'Errors & exceptions' },
+      items: [
+        {
+          id: 'py-try-except',
+          title: { fr: 'try / except / else / finally', en: 'try / except / else / finally' },
+          code: `try:
+    x = int(saisie)
+except ValueError as e:        # cible un type PRÉCIS
+    print(f"pas un entier : {e}")
+else:
+    print("réussi")            # seulement si AUCUNE exception
+finally:
+    fichier.close()            # toujours exécuté (nettoyage)`,
+          note: {
+            fr: `except cible un type précis — jamais un except: nu. else ne tourne que si le try a réussi : il sépare le code « à risque » du code « en cas de succès ». finally s'exécute quoi qu'il arrive, même après un return : idéal pour libérer une ressource.`,
+            en: `except targets a precise type — never a bare except:. else runs only if the try succeeded: it separates the "risky" code from the "on success" code. finally runs no matter what, even after a return: ideal to release a resource.`,
+          },
+        },
+        {
+          id: 'py-raise',
+          title: { fr: 'raise & exception personnalisée', en: 'raise & custom exception' },
+          code: `class SoldeInsuffisant(Exception):     # hérite d'Exception
+    def __init__(self, manque):
+        super().__init__(f"il manque {manque} €")
+        self.manque = manque              # donnée exploitable
+def retirer(solde, montant):
+    if montant > solde:
+        raise SoldeInsuffisant(montant - solde)`,
+          note: {
+            fr: `Définir ses propres exceptions (une classe qui hérite d'Exception) rend les erreurs métier attrapables précisément par l'appelant. Attachez des données utiles (self.manque) pour que le except puisse réagir, pas seulement logger un message.`,
+            en: `Defining your own exceptions (a class inheriting from Exception) makes domain errors precisely catchable by the caller. Attach useful data (self.manque) so the except can react, not just log a message.`,
+          },
+        },
+        {
+          id: 'py-raise-from',
+          title: { fr: 'raise ... from (chaînage)', en: 'raise ... from (chaining)' },
+          code: `try:
+    cfg = json.loads(brut)
+except json.JSONDecodeError as e:
+    raise ConfigInvalide("config illisible") from e   # garde la cause
+# le traceback montre les DEUX erreurs, reliées par
+# « The above exception was the direct cause of… »`,
+          note: {
+            fr: `raise NouvelleErreur from e remonte une erreur de haut niveau tout en gardant la cause d'origine dans le traceback — indispensable pour déboguer. Sans from, la cause réelle est masquée ; from None supprime volontairement la chaîne.`,
+            en: `raise NewError from e surfaces a high-level error while keeping the original cause in the traceback — essential for debugging. Without from, the real cause is hidden; from None deliberately suppresses the chain.`,
+          },
+        },
+        {
+          id: 'py-eafp',
+          title: { fr: 'EAFP > LBYL', en: 'EAFP > LBYL' },
+          code: `# LBYL — Look Before You Leap (verbeux, sujet aux races)
+if "cle" in d and d["cle"] is not None:
+    v = d["cle"]
+# EAFP — Easier to Ask Forgiveness (pythonique)
+try:
+    v = d["cle"]
+except KeyError:
+    v = defaut`,
+          note: {
+            fr: `L'idiome Python privilégie EAFP : tenter l'opération et rattraper l'échec, plutôt que d'empiler les vérifications préalables (LBYL) qui restent sujettes aux conditions de course. Un try qui réussit ne coûte quasiment rien à l'exécution.`,
+            en: `The Python idiom favors EAFP: attempt the operation and catch the failure, rather than piling up prior checks (LBYL) that remain race-prone. A try that succeeds costs almost nothing at runtime.`,
+          },
+        },
+        {
+          id: 'py-except-swallow',
+          title: { fr: 'Ne pas avaler les erreurs', en: "Don't swallow errors" },
+          code: `try:
+    risque()
+except Exception:          # trop large : masque tout
+    pass                   # ERREUR silencieuse, bug invisible
+# --- correct : cibler, journaliser, re-lever ---
+try:
+    risque()
+except (IOError, TimeoutError) as e:
+    logger.warning("échec réseau", exc_info=e)
+    raise                  # re-lève si on ne sait pas gérer`,
+          note: {
+            fr: `except Exception: pass fait disparaître les bugs — le pire réflexe. Attrapez le type le plus précis possible, journalisez (exc_info), et re-levez (raise nu) si vous ne pouvez pas vraiment traiter l'erreur. Ne jamais avaler KeyboardInterrupt ni SystemExit.`,
+            en: `except Exception: pass makes bugs vanish — the worst reflex. Catch the most precise type possible, log it (exc_info), and re-raise (bare raise) if you cannot genuinely handle the error. Never swallow KeyboardInterrupt or SystemExit.`,
+          },
+        },
+        {
+          id: 'py-except-star',
+          title: { fr: 'Groupes except* (3.11)', en: 'Exception groups except* (3.11)' },
+          code: `try:
+    async with asyncio.TaskGroup() as tg:   # tâches concurrentes
+        tg.create_task(a())
+        tg.create_task(b())
+except* ValueError as eg:      # attrape TOUS les ValueError du groupe
+    print(eg.exceptions)
+except* TypeError as eg:
+    ...`,
+          note: {
+            fr: `Depuis 3.11, plusieurs erreurs peuvent survenir en même temps (tâches concurrentes) : ExceptionGroup les regroupe et except* en attrape un sous-ensemble par type, sans perdre les autres. À réserver au code concurrent (TaskGroup, asyncio).`,
+            en: `Since 3.11, several errors can occur at once (concurrent tasks): ExceptionGroup bundles them and except* catches a subset by type without losing the others. Reserve it for concurrent code (TaskGroup, asyncio).`,
+          },
+        },
+      ],
+    },
+    {
       id: 'classes',
       title: { fr: 'Classes & dataclasses', en: 'Classes & dataclasses' },
       items: [
@@ -522,6 +623,48 @@ with chrono("import"): ...     # combinable : with a, b:`,
             en: `with guarantees cleanup (closing, releasing) even on exceptions. @contextmanager turns a generator into a context manager: setup before yield, teardown after.`,
           },
         },
+        {
+          id: 'py-functools',
+          title: { fr: 'functools : cache, partial, reduce', en: 'functools: cache, partial, reduce' },
+          code: `from functools import lru_cache, partial, reduce
+@lru_cache(maxsize=None)          # mémoïse les appels (ou @cache 3.9+)
+def fib(n):
+    return n if n < 2 else fib(n - 1) + fib(n - 2)
+en_binaire = partial(int, base=2)  # fige un argument
+produit = reduce(lambda a, b: a * b, [1, 2, 3, 4])  # 24`,
+          note: {
+            fr: `@lru_cache mémorise les résultats : un fib récursif passe d'exponentiel à linéaire sans réécriture. partial pré-remplit des arguments pour dériver une variante d'une fonction. reduce cumule une séquence en une valeur — mais une boucle est souvent plus lisible.`,
+            en: `@lru_cache memoizes results: a recursive fib goes from exponential to linear with no rewrite. partial pre-fills arguments to derive a variant of a function. reduce folds a sequence into one value — but a loop is often more readable.`,
+          },
+        },
+        {
+          id: 'py-logging',
+          title: { fr: 'logging (pas print)', en: 'logging (not print)' },
+          code: `import logging
+logger = logging.getLogger(__name__)   # un logger par module
+logging.basicConfig(level=logging.INFO)
+logger.info("démarrage %s", version)   # %s : formaté SI émis
+logger.warning("disque à %d%%", 92)
+logger.exception("échec")              # dans un except : + traceback`,
+          note: {
+            fr: `print n'a ni niveau, ni horodatage, ni destination configurable — logging si. Un logger nommé par module (__name__) permet de filtrer par source. Passez les variables en arguments (%s), pas en f-string : le formatage n'a lieu que si le message est réellement émis.`,
+            en: `print has no level, timestamp, or configurable destination — logging does. A per-module named logger (__name__) lets you filter by source. Pass variables as arguments (%s), not as an f-string: formatting happens only if the message is actually emitted.`,
+          },
+        },
+        {
+          id: 'py-re',
+          title: { fr: 're — expressions régulières', en: 're — regular expressions' },
+          code: `import re
+m = re.search(r"(\\d{4})-(\\d{2})", "le 2026-07")  # r"" = raw string
+if m:
+    print(m.group(1), m.group(2))     # 2026 07
+re.findall(r"\\w+@\\w+", texte)         # toutes les occurrences
+motif = re.compile(r"^ERROR", re.M)   # compilé = réutilisable`,
+          note: {
+            fr: `Toujours des raw strings r"..." pour que les séquences comme \\d ou \\w ne soient pas interprétées par Python. search trouve la 1re occurrence, findall toutes, sub remplace. Pré-compilez (re.compile) un motif réutilisé en boucle ; les groupes (...) capturent des sous-parties.`,
+            en: `Always raw strings r"..." so sequences like \\d or \\w aren't interpreted by Python. search finds the 1st match, findall all of them, sub replaces. Pre-compile (re.compile) a pattern reused in a loop; groups (...) capture sub-parts.`,
+          },
+        },
       ],
     },
     {
@@ -611,6 +754,82 @@ python -m pytest             # ajoute le cwd au sys.path`,
           note: {
             fr: `-m exécute un module via l'interpréteur courant : "python -m pip" garantit d'installer dans le bon venv quand plusieurs Python cohabitent. Beaucoup de modules stdlib sont des outils CLI cachés.`,
             en: `-m runs a module through the current interpreter: "python -m pip" guarantees installing into the right venv when several Pythons coexist. Many stdlib modules are hidden CLI tools.`,
+          },
+        },
+      ],
+    },
+    {
+      id: 'async',
+      title: { fr: 'Asynchrone (asyncio)', en: 'Async (asyncio)' },
+      items: [
+        {
+          id: 'py-async-await',
+          title: { fr: 'async def & await', en: 'async def & await' },
+          code: `import asyncio
+async def fetch(n):
+    await asyncio.sleep(1)     # cède la main pendant l'attente I/O
+    return n * 2
+async def main():
+    print(await fetch(21))     # 42
+asyncio.run(main())            # LE point d'entrée, une seule fois`,
+          note: {
+            fr: `async def crée une coroutine ; await la suspend et rend la main à la boucle d'événements pendant une opération I/O (réseau, disque) au lieu de bloquer le thread. asyncio.run() démarre la boucle — un seul appel, à la racine du programme.`,
+            en: `async def creates a coroutine; await suspends it and yields control to the event loop during an I/O operation (network, disk) instead of blocking the thread. asyncio.run() starts the loop — one call, at the program's root.`,
+          },
+        },
+        {
+          id: 'py-asyncio-gather',
+          title: { fr: 'gather : concurrence', en: 'gather: concurrency' },
+          code: `async def main():
+    # séquentiel : 3 s  |  concurrent : ~1 s
+    r = await asyncio.gather(fetch(1), fetch(2), fetch(3))
+    print(r)                   # [2, 4, 6] — ordre des arguments
+asyncio.run(main())`,
+          note: {
+            fr: `gather lance plusieurs coroutines EN MÊME TEMPS et attend qu'elles finissent toutes — c'est là qu'asyncio gagne : 100 requêtes réseau en parallèle sur un seul thread. L'ordre des résultats suit celui des arguments, pas l'ordre d'arrivée.`,
+            en: `gather starts several coroutines AT ONCE and waits for them all — this is where asyncio wins: 100 network requests in parallel on a single thread. The result order follows the argument order, not the completion order.`,
+          },
+        },
+        {
+          id: 'py-async-task',
+          title: { fr: 'create_task & TaskGroup', en: 'create_task & TaskGroup' },
+          code: `async def main():
+    async with asyncio.TaskGroup() as tg:   # 3.11+
+        t1 = tg.create_task(fetch(1))       # démarre en arrière-plan
+        t2 = tg.create_task(fetch(2))
+    # à la sortie du bloc, les deux sont terminées
+    print(t1.result(), t2.result())`,
+          note: {
+            fr: `create_task planifie une coroutine immédiatement, sans l'attendre. TaskGroup (3.11) est l'idiome moderne : il attend toutes les tâches à la sortie du async with et annule les autres si l'une échoue — plus sûr que gather pour la propagation d'erreurs.`,
+            en: `create_task schedules a coroutine immediately, without awaiting it. TaskGroup (3.11) is the modern idiom: it awaits all tasks when the async with exits and cancels the rest if one fails — safer than gather for error propagation.`,
+          },
+        },
+        {
+          id: 'py-async-with-for',
+          title: { fr: 'async with / async for', en: 'async with / async for' },
+          code: `async def lire(url):
+    async with session.get(url) as resp:   # ouverture/fermeture async
+        async for ligne in resp.content:   # flux produit à la demande
+            traiter(ligne)
+async def borne():
+    async with asyncio.timeout(5):         # 3.11 : borne le temps
+        await lente()`,
+          note: {
+            fr: `async with gère des ressources dont l'ouverture/fermeture est elle-même asynchrone (connexions HTTP, pools DB) ; async for itère un flux produit à la demande (streaming, websocket). asyncio.timeout impose une limite de temps sans threads.`,
+            en: `async with manages resources whose open/close is itself async (HTTP connections, DB pools); async for iterates a stream produced on demand (streaming, websocket). asyncio.timeout enforces a time limit without threads.`,
+          },
+        },
+        {
+          id: 'py-async-blocking',
+          title: { fr: 'Le piège bloquant', en: 'The blocking trap' },
+          code: `async def mauvais():
+    time.sleep(3)              # BLOQUE toute la boucle : tout gèle
+async def bon():
+    await asyncio.sleep(3)                     # cède la main
+    r = await asyncio.to_thread(calcul_lourd)  # décharge le CPU-bound`,
+          note: {
+            fr: `Un seul appel bloquant (time.sleep, requests.get, gros calcul) gèle TOUTE la boucle d'événements et anéantit l'intérêt d'asyncio. Utilisez les équivalents async (asyncio.sleep, httpx/aiohttp) ou asyncio.to_thread pour le code bloquant ou CPU-bound.`,
+            en: `A single blocking call (time.sleep, requests.get, heavy computation) freezes the WHOLE event loop and defeats the point of asyncio. Use the async equivalents (asyncio.sleep, httpx/aiohttp) or asyncio.to_thread for blocking or CPU-bound code.`,
           },
         },
       ],
