@@ -4,6 +4,7 @@ import { mulberry32, blobs, linear, moons } from '../src/ml/datasets.js';
 import { kmeansSteps } from '../src/ml/kmeans.js';
 import { gradientSteps } from '../src/ml/gradient.js';
 import { knnClassify, knnRegionGrid } from '../src/ml/knn.js';
+import { decisionTreeSteps, buildTree, gini } from '../src/ml/tree.js';
 
 test('mulberry32 is deterministic for a given seed', () => {
   const a = mulberry32(42);
@@ -102,4 +103,33 @@ test('knnRegionGrid is deterministic and shaped res*res', () => {
   assert.equal(g1.cells.length, 24 * 24);
   assert.deepEqual([...g1.cells], [...g2.cells]);
   assert.ok([...g1.cells].every((c) => c >= 0 && c < 3)); // every cell classified
+});
+
+test('gini is 0 for a pure set and >0 for a mixed set', () => {
+  assert.equal(gini([{ label: 0 }, { label: 0 }]), 0);
+  assert.ok(gini([{ label: 0 }, { label: 1 }]) > 0);
+});
+
+test('buildTree first split reduces weighted impurity', () => {
+  const pts = blobs({ k: 2, n: 80, seed: 9 });
+  const tree = buildTree(pts, { maxDepth: 4 });
+  assert.ok(tree.split, 'root should split a mixed set');
+  const wl = tree.left.n / tree.n;
+  const wr = tree.right.n / tree.n;
+  const weighted = wl * tree.left.gini + wr * tree.right.gini;
+  assert.ok(weighted < tree.gini + 1e-9, `weighted ${weighted} !< parent ${tree.gini}`);
+});
+
+test('decisionTreeSteps: splits grow, deterministic, tree fits training data', () => {
+  const pts = blobs({ k: 3, n: 120, seed: 11 });
+  const { frames } = decisionTreeSteps(pts, { maxDepth: 5, res: 30 });
+  assert.ok(frames.length >= 2);
+  frames.forEach((f, i) => {
+    assert.equal(f.splits.length, i); // frame i reveals i splits
+    assert.equal(f.regions, i + 1);
+    assert.equal(f.regionGrid.cells.length, 30 * 30);
+  });
+  // determinism
+  const again = decisionTreeSteps(pts, { maxDepth: 5, res: 30 });
+  assert.deepEqual([...frames[frames.length - 1].regionGrid.cells], [...again.frames[again.frames.length - 1].regionGrid.cells]);
 });

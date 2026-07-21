@@ -18,7 +18,8 @@
  */
 
 // Palette catégorielle (cluster / classe). Assez distincte en clair comme sombre.
-const CLUSTER_HEX = ['#6366f1', '#22c55e', '#eab308', '#ef4444', '#06b6d4', '#d946ef'];
+// Exportée pour que les panneaux (diagrammes SVG) restent cohérents avec le plan.
+export const CLUSTER_HEX = ['#6366f1', '#22c55e', '#eab308', '#ef4444', '#06b6d4', '#d946ef'];
 const UNASSIGNED = '#94a3b8';
 const SINGLE = '#64748b'; // points sans classe (régression)
 
