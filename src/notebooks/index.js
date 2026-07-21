@@ -29,8 +29,15 @@ const regression = {
       type: 'markdown',
       source: `# Régression linéaire
 
-Ajuster une droite \`y = a·x + b\` qui minimise l'erreur quadratique. On génère
-des données bruitées, on entraîne un modèle scikit-learn, puis on visualise.`,
+**Le problème.** Prédire une valeur *continue* (prix, température…) à partir d'une
+variable, en ajustant la droite \`y = a·x + b\` qui passe « au mieux » dans le nuage.
+
+**L'idée.** « Au mieux » = celle qui minimise la somme des écarts au carré entre les
+points et la droite (moindres carrés). C'est la **baseline** à battre avant tout
+modèle plus complexe : rapide, interprétable, sans réglage.
+
+Ci-dessous on fabrique des données bruitées autour d'une vraie tendance, puis on
+laisse scikit-learn *retrouver* la droite.`,
     },
     {
       type: 'code',
@@ -47,7 +54,15 @@ X[:3].ravel(), y[:3]`,
       type: 'markdown',
       source: `## Entraînement
 
-\`.fit(X, y)\` apprend la pente et l'ordonnée qui collent le mieux aux points.`,
+\`.fit(X, y)\` calcule la pente \`a\` (\`coef_\`) et l'ordonnée \`b\` (\`intercept_\`).
+
+**À observer.** La pente ≈ **2.5** et l'ordonnée ≈ **4** : le modèle *retrouve* la loi
+qu'on a utilisée pour générer les données. Le **R²** (entre 0 et 1) mesure la part de
+variance expliquée — proche de 1 = la droite colle bien.
+
+**Piège.** Ici on lit le R² sur les mêmes données que l'entraînement. Sur un vrai
+projet, évalue toujours sur des données *mises de côté* (train/test) : un R²
+d'entraînement flatteur ne garantit rien sur des données neuves.`,
     },
     {
       type: 'code',
@@ -60,7 +75,11 @@ print("R²        :", round(reg.score(X, y), 3))`,
       type: 'markdown',
       source: `## Visualisation
 
-La droite ajustée (en rouge) épouse le nuage de points.`,
+On trace la droite apprise (rouge) par-dessus le nuage.
+
+**À observer.** Elle passe au centre du nuage, pas par tous les points : le bruit est
+*irréductible*. Un bon modèle capture la **tendance**, pas chaque point — vouloir tout
+traverser, ce serait du surapprentissage.`,
     },
     {
       type: 'code',
@@ -83,8 +102,13 @@ const numpyPandas = {
       type: 'markdown',
       source: `# NumPy & pandas
 
-Manipuler des tableaux (\`numpy\`) et des tables (\`pandas\`). Comme dans Jupyter,
-la **dernière expression** d'une cellule s'affiche — un DataFrame devient une table.`,
+Avant tout modèle, il faut **manipuler les données**. Deux outils :
+
+- **NumPy** — des tableaux numériques rapides (calcul *vectorisé*, sans boucle Python) ;
+- **pandas** — des *tables* étiquetées (colonnes nommées), le format de travail de la data.
+
+Comme dans Jupyter, la **dernière expression** d'une cellule s'affiche : un DataFrame
+devient une vraie table.`,
     },
     {
       type: 'code',
@@ -103,7 +127,11 @@ df`,
       type: 'markdown',
       source: `## Agrégation
 
-\`groupby\` résume par clé (le GROUP BY de SQL, en une ligne).`,
+\`groupby("clé")\` découpe la table par valeur, puis \`agg\` applique une fonction par
+groupe — le \`GROUP BY\` de SQL, en une ligne.
+
+**À observer.** On passe de lignes brutes à un **résumé par ville** (total, nombre).
+C'est la brique de tout reporting et de la création de *features* agrégées.`,
     },
     {
       type: 'code',
@@ -111,7 +139,14 @@ df`,
     },
     {
       type: 'markdown',
-      source: `## NumPy vectorisé & colonne dérivée`,
+      source: `## NumPy vectorisé & colonne dérivée
+
+**À observer.** \`a ** 2\` élève au carré *tout le tableau d'un coup*, sans boucle —
+c'est la vectorisation (10 à 100× plus rapide en vrai). Et \`df["net"] = …\` crée une
+**colonne dérivée** par une opération entre colonnes.
+
+**Piège.** Les vraies données ont des **valeurs manquantes** (NaN) et des colonnes
+texte à encoder avant d'entraîner : on ne donne jamais un DataFrame brut à \`.fit()\`.`,
     },
     {
       type: 'code',
@@ -132,7 +167,12 @@ const kmeans = {
       type: 'markdown',
       source: `# K-means
 
-Regrouper des points **non étiquetés** en \`k\` clusters, puis visualiser.`,
+**Le problème.** Apprentissage **non supervisé** : on n'a *aucune étiquette*, on
+cherche des groupes naturels dans les données (segmentation client, compression…).
+
+**L'idée.** On fixe \`k\` (le nombre de groupes), puis l'algo alterne deux étapes :
+affecter chaque point au centroïde le plus proche, puis déplacer chaque centroïde au
+centre de son groupe — jusqu'à convergence.`,
     },
     {
       type: 'code',
@@ -149,7 +189,13 @@ km.cluster_centers_.round(2)`,
       type: 'markdown',
       source: `## Visualisation des clusters
 
-Chaque point coloré par son cluster ; les ✕ rouges sont les centroïdes.`,
+**À observer.** Les couleurs (clusters trouvés *sans* étiquettes) épousent bien les
+trois paquets qu'on a générés : l'algo a retrouvé la structure. Les ✕ rouges sont les
+centroïdes finaux.
+
+**Piège.** Il faut choisir \`k\` à l'avance (ici 3 ; en vrai : méthode du coude). Et
+k-means suppose des clusters ~sphériques de taille comparable, et il est sensible à
+l'échelle des variables → **standardise** avant.`,
     },
     {
       type: 'code',
@@ -170,7 +216,12 @@ const classification = {
       type: 'markdown',
       source: `# Classification & métriques
 
-Entraîner un classifieur, puis lire ses métriques (précision, rappel, F1).`,
+**Le problème.** Prédire une **classe** (0/1, spam/ok) plutôt qu'une valeur continue.
+La régression logistique est le classifieur linéaire de référence.
+
+**L'enjeu : bien mesurer.** On entraîne sur une partie des données, on évalue sur une
+partie *mise de côté* (\`train_test_split\`) — sinon on juge le modèle sur ce qu'il a
+déjà vu, et le score ne veut rien dire.`,
     },
     {
       type: 'code',
@@ -189,7 +240,16 @@ print("accuracy :", round(clf.score(X_te, y_te), 3))`,
       type: 'markdown',
       source: `## Rapport & matrice de confusion
 
-L'accuracy seule ment sur des classes déséquilibrées — regarde précision vs rappel.`,
+**À observer.**
+
+- **précision** — parmi les « positifs » prédits, combien sont justes (peu de fausses alertes) ;
+- **rappel** — parmi les vrais positifs, combien sont attrapés (peu d'oublis) ;
+- **F1** — la moyenne harmonique des deux ;
+- la **matrice de confusion** croise vrai vs prédit : la diagonale = les bons.
+
+**Piège.** L'**accuracy** seule ment sur des classes déséquilibrées (99 % de
+« non-fraude » → 99 % d'accuracy en prédisant toujours « non »). Selon le coût métier,
+privilégie précision *ou* rappel.`,
     },
     {
       type: 'code',
