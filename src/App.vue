@@ -73,6 +73,7 @@ import MlGradientPanel from '@/components/panels/MlGradientPanel.vue'
 import MlKnnPanel from '@/components/panels/MlKnnPanel.vue'
 import MlTreePanel from '@/components/panels/MlTreePanel.vue'
 import MlNeuralPanel from '@/components/panels/MlNeuralPanel.vue'
+import MlNotebookPanel from '@/components/panels/MlNotebookPanel.vue'
 
 const { t, locale } = useI18n()
 useTheme() // applies the persisted theme + code palette/font on startup
@@ -133,6 +134,7 @@ const TABS: { mode: string; key: string; cat: string; not?: string[] }[] = [
   { mode: 'mlknn', key: 'tabs.mlknn', cat: 'ml' },
   { mode: 'mltree', key: 'tabs.mltree', cat: 'ml' },
   { mode: 'mlneural', key: 'tabs.mlneural', cat: 'ml' },
+  { mode: 'mlnotebook', key: 'tabs.mlnotebook', cat: 'ml' },
   { mode: 'cbasics', key: 'tabs.cbasics', cat: 'c' },
   { mode: 'cmemory', key: 'tabs.cmemory', cat: 'c' },
   { mode: 'scheduler', key: 'tabs.scheduler', cat: 'os' },
@@ -201,6 +203,7 @@ const panels: Record<string, unknown> = {
   mlknn: MlKnnPanel,
   mltree: MlTreePanel,
   mlneural: MlNeuralPanel,
+  mlnotebook: MlNotebookPanel,
   cbasics: CBasicsPanel,
   cmemory: CMemoryPanel,
   scheduler: SchedulerPanel,

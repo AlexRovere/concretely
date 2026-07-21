@@ -86,7 +86,7 @@ export function createKernel() {
         return { outputs: [{ type: 'error', text: 'network' }], netError: true };
       }
 
-      ns ??= py.globals.get('dict')();
+      ns ??= py.toPy({}); // dict de globals vierge (CPython y injecte __builtins__)
       const outputs = [];
       const logs = [];
       sink.logs = logs;
