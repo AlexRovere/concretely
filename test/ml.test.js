@@ -5,6 +5,7 @@ import { kmeansSteps } from '../src/ml/kmeans.js';
 import { gradientSteps } from '../src/ml/gradient.js';
 import { knnClassify, knnRegionGrid } from '../src/ml/knn.js';
 import { decisionTreeSteps, buildTree, gini } from '../src/ml/tree.js';
+import { nnSteps, nnPredict } from '../src/ml/nn.js';
 
 test('mulberry32 is deterministic for a given seed', () => {
   const a = mulberry32(42);
@@ -131,5 +132,23 @@ test('decisionTreeSteps: splits grow, deterministic, tree fits training data', (
   });
   // determinism
   const again = decisionTreeSteps(pts, { maxDepth: 5, res: 30 });
+  assert.deepEqual([...frames[frames.length - 1].regionGrid.cells], [...again.frames[again.frames.length - 1].regionGrid.cells]);
+});
+
+test('nnSteps learns a non-linear boundary and is deterministic', () => {
+  const pts = moons({ n: 120, noise: 0.05, seed: 2 });
+  const { net, frames } = nnSteps(pts, { hidden: 8, epochs: 300, res: 24, seed: 3 });
+  assert.ok(frames.length >= 2);
+  for (const f of frames) {
+    assert.equal(f.regionGrid.cells.length, 24 * 24);
+    assert.ok([...f.regionGrid.cells].every((c) => c === 0 || c === 1));
+    assert.ok(Number.isFinite(f.loss));
+  }
+  assert.ok(frames[frames.length - 1].loss < frames[0].loss, 'loss should drop');
+  // training accuracy well above the 0.5 baseline
+  const acc = pts.filter((p) => nnPredict(net, p.x, p.y) === p.label).length / pts.length;
+  assert.ok(acc > 0.75, `accuracy ${acc}`);
+  // deterministic
+  const again = nnSteps(pts, { hidden: 8, epochs: 300, res: 24, seed: 3 });
   assert.deepEqual([...frames[frames.length - 1].regionGrid.cells], [...again.frames[again.frames.length - 1].regionGrid.cells]);
 });
