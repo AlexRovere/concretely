@@ -15,9 +15,16 @@ export const LOCALES = [
 let locale = 'fr';
 const listeners = [];
 
+// Garde l'attribut lang de <html> en phase avec la locale : sans ça, un lecteur
+// d'écran prononce le contenu anglais avec la phonétique française (a11y).
+function syncDocumentLang() {
+  if (typeof document !== 'undefined') document.documentElement.lang = locale;
+}
+syncDocumentLang();
+
 export const getLocale = () => locale;
 export function onLocaleChange(fn) { listeners.push(fn); }
-export function setLocale(l) { locale = l; for (const fn of listeners) fn(); }
+export function setLocale(l) { locale = l; syncDocumentLang(); for (const fn of listeners) fn(); }
 
 const UI = {
   en: {
@@ -497,6 +504,8 @@ const UI = {
     'menu.title': 'Menu',
     'menu.nav': 'Navigation',
     'menu.lang': 'Language',
+    'nav.category': 'Category',
+    'nav.language': 'Language',
     'menu.close': 'Close the menu',
     'tabs.playground': '▶ Playground',
     'pg.run': '▶ Run (Ctrl+↵)',
@@ -1037,6 +1046,8 @@ const UI = {
     'menu.title': 'Menu',
     'menu.nav': 'Navigation',
     'menu.lang': 'Langue',
+    'nav.category': 'Catégorie',
+    'nav.language': 'Langue',
     'menu.close': 'Fermer le menu',
     'tabs.playground': '▶ Playground',
     'pg.run': '▶ Exécuter (Ctrl+↵)',

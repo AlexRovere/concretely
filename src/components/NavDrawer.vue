@@ -1,5 +1,5 @@
 <script setup>
-import { watch, onMounted, onUnmounted } from 'vue';
+import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue';
 import { useI18n } from '@/composables/useI18n';
 import SettingsFields from '@/components/SettingsFields.vue';
 
@@ -29,13 +29,32 @@ function pick(mode) {
   emit('close');
 }
 
-// Lock the page scroll while the drawer is open.
+const dialog = ref(null);
+
+// Éléments focalisables du dialogue (pour le focus initial et le piège Tab).
+function focusables() {
+  if (!dialog.value) return [];
+  return [...dialog.value.querySelectorAll('button, select, [href], input, [tabindex]:not([tabindex="-1"])')]
+    .filter((el) => !el.disabled && el.offsetParent !== null);
+}
+
+// Lock the page scroll while the drawer is open + move focus into the dialog.
 watch(() => props.open, (o) => {
   document.documentElement.style.overflow = o ? 'hidden' : '';
+  if (o) nextTick(() => focusables()[0]?.focus());
 });
 
 function onKey(e) {
-  if (e.key === 'Escape' && props.open) emit('close');
+  if (!props.open) return;
+  if (e.key === 'Escape') { emit('close'); return; }
+  if (e.key === 'Tab') {
+    const items = focusables();
+    if (!items.length) return;
+    const first = items[0];
+    const last = items[items.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  }
 }
 onMounted(() => window.addEventListener('keydown', onKey));
 onUnmounted(() => {
@@ -48,7 +67,7 @@ onUnmounted(() => {
   <Teleport to="body">
     <Transition name="drawer">
       <div v-if="open" class="dw-overlay" @click.self="emit('close')">
-        <aside class="dw" role="dialog" :aria-label="t('menu.title')">
+        <aside ref="dialog" class="dw" role="dialog" aria-modal="true" :aria-label="t('menu.title')">
           <div class="dw-head">
             <strong class="dw-title">Concretely</strong>
             <button class="icon-btn" :aria-label="t('menu.close')" @click="emit('close')">✕</button>

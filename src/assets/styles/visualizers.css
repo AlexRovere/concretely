@@ -16,7 +16,8 @@
   --border: #1f2937;
   --edge: #334155;           /* SVG edges, separators on insets */
   --dim: #475569;
-  --accent: #6366f1;
+  --accent: #5558e6;        /* texte blanc dessus ≈ 5.3:1 (WCAG AA) */
+  --accent-ink: #a5b4fc;    /* accent EN TEXTE : indigo clair, ≥ 4.5:1 sur fond sombre */
   --accent-2: #8b5cf6;
   --ok: #22c55e;
   --ko: #ef4444;
@@ -71,6 +72,7 @@
   --edge: #94a3b8;
   --dim: #94a3b8;
   --accent: #4f46e5;
+  --accent-ink: #4f46e5;    /* déjà ≥ 4.5:1 en texte sur fond clair */
   --accent-2: #7c3aed;
   --ok: #15803d;
   --ko: #dc2626;
@@ -91,6 +93,20 @@
 ::selection { background: color-mix(in srgb, var(--accent) 30%, transparent); }
 
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Respecte la préférence système « réduire les animations » : coupe les
+   transitions/animations CSS et le défilement animé (les visualizers restent
+   pilotables au pas via Step). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
 
 body {
   margin: 0;
@@ -298,6 +314,8 @@ button {
   font-size: 0.85rem;
 }
 button:hover { border-color: var(--accent); }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+button:disabled:hover { border-color: var(--border); }
 button.primary { background: var(--accent); border-color: var(--accent); color: white; }
 
 canvas {
@@ -340,7 +358,7 @@ canvas {
   color: var(--ink-2);
   cursor: help;
 }
-.cx b { color: var(--accent); font-weight: 600; margin-right: 0.25rem; }
+.cx b { color: var(--accent-ink); font-weight: 600; margin-right: 0.25rem; }
 .cx-desc { margin: 0.5rem 0 0; font-size: 0.85rem; color: var(--ink); max-width: 70ch; line-height: 1.5; }
 .cx-tips { margin: 0.4rem 0 0; font-size: 0.85rem; color: var(--ink-2); max-width: 70ch; line-height: 1.5; }
 .cx-tips b { color: var(--ok); }
@@ -430,7 +448,7 @@ canvas {
 
 /* Recursion */
 .rec-info { font-size: 0.9rem; color: var(--ink); margin-bottom: 0.75rem; }
-.rec-info b { color: var(--accent); }
+.rec-info b { color: var(--accent-ink); }
 .rec-note { color: var(--muted); font-size: 0.82rem; }
 .rec-h { font-size: 0.85rem; color: var(--muted); margin: 0 0 0.5rem; font-weight: 500; }
 .rec-stage {
@@ -446,7 +464,7 @@ canvas {
 .frame.memo { border-left-color: var(--ok); color: var(--ok); }
 
 /* Event loop */
-.el-phase { font-size: 0.8rem; color: var(--accent); align-self: center; }
+.el-phase { font-size: 0.8rem; color: var(--accent-ink); align-self: center; }
 .el-stage { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; margin-top: 1rem; }
 .el-col { background: var(--inset); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem; min-height: 240px; }
 .el-list { display: flex; flex-direction: column; gap: 4px; }
@@ -464,7 +482,7 @@ canvas {
 @media (max-width: 760px) { .el-stage { grid-template-columns: 1fr 1fr; } }
 
 /* Data structures */
-.ds-info { font-family: var(--mono); font-size: 0.85rem; color: var(--accent); min-height: 1.2em; margin-bottom: 0.75rem; }
+.ds-info { font-family: var(--mono); font-size: 0.85rem; color: var(--accent-ink); min-height: 1.2em; margin-bottom: 0.75rem; }
 .ds-view {
   background: var(--inset); border: 1px solid var(--border); border-radius: 8px;
   padding: 1rem; min-height: 300px;
@@ -499,7 +517,7 @@ canvas {
   background: var(--chip); color: var(--ink-2); border: 1px solid var(--border); border-radius: 4px; padding: 0.25rem 0.6rem;
 }
 .vr-var.hot, .vr-obj.hot { border-color: var(--accent); background: var(--chip-hot); }
-.vr-var b, .vr-obj b { color: var(--accent); }
+.vr-var b, .vr-obj b { color: var(--accent-ink); }
 .vr-ref { color: var(--info); }
 
 /* Swift / Combine pipeline */
@@ -537,7 +555,7 @@ canvas {
   width: 2.4rem; height: 2.4rem; text-align: center; border: 1px solid var(--border);
   font-size: 0.85rem; position: relative;
 }
-.dp-h { color: var(--accent); font-weight: 600; background: var(--inset); }
+.dp-h { color: var(--accent-ink); font-weight: 600; background: var(--inset); }
 .dp-cell { color: var(--ink-2); background: var(--panel); }
 .dp-cell.filled { background: var(--cell-fill); }
 .dp-cell.src { background: var(--cell-src); }
@@ -763,7 +781,7 @@ canvas {
 .pat-pill.active { background: var(--accent); color: white; border-color: var(--accent); }
 .pat-card { margin-top: 0.4rem; }
 .pat-name { font-size: 1.3rem; font-weight: 700; color: var(--ink); margin: 0 0 0.3rem; }
-.pat-tagline { color: var(--accent); font-size: 1rem; font-weight: 500; margin: 0 0 1rem; }
+.pat-tagline { color: var(--accent-ink); font-size: 1rem; font-weight: 500; margin: 0 0 1rem; }
 .pat-fields {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -807,7 +825,7 @@ canvas {
   background: var(--inset);
 }
 .cmp-card-head { margin-bottom: 0.4rem; }
-.cmp-card-head code { font-family: var(--mono); color: var(--accent); }
+.cmp-card-head code { font-family: var(--mono); color: var(--accent-ink); }
 .cmp-code { margin: 0 0 0.5rem; overflow-x: auto; }
 .cmp-when { font-size: 0.85rem; color: var(--ink-2); }
 .cmp-notes { margin: 0.4rem 0 0 1.1rem; color: var(--ink-2); }
@@ -856,7 +874,7 @@ canvas {
 
 /* Visualiseur de JOINs SQL */
 .sj-query { font-family: var(--mono); font-size: 0.85rem; color: var(--ink-2); margin: 0 0 0.75rem; }
-.sj-query b { color: var(--accent); }
+.sj-query b { color: var(--accent-ink); }
 .sj-stage { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.9rem; }
 @media (max-width: 760px) { .sj-stage { grid-template-columns: 1fr; } }
 .sj-table { border-collapse: collapse; font-family: var(--mono); font-size: 0.82rem; width: 100%; }
@@ -879,7 +897,7 @@ canvas {
 .cm-zone { background: var(--inset); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem; min-height: 180px; }
 .cm-frames { display: flex; flex-direction: column; gap: 0.5rem; }
 .cm-frame { background: var(--chip); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 6px; padding: 0.4rem 0.6rem; }
-.cm-fn { font-family: var(--mono); font-size: 0.8rem; color: var(--accent); margin-bottom: 0.2rem; }
+.cm-fn { font-family: var(--mono); font-size: 0.8rem; color: var(--accent-ink); margin-bottom: 0.2rem; }
 .cm-var { font-family: var(--mono); font-size: 0.8rem; color: var(--ink-2); }
 .cm-var b { color: var(--ink); font-weight: 600; }
 .cm-ptr { color: var(--info); margin-left: 0.4rem; }
@@ -946,7 +964,7 @@ canvas {
   font-size: 0.65rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--accent);
+  color: var(--accent-ink);
   border: 1px solid var(--accent);
   border-radius: 999px;
   padding: 0.05rem 0.45rem;
@@ -991,6 +1009,10 @@ canvas {
     padding: 0.15rem 0.9rem;
     scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
+    /* Dégradé sur les bords : signale qu'il reste des onglets hors écran
+       (la barre de défilement est masquée à dessein). */
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%);
   }
   .tabs::-webkit-scrollbar { display: none; }
   .tab { flex-shrink: 0; white-space: nowrap; }
@@ -1085,6 +1107,7 @@ canvas {
   button { padding-top: 0.55rem; padding-bottom: 0.55rem; }
   .icon-btn { padding: 0.5rem 0.6rem; }
   .search-btn { padding: 0.5rem 0.65rem; }
+  .cs-copy { padding: 0.5rem 0.6rem; }
   select, #category, #locale, .lang-select, .sp-input, .cs-search input, #ds-value {
     font-size: 16px;
   }

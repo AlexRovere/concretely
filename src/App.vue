@@ -297,7 +297,7 @@ function onLocale(e: Event) {
     <button class="icon-btn ham" :aria-label="t('menu.title')" @click="drawer = true">☰</button>
     <h1>Concretely</h1>
     <label class="cat-pick">
-      <select id="category" :value="cat" @change="onCat">
+      <select id="category" :value="cat" :aria-label="t('nav.category')" @change="onCat">
         <option v-for="c in CATEGORIES" :key="c" :value="c">{{ t('cat.' + c) }}</option>
       </select>
     </label>
@@ -317,7 +317,7 @@ function onLocale(e: Event) {
     </button>
     <SettingsMenu />
     <label class="locale-pick">
-      <select id="locale" :value="locale" @change="onLocale">
+      <select id="locale" :value="locale" :aria-label="t('nav.language')" @change="onLocale">
         <option v-for="l in LOCALES" :key="l.id" :value="l.id">{{ l.name }}</option>
       </select>
     </label>
