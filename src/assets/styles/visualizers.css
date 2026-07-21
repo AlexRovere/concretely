@@ -1106,3 +1106,42 @@ canvas {
   border-radius: 12px;
   background: var(--panel);
 }
+/* plan + panneau latéral (courbe de loss, arbre, schéma réseau) */
+.ml-split {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-start;
+  justify-content: center;
+}
+.ml-split .ml-canvas {
+  margin: 0;
+  flex: 0 1 480px;
+}
+.ml-aside {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  flex: 1 1 220px;
+  min-width: 200px;
+}
+.ml-aside-label {
+  font-size: 0.8rem;
+  color: var(--muted, #64748b);
+}
+.ml-loss,
+.ml-tree,
+.ml-net {
+  width: 100%;
+  max-width: 340px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel);
+}
+.ml-loss {
+  height: 120px;
+}
+.ml-tree,
+.ml-net {
+  height: auto;
+}

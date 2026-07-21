@@ -30,8 +30,10 @@ onMounted(() => {
 
   const renderer = new MlPlaneRenderer(canvas);
   let frames = [];
+  let current = null;
 
   const renderFrame = (f) => {
+    current = f;
     renderer.draw(f);
     metrics.textContent = t('ml.metrics.kmeans')({ iter: f.iter + 1, inertia: f.inertia });
   };
@@ -59,7 +61,7 @@ onMounted(() => {
   kEl.onchange = regenerate;
   $('ml-new').onclick = () => { seed += 1; regenerate(); };
   speedEl.oninput = () => player.setSpeed(+speedEl.value);
-  onLocaleChange(() => setStatus(status, player));
+  onLocaleChange(() => { if (current) renderFrame(current); setStatus(status, player); });
   regenerate();
 });
 
