@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { parseHash, formatRoute, resolveRoute } from '@/hashRoute.js'
+import { CATEGORIES } from '@/nav.js'
+import HomePanel from '@/components/panels/HomePanel.vue'
 import { useI18n } from '@/composables/useI18n'
 import SortingPanel from '@/components/panels/SortingPanel.vue'
 import PathfindingPanel from '@/components/panels/PathfindingPanel.vue'
@@ -74,12 +76,6 @@ import MlNeuralPanel from '@/components/panels/MlNeuralPanel.vue'
 
 const { t, locale, setLocale, LOCALES } = useI18n()
 useTheme() // applies the persisted theme + code palette/font on startup
-
-// Languages first, then tools/infra.
-const CATEGORIES = [
-  'general', 'patterns', 'js', 'ts', 'python', 'vue', 'swift', 'ruby', 'kotlin', 'java', 'go', 'rust', 'c', 'ml',
-  'sql', 'git', 'linux', 'os', 'web', 'docker', 'k8s'
-]
 
 // `cat: '*'` = always-visible tab (appended last); `not` lists categories
 // where such a tab is hidden (no Swift compiler runs in a browser).
@@ -220,7 +216,8 @@ const panels: Record<string, unknown> = {
 }
 
 const mode = ref<string>('sorting')
-const currentPanel = computed(() => panels[mode.value])
+const view = ref<'home' | 'panel'>('home')
+const currentPanel = computed(() => (view.value === 'home' ? HomePanel : panels[mode.value]))
 
 const cat = ref<string>('general')
 // Topic tabs of the active category, then the always-visible tabs LAST
@@ -243,29 +240,35 @@ const nav = {
   firstMode: (c: string) => modesForCat(c)[0] ?? null,
   isValidMode: (c: string, m: string) => modesForCat(c).includes(m)
 }
-// Apply the current URL hash to the app state (invalid → default view).
+// Apply the current URL hash to the app state (invalid → home).
 function applyHash() {
   const resolved = resolveRoute(parseHash(window.location.hash), nav)
   if (resolved.view === 'home') {
-    // R1: no home page yet — fall back to the default view.
-    cat.value = 'general'
-    mode.value = modesForCat('general')[0] ?? 'sorting'
+    view.value = 'home'
   } else {
+    view.value = 'panel'
     cat.value = resolved.cat as string
     mode.value = resolved.mode as string
   }
 }
 // Reflect the app state back into the URL (guarded to avoid a write loop).
 function syncHash() {
-  const h = formatRoute({ view: 'panel', cat: cat.value, mode: mode.value })
+  const route =
+    view.value === 'home'
+      ? { view: 'home' as const }
+      : { view: 'panel' as const, cat: cat.value, mode: mode.value }
+  const h = formatRoute(route)
   if (window.location.hash !== h) window.location.hash = h
+}
+function goHome() {
+  view.value = 'home'
 }
 onMounted(() => {
   applyHash()
   window.addEventListener('hashchange', applyHash)
 })
 onUnmounted(() => window.removeEventListener('hashchange', applyHash))
-watch([cat, mode], syncHash)
+watch([cat, mode, view], syncHash)
 
 // Mobile: auto-hide the sticky header on scroll down, reveal on scroll up
 // (the transform only applies ≤920px — see visualizers.css).
@@ -294,6 +297,7 @@ function onGoto(target: string) {
   const tab = TABS.find((tb) => tb.mode === target)
   if (tab && tab.cat !== '*') cat.value = tab.cat
   mode.value = target
+  view.value = 'panel'
 }
 
 // ---- Global search (Ctrl+K palette) -------------------------------------
@@ -309,6 +313,7 @@ function onPick(e: { kind: string; mode: string; cat: string; titleFr: string; t
   cat.value = e.cat
   mode.value = 'cheatsheet'
   cheatQuery.value = locale.value === 'fr' ? e.titleFr : e.titleEn
+  view.value = 'panel'
 }
 
 function selectCat(c: string) {
@@ -317,6 +322,7 @@ function selectCat(c: string) {
   if (!visibleTabs.value.some((tb) => tb.mode === mode.value)) {
     mode.value = visibleTabs.value[0].mode
   }
+  view.value = 'panel'
 }
 function onCat(e: Event) {
   selectCat((e.target as HTMLSelectElement).value)
@@ -333,13 +339,21 @@ function onLocale(e: Event) {
 <template>
   <header :class="{ 'nav-hidden': navHidden }">
     <button class="icon-btn ham" :aria-label="t('menu.title')" @click="drawer = true">☰</button>
-    <h1>Concretely</h1>
+    <h1
+      class="brand"
+      role="button"
+      tabindex="0"
+      :aria-label="t('home.title')"
+      @click="goHome"
+      @keydown.enter="goHome"
+      @keydown.space.prevent="goHome"
+    >Concretely</h1>
     <label class="cat-pick">
       <select id="category" :value="cat" :aria-label="t('nav.category')" @change="onCat">
         <option v-for="c in CATEGORIES" :key="c" :value="c">{{ t('cat.' + c) }}</option>
       </select>
     </label>
-    <nav class="tabs">
+    <nav v-if="view === 'panel'" class="tabs">
       <button
         v-for="tab in visibleTabs"
         :key="tab.mode"
@@ -364,7 +378,7 @@ function onLocale(e: Event) {
   <main>
     <!-- :cat syncs the Quiz pool & the Cheatsheet; :query seeds the Cheatsheet filter. -->
     <KeepAlive>
-      <component :is="currentPanel" :cat="cat" :query="cheatQuery" @goto="onGoto" />
+      <component :is="currentPanel" :cat="cat" :query="cheatQuery" @goto="onGoto" @pick="selectCat" />
     </KeepAlive>
   </main>
 
