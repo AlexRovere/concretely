@@ -42,8 +42,8 @@ import QuizPanel from '@/components/panels/QuizPanel.vue'
 import CheatsheetPanel from '@/components/panels/CheatsheetPanel.vue'
 import PlaygroundPanel from '@/components/panels/PlaygroundPanel.vue'
 import SearchPalette from '@/components/SearchPalette.vue'
-import SettingsMenu from '@/components/SettingsMenu.vue'
 import NavDrawer from '@/components/NavDrawer.vue'
+import SideNav from '@/components/SideNav.vue'
 import { useTheme } from '@/composables/useTheme'
 import JsBasicsPanel from '@/components/panels/JsBasicsPanel.vue'
 import SwiftBasicsPanel from '@/components/panels/SwiftBasicsPanel.vue'
@@ -74,7 +74,7 @@ import MlKnnPanel from '@/components/panels/MlKnnPanel.vue'
 import MlTreePanel from '@/components/panels/MlTreePanel.vue'
 import MlNeuralPanel from '@/components/panels/MlNeuralPanel.vue'
 
-const { t, locale, setLocale, LOCALES } = useI18n()
+const { t, locale } = useI18n()
 useTheme() // applies the persisted theme + code palette/font on startup
 
 // `cat: '*'` = always-visible tab (appended last); `not` lists categories
@@ -324,63 +324,64 @@ function selectCat(c: string) {
   }
   view.value = 'panel'
 }
-function onCat(e: Event) {
-  selectCat((e.target as HTMLSelectElement).value)
-}
-
 // Mobile drawer (☰): navigation + options in a side panel.
 const drawer = ref(false)
 
-function onLocale(e: Event) {
-  setLocale((e.target as HTMLSelectElement).value)
+// Desktop sidebar: persistent, collapsible via ☰; state persisted.
+const sidebarCollapsed = ref(localStorage.getItem('nav.sidebar') === '1')
+watch(sidebarCollapsed, (v) => localStorage.setItem('nav.sidebar', v ? '1' : '0'))
+
+// The ☰ button toggles the sidebar on desktop, opens the drawer on mobile.
+const desktopMq = window.matchMedia('(min-width: 921px)')
+const isDesktop = ref(desktopMq.matches)
+function onMq(e: MediaQueryListEvent) { isDesktop.value = e.matches }
+onMounted(() => desktopMq.addEventListener('change', onMq))
+onUnmounted(() => desktopMq.removeEventListener('change', onMq))
+function toggleNav() {
+  if (isDesktop.value) sidebarCollapsed.value = !sidebarCollapsed.value
+  else drawer.value = true
 }
 </script>
 
 <template>
-  <header :class="{ 'nav-hidden': navHidden }">
-    <button class="icon-btn ham" :aria-label="t('menu.title')" @click="drawer = true">☰</button>
-    <h1
-      class="brand"
-      role="button"
-      tabindex="0"
-      :aria-label="t('home.title')"
-      @click="goHome"
-      @keydown.enter="goHome"
-      @keydown.space.prevent="goHome"
-    >Concretely</h1>
-    <label class="cat-pick">
-      <select id="category" :value="cat" :aria-label="t('nav.category')" @change="onCat">
-        <option v-for="c in CATEGORIES" :key="c" :value="c">{{ t('cat.' + c) }}</option>
-      </select>
-    </label>
-    <nav v-if="view === 'panel'" class="tabs">
-      <button
-        v-for="tab in visibleTabs"
-        :key="tab.mode"
-        class="tab"
-        :class="{ active: mode === tab.mode }"
-        @click="mode = tab.mode"
-      >
-        {{ t(tab.key) }}
-      </button>
-    </nav>
-    <button class="search-btn" :title="t('search.btn') + ' (Ctrl K)'" @click="palette?.show()">
-      🔍 <kbd>Ctrl K</kbd>
-    </button>
-    <SettingsMenu />
-    <label class="locale-pick">
-      <select id="locale" :value="locale" :aria-label="t('nav.language')" @change="onLocale">
-        <option v-for="l in LOCALES" :key="l.id" :value="l.id">{{ l.name }}</option>
-      </select>
-    </label>
-  </header>
+  <div class="app-shell" :class="{ 'nav-collapsed': sidebarCollapsed }">
+    <SideNav :cat="cat" :view="view" @pick="selectCat" @home="goHome" />
+    <div class="app-main">
+      <header :class="{ 'nav-hidden': navHidden }">
+        <button class="icon-btn ham" :aria-label="t('menu.nav')" @click="toggleNav">☰</button>
+        <h1
+          class="brand"
+          role="button"
+          tabindex="0"
+          :aria-label="t('home.title')"
+          @click="goHome"
+          @keydown.enter="goHome"
+          @keydown.space.prevent="goHome"
+        >Concretely</h1>
+        <nav v-if="view === 'panel'" class="tabs">
+          <button
+            v-for="tab in visibleTabs"
+            :key="tab.mode"
+            class="tab"
+            :class="{ active: mode === tab.mode }"
+            @click="mode = tab.mode"
+          >
+            {{ t(tab.key) }}
+          </button>
+        </nav>
+        <button class="search-btn" :title="t('search.btn') + ' (Ctrl K)'" @click="palette?.show()">
+          🔍 <kbd>Ctrl K</kbd>
+        </button>
+      </header>
 
-  <main>
-    <!-- :cat syncs the Quiz pool & the Cheatsheet; :query seeds the Cheatsheet filter. -->
-    <KeepAlive>
-      <component :is="currentPanel" :cat="cat" :query="cheatQuery" @goto="onGoto" @pick="selectCat" />
-    </KeepAlive>
-  </main>
+      <main>
+        <!-- :cat syncs the Quiz pool & the Cheatsheet; :query seeds the Cheatsheet filter. -->
+        <KeepAlive>
+          <component :is="currentPanel" :cat="cat" :query="cheatQuery" @goto="onGoto" @pick="selectCat" />
+        </KeepAlive>
+      </main>
+    </div>
+  </div>
 
   <SearchPalette ref="palette" :tabs="TABS" @pick="onPick" />
   <NavDrawer

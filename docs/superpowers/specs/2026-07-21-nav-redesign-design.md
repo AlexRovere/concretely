@@ -54,9 +54,9 @@ Refondre la navigation pour améliorer la découvrabilité des ~65 vues (reco #3
 
 ## Découpage (multi-sessions, une PR par phase)
 
-- **R1 — Router hash** : `useHashRoute` + `parseHash`/`formatRoute` (tests purs) + branchement `App.vue` (cat/mode ↔ URL, back/forward, validation, deep-link). Aucun changement visuel ; URLs partageables opérationnelles.
-- **R2 — Page d'accueil** : `HomePanel` + `categoryMeta` (test de complétude) + cards groupées + logo→accueil + route `#/` par défaut.
-- **R3 — Sidebar desktop** : `SideNav` collapsible (catégories + params + langue) + header allégé + toggle persistant ; mobile inchangé.
+- ✅ **R1** (livré le 2026-07-21) — Router hash : `hashRoute.js` (`parseHash`/`formatRoute`/`resolveRoute`, tests purs) + branchement `App.vue` (cat/mode ↔ URL, back/forward, validation, deep-link). Aucun changement visuel ; URLs partageables opérationnelles.
+- ✅ **R2** (livré le 2026-07-21) — Page d'accueil : `HomePanel` + `categoryMeta` (test de complétude) + cards groupées + logo→accueil + route `#/` par défaut. `CATEGORIES` extrait dans `nav.js`.
+- ✅ **R3** (livré le 2026-07-21) — Sidebar desktop : `SideNav` collapsible (catégories + params + langue) + header allégé + toggle persistant (localStorage) ; mobile inchangé (NavDrawer).
 
 ## Tests
 

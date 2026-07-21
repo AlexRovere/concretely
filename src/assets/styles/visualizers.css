@@ -191,7 +191,8 @@ h1 {
 /* Theme toggle + appearance settings (header, right side). */
 .settings { position: relative; display: flex; gap: 0.4rem; flex-shrink: 0; }
 /* Hamburger : mobile uniquement (ouvre le drawer de navigation). */
-.ham { display: none; font-size: 1.05rem; }
+/* ☰ : toggle sidebar (desktop) / ouverture drawer (mobile) — visible partout. */
+.ham { display: inline-flex; font-size: 1.05rem; }
 .icon-btn {
   background: var(--panel);
   border: 1px solid var(--border);
@@ -1231,3 +1232,69 @@ h1.brand {
   user-select: none;
 }
 h1.brand:hover { opacity: 0.85; }
+
+/* --- Layout shell : sidebar persistante (desktop) + contenu --------- */
+.app-shell { display: flex; align-items: flex-start; }
+.app-main { flex: 1; min-width: 0; }
+.sidenav {
+  flex-shrink: 0;
+  width: 240px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  border-right: 1px solid var(--border);
+  background: var(--panel-2);
+  padding: 1rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.app-shell.nav-collapsed .sidenav { display: none; }
+.sidenav-home,
+.sidenav-cat {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.88rem;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+.sidenav-home:hover,
+.sidenav-cat:hover { background: var(--accent-soft); color: var(--ink); }
+.sidenav-home.active,
+.sidenav-cat.active {
+  background: var(--accent-soft);
+  color: var(--ink);
+  border-color: var(--accent);
+}
+.sidenav-cat-icon { font-size: 1.05rem; line-height: 1; width: 1.4rem; text-align: center; }
+.sidenav-cats { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.4rem; }
+.sidenav-group { display: flex; flex-direction: column; gap: 2px; }
+.sidenav-group-label {
+  margin: 0 0 0.25rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  padding: 0 0.6rem;
+}
+.sidenav-foot {
+  margin-top: auto;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+@media (max-width: 920px) {
+  .sidenav { display: none; }
+  .app-shell { display: block; }
+}
