@@ -222,6 +222,57 @@ const g = new Map([
             en: `The adjacency list is the default choice: most real-world graphs are sparse (E far smaller than V²).`,
           },
         },
+        {
+          id: 'gen-ds-union-find',
+          title: { fr: 'Union-Find (Disjoint Set Union)', en: 'Union-Find (Disjoint Set Union)' },
+          code: `class UnionFind {
+  #parent;
+  constructor(n) { this.#parent = Array.from({ length: n }, (_, i) => i); }
+  find(x) { return this.#parent[x] === x ? x : (this.#parent[x] = this.find(this.#parent[x])); }
+  union(a, b) {
+    const ra = this.find(a), rb = this.find(b);
+    if (ra === rb) return false;        // déjà connectés -> ajouter cette arête créerait un cycle
+    this.#parent[ra] = rb;
+    return true;
+  }
+}
+// find/union : O(α(n)) amorti avec compression de chemin — quasi constant`,
+          note: {
+            fr: `Union-Find teste en quasi-O(1) si deux éléments sont dans la même composante et fusionne des groupes : la structure clé de Kruskal (arbre couvrant minimal), de la détection de cycle et de la connectivité dynamique.`,
+            en: `Union-Find tests in near-O(1) whether two elements are in the same component and merges groups: the key structure behind Kruskal's MST, cycle detection, and dynamic connectivity.`,
+          },
+        },
+        {
+          id: 'gen-ds-trie',
+          title: { fr: 'Trie (arbre préfixe)', en: 'Trie (prefix tree)' },
+          code: `class TrieNode {
+  enfants = new Map();
+  finMot = false;
+}
+class Trie {
+  #racine = new TrieNode();
+  insert(mot) {
+    let n = this.#racine;
+    for (const c of mot) {
+      if (!n.enfants.has(c)) n.enfants.set(c, new TrieNode());
+      n = n.enfants.get(c);
+    }
+    n.finMot = true; // O(longueur du mot)
+  }
+  aPrefixe(prefixe) {
+    let n = this.#racine;
+    for (const c of prefixe) {
+      if (!n.enfants.has(c)) return false;
+      n = n.enfants.get(c);
+    }
+    return true; // O(longueur du préfixe)
+  }
+}`,
+          note: {
+            fr: `Un trie partage les préfixes communs entre mots dans un arbre : insertion et recherche de préfixe en O(longueur du mot), indépendamment du nombre de mots stockés — la structure de référence pour l'autocomplétion et les correcteurs orthographiques.`,
+            en: `A trie shares common prefixes between words in a tree: insertion and prefix search run in O(word length), independent of how many words are stored — the go-to structure for autocomplete and spell-checkers.`,
+          },
+        },
       ],
     },
     {
@@ -420,6 +471,67 @@ const sommeIJ = (i, j) => pre[j + 1] - pre[i]; // O(1) par requête
           note: {
             fr: `Un pré-calcul O(n) rend toutes les sommes d'intervalles instantanées : indispensable dès qu'il y a beaucoup de requêtes.`,
             en: `A single O(n) precomputation makes every range sum instant: essential when there are many queries.`,
+          },
+        },
+        {
+          id: 'gen-pat-dijkstra',
+          title: { fr: 'Dijkstra (plus court chemin pondéré)', en: 'Dijkstra (weighted shortest path)' },
+          code: `// Plus court chemin depuis 'depart' dans un graphe à poids POSITIFS
+function dijkstra(depart, graphe) { // graphe: Map<noeud, [[voisin, poids], ...]>
+  const dist = new Map([[depart, 0]]);
+  const aVisiter = [[0, depart]]; // idéalement un vrai tas min, ici simplifié
+  const vus = new Set();
+  while (aVisiter.length) {
+    aVisiter.sort((a, b) => a[0] - b[0]);
+    const [d, u] = aVisiter.shift();
+    if (vus.has(u)) continue;
+    vus.add(u);
+    for (const [v, poids] of graphe.get(u) ?? []) {
+      const alt = d + poids;
+      if (alt < (dist.get(v) ?? Infinity)) { dist.set(v, alt); aVisiter.push([alt, v]); }
+    }
+  }
+  return dist; // O((V + E) log V) avec un vrai heap binaire
+}`,
+          note: {
+            fr: `Comme BFS mais pondéré : à chaque étape, on traite le nœud non visité de plus petite distance connue (d'où le tas min) et on relâche ses arêtes. Ne fonctionne QUE si tous les poids sont positifs (sinon : Bellman-Ford).`,
+            en: `Like BFS but weighted: at each step, process the unvisited node with the smallest known distance (hence the min-heap) and relax its edges. Only works if ALL weights are positive (otherwise: Bellman-Ford).`,
+          },
+        },
+        {
+          id: 'gen-pat-topo-sort',
+          title: { fr: 'Tri topologique (DAG)', en: 'Topological sort (DAG)' },
+          code: `// Ordonner un DAG (graphe orienté acyclique) tel que u -> v => u avant v
+function triTopologique(noeuds, graphe) { // graphe: Map<noeud, [voisins...]>
+  const visites = new Set(), pile = [];
+  function dfs(u) {
+    visites.add(u);
+    for (const v of graphe.get(u) ?? []) if (!visites.has(v)) dfs(v);
+    pile.push(u); // empiler APRES avoir visité tous les successeurs
+  }
+  for (const n of noeuds) if (!visites.has(n)) dfs(n);
+  return pile.reverse(); // O(V + E)
+}`,
+          note: {
+            fr: `Un tri topologique n'existe que sur un graphe SANS cycle (DAG) : on empile chaque nœud une fois tous ses successeurs traités, puis on inverse la pile. Base de la résolution de dépendances (build, imports, planification de tâches).`,
+            en: `A topological sort only exists on a graph WITHOUT cycles (DAG): push each node once all its successors are processed, then reverse the stack. The basis of dependency resolution (builds, imports, task scheduling).`,
+          },
+        },
+        {
+          id: 'gen-pat-dp-tabulation',
+          title: { fr: 'Programmation dynamique bottom-up (tabulation)', en: 'Bottom-up dynamic programming (tabulation)' },
+          code: `// Programmation dynamique BOTTOM-UP : on remplit une table du plus petit
+// sous-problème vers le plus grand, sans récursion ni pile d'appels.
+function fibTabulation(n) {
+  if (n <= 1) return n;
+  const dp = new Array(n + 1);
+  dp[0] = 0; dp[1] = 1;
+  for (let i = 2; i <= n; i++) dp[i] = dp[i - 1] + dp[i - 2]; // remplit la table dans l'ordre
+  return dp[n]; // O(n) temps, O(n) espace — aucun risque de stack overflow
+}`,
+          note: {
+            fr: `Contrairement à la mémoïsation (top-down, récursive), la tabulation remplit itérativement une table depuis les cas de base : même complexité mais sans risque de dépassement de pile sur n grand, et souvent plus facile à optimiser en espace (ici, garder les 2 dernières valeurs suffirait).`,
+            en: `Unlike memoization (top-down, recursive), tabulation iteratively fills a table starting from the base cases: same complexity but no stack-overflow risk on large n, and often easier to optimize for space (here, keeping just the last 2 values would suffice).`,
           },
         },
       ],

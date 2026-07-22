@@ -405,6 +405,34 @@ const ko: Route = "/users/abc";  // Erreur`,
             en: `Template literal types build string unions by combination: event names, routes, CSS keys. Combined with Capitalize/Uppercase, they can type entire naming conventions.`,
           },
         },
+        {
+          id: 'ts-conditional-types',
+          title: { fr: 'Types conditionnels', en: 'Conditional types' },
+          code: `type EstTableau<T> = T extends unknown[] ? true : false;
+
+type A = EstTableau<string[]>;   // true
+type B = EstTableau<number>;     // false
+
+type Deballer<T> = T extends Promise<infer U> ? U : T;
+type C = Deballer<Promise<string>>;  // string`,
+          note: {
+            fr: `T extends U ? X : Y choisit un type selon une condition évaluée à la compilation ; infer capture un sous-type à l'intérieur de la condition (c'est ainsi qu'Awaited est implémenté).`,
+            en: `T extends U ? X : Y picks a type based on a compile-time condition; infer captures a sub-type from within the condition (this is how Awaited is implemented).`,
+          },
+        },
+        {
+          id: 'ts-exclude-extract-nonnull',
+          title: { fr: 'Exclude, Extract, NonNullable', en: 'Exclude, Extract, NonNullable' },
+          code: `type Statut = "actif" | "inactif" | "archive";
+
+type SansArchive = Exclude<Statut, "archive">;        // "actif" | "inactif"
+type SeulementActif = Extract<Statut, "actif" | "x">; // "actif"
+type Sur = NonNullable<string | null | undefined>;    // string`,
+          note: {
+            fr: `Exclude retire des membres d'une union, Extract n'en garde que l'intersection avec une autre union, NonNullable retire null/undefined — trois outils pour retailler une union existante sans la réécrire.`,
+            en: `Exclude removes members from a union, Extract keeps only the intersection with another union, NonNullable strips null/undefined — three tools to reshape an existing union without rewriting it.`,
+          },
+        },
       ],
     },
     {
@@ -487,6 +515,94 @@ if (input) input.focus(); // version sûre : narrowing explicite`,
           note: {
             fr: `\`!\` supprime null/undefined du type sans aucune vérification réelle : c'est une promesse faite au compilateur, pas une protection. Préférez un if, \`?.\` ou un throw explicite ; réservez \`!\` aux cas garantis par construction.`,
             en: `\`!\` removes null/undefined from the type with zero actual checking: it's a promise to the compiler, not a protection. Prefer an if, \`?.\` or an explicit throw; reserve \`!\` for cases guaranteed by construction.`,
+          },
+        },
+        {
+          id: 'ts-function-type',
+          title: { fr: 'Signature de fonction comme type', en: 'Function signature as a type' },
+          code: `type Handler = (event: string, payload?: unknown) => void;
+
+const surClic: Handler = (event, payload) => {
+  console.log(event, payload);
+};
+
+interface Comparateur {           // interface callable : autre syntaxe
+  (a: number, b: number): number;
+}`,
+          note: {
+            fr: `Nommer un type de fonction (Handler) documente la forme attendue une seule fois et la réutilise partout (callbacks, props, options) au lieu de répéter la signature inline.`,
+            en: `Naming a function type (Handler) documents the expected shape once and reuses it everywhere (callbacks, props, options) instead of repeating the inline signature.`,
+          },
+        },
+      ],
+    },
+    {
+      id: 'classes',
+      title: { fr: 'Classes TypeScript', en: 'TypeScript classes' },
+      items: [
+        {
+          id: 'ts-class-modifiers',
+          title: { fr: 'Modificateurs de visibilité : public, private, protected', en: 'Visibility modifiers: public, private, protected' },
+          code: `class Compte {
+  public solde: number;         // accessible partout (défaut)
+  private pin: string;          // accessible seulement dans la classe
+  protected id: string;         // accessible dans la classe et ses sous-classes
+
+  constructor(solde: number, pin: string, id: string) {
+    this.solde = solde; this.pin = pin; this.id = id;
+  }
+}
+new Compte(100, "1234", "a1").pin;   // Erreur : private`,
+          note: {
+            fr: `Ces modificateurs n'existent qu'à la compilation (le JS émis n'a aucune protection réelle) ; pour une vraie encapsulation à l'exécution, utilisez les champs privés natifs #x.`,
+            en: `These modifiers exist only at compile time (the emitted JS has no real protection); for genuine runtime encapsulation, use native private fields #x.`,
+          },
+        },
+        {
+          id: 'ts-class-parameter-properties',
+          title: { fr: 'Parameter properties (raccourci constructor)', en: 'Parameter properties (constructor shorthand)' },
+          code: `class Point {
+  constructor(
+    public readonly x: number,
+    public readonly y: number,
+  ) {}                    // déclare ET assigne x et y automatiquement
+}
+const p = new Point(1, 2);
+p.x = 5;                  // Erreur : readonly`,
+          note: {
+            fr: `Préfixer un paramètre de constructor par un modificateur (public/private/readonly) déclare le champ et l'assigne en une seule ligne — élimine le boilerplate this.x = x.`,
+            en: `Prefixing a constructor parameter with a modifier (public/private/readonly) declares the field and assigns it in one line — eliminates the this.x = x boilerplate.`,
+          },
+        },
+        {
+          id: 'ts-class-abstract',
+          title: { fr: 'Classes abstraites', en: 'Abstract classes' },
+          code: `abstract class Forme {
+  abstract aire(): number;         // pas d'implémentation ici
+  decrire() { return \`Aire: \${this.aire()}\`; }  // méthode concrète partagée
+}
+class Carre extends Forme {
+  constructor(private cote: number) { super(); }
+  aire() { return this.cote ** 2; }   // obligatoire : sinon erreur
+}
+new Forme();    // Erreur : impossible d'instancier une classe abstraite`,
+          note: {
+            fr: `abstract interdit l'instanciation directe et force chaque sous-classe à implémenter les méthodes abstraites, tout en partageant la logique concrète commune (decrire).`,
+            en: `abstract forbids direct instantiation and forces every subclass to implement the abstract methods, while sharing common concrete logic (decrire).`,
+          },
+        },
+        {
+          id: 'ts-class-implements',
+          title: { fr: 'implements vs extends', en: 'implements vs extends' },
+          code: `interface Sauvegardable { sauvegarder(): void; }
+
+class Document implements Sauvegardable {   // respecte le contrat, pas d'héritage
+  sauvegarder() { console.log('sauvegardé'); }
+}
+class Rapport extends Document { }           // extends : hérite de l'implémentation`,
+          note: {
+            fr: `implements vérifie qu'une classe respecte la forme d'une interface sans rien hériter (pas de code partagé) ; extends hérite d'une classe concrète, y compris son comportement.`,
+            en: `implements checks that a class matches an interface's shape without inheriting anything (no shared code); extends inherits from a concrete class, including its behavior.`,
           },
         },
       ],
@@ -580,6 +696,20 @@ const vrai = Number("42");                // number, pour de vrai`,
           note: {
             fr: `En JavaScript on peut lancer n'importe quelle valeur, pas seulement des Error : TS type donc e en unknown. Le réflexe \`instanceof Error\` avant d'accéder à .message évite un second crash dans le handler d'erreur.`,
             en: `JavaScript lets you throw any value, not just Errors: TS therefore types e as unknown. The \`instanceof Error\` reflex before touching .message avoids a second crash inside the error handler.`,
+          },
+        },
+        {
+          id: 'ts-declare-module',
+          title: { fr: 'Déclarations ambiantes : declare & .d.ts', en: 'Ambient declarations: declare & .d.ts' },
+          code: `// global.d.ts — types pour une lib JS sans typage
+declare module "legacy-lib" {
+  export function init(config: { debug: boolean }): void;
+}
+// utilisation normale ensuite :
+import { init } from "legacy-lib";`,
+          note: {
+            fr: `declare module décrit la forme d'un module dont TypeScript n'a pas les types (lib JS pure, asset importé) sans générer de code ; les fichiers .d.ts ne contiennent que des types, jamais d'implémentation.`,
+            en: `declare module describes the shape of a module TypeScript has no types for (plain JS lib, imported asset) without emitting code; .d.ts files contain only types, never implementation.`,
           },
         },
       ],

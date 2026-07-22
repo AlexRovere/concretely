@@ -82,6 +82,21 @@ X-RateLimit-Remaining: 0 # convention fréquente des API`,
             en: `Behind a load balancer: 500 = application bug, 502 = the app crashed or returned garbage, 503 = the app is down or in maintenance, 504 = the app is too slow. This directly points the debugging.`,
           },
         },
+        {
+          id: 'web-http-methods-safety',
+          title: { fr: 'Méthodes HTTP : sûres et/ou idempotentes', en: 'HTTP methods: safe and/or idempotent' },
+          code: `# Sûre (safe) = ne modifie rien côté serveur : GET, HEAD, OPTIONS
+# Idempotente = même résultat si rejouée 1 fois ou 100 fois
+#   GET, HEAD, PUT, DELETE, OPTIONS  -> idempotentes
+#   POST, PATCH                      -> PAS idempotentes
+curl -X PUT https://api.exemple.fr/users/42 -d '{"nom":"Ada"}'
+# Rejouer ce PUT 3 fois => même état final. Rejouer un POST 3 fois
+# créerait 3 ressources (sauf si l'API gère une Idempotency-Key).`,
+          note: {
+            fr: `Sûre = pas d'effet de bord observable (les GET traqués par un CDN restent "sûrs"). Idempotente = rejouable sans risque, ce qui légitime les retries automatiques sur GET/PUT/DELETE. Un POST de paiement rejoué sans protection double la facture — d'où le pattern Idempotency-Key sur les API de paiement.`,
+            en: `Safe = no observable side effect (a GET tracked by a CDN is still "safe"). Idempotent = replayable without risk, which is why automatic retries are safe on GET/PUT/DELETE. A replayed payment POST without protection double-charges — hence the Idempotency-Key pattern on payment APIs.`,
+          },
+        },
       ],
     },
     {
@@ -208,6 +223,25 @@ Access-Control-Allow-Credentials: true
           },
         },
         {
+          id: 'web-cors-preflight',
+          title: { fr: 'Preflight CORS : la requête OPTIONS invisible', en: 'CORS preflight: the invisible OPTIONS request' },
+          code: `# Le navigateur envoie OPTIONS AVANT la vraie requête si :
+#  - méthode hors GET/POST/HEAD (PUT, DELETE, PATCH...)
+#  - header custom (Authorization, X-Custom...)
+#  - Content-Type autre que form/text/plain
+OPTIONS /api/users HTTP/1.1
+Access-Control-Request-Method: DELETE
+Access-Control-Request-Headers: authorization
+# Réponse attendue :
+Access-Control-Allow-Methods: GET, POST, DELETE
+Access-Control-Allow-Headers: Authorization
+Access-Control-Max-Age: 86400   # met le preflight en cache 24h`,
+          note: {
+            fr: `Le preflight double chaque requête "non simple" d'un aller-retour OPTIONS invisible dans le code applicatif — visible seulement dans l'onglet réseau. Sans Access-Control-Max-Age, le navigateur le refait à chaque requête ; avec, il le met en cache jusqu'à la durée indiquée (plafonnée par le navigateur, souvent 2h max sur Chrome).`,
+            en: `Preflight doubles every "non-simple" request with an invisible OPTIONS round trip — invisible in application code, visible only in the network tab. Without Access-Control-Max-Age, the browser repeats it every time; with it, the browser caches the result up to that duration (capped by the browser, often 2h max on Chrome).`,
+          },
+        },
+        {
           id: 'web-resp-content-disposition',
           title: { fr: 'Content-Disposition : afficher ou télécharger', en: 'Content-Disposition: display or download' },
           code: `# Forcer le téléchargement avec un nom de fichier
@@ -285,6 +319,20 @@ Vary: Accept-Language, Cookie  # version FR vs EN, etc.
           note: {
             fr: `Vary dit au cache d'indexer la réponse par certains headers. Oublier Vary: Accept-Encoding peut servir du gzip à un client qui ne le décode pas. Vary: Cookie rend en pratique la réponse incachable en partagé.`,
             en: `Vary tells caches to key the response on certain headers. Forgetting Vary: Accept-Encoding can serve gzip to a client that cannot decode it. Vary: Cookie effectively makes the response uncacheable in shared caches.`,
+          },
+        },
+        {
+          id: 'web-cache-compression',
+          title: { fr: 'Compression : Content-Encoding et Accept-Encoding', en: 'Compression: Content-Encoding and Accept-Encoding' },
+          code: `# Le client annonce ce qu'il sait décoder
+Accept-Encoding: gzip, br, deflate
+# Le serveur choisit et le déclare
+Content-Encoding: br
+Vary: Accept-Encoding   # sinon un cache peut servir du br à qui ne le lit pas
+curl -H "Accept-Encoding: gzip" -i https://exemple.fr/app.js`,
+          note: {
+            fr: `br (Brotli) compresse mieux que gzip mais coûte plus de CPU serveur ; beaucoup d'infra ne l'active qu'en statique pré-compressé. Sans Vary: Accept-Encoding, un cache/CDN partagé peut mémoriser une réponse compressée et la resservir telle quelle à un client qui ne sait pas la décoder.`,
+            en: `br (Brotli) compresses better than gzip but costs more server CPU; a lot of setups only enable it for pre-compressed static assets. Without Vary: Accept-Encoding, a shared cache/CDN can store a compressed response and serve it as-is to a client that can't decode it.`,
           },
         },
         {

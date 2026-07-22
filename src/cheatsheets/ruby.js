@@ -83,6 +83,35 @@ puts 'Pas ici : #{nom}'          # guillemets simples = littéral`,
             en: `#{} interpolation only works inside double quotes (or heredocs). It calls to_s on the result automatically.`,
           },
         },
+        {
+          id: 'ruby-gemfile-bundler',
+          title: { fr: 'Gemfile & Bundler', en: 'Gemfile & Bundler' },
+          code: `# Gemfile
+source "https://rubygems.org"
+gem "rails", "~> 7.1"
+group :test do
+  gem "rspec"
+end
+# puis : bundle install && bundle exec rspec`,
+          note: {
+            fr: `Le Gemfile déclare les dépendances du projet et leurs contraintes de version (~> pour un patch/minor compatible) ; bundle exec garantit d'exécuter avec exactement les gems résolues par Bundler, pas celles installées globalement.`,
+            en: `The Gemfile declares the project's dependencies and their version constraints (~> for a compatible patch/minor); bundle exec guarantees running with exactly the gems Bundler resolved, not whatever is installed globally.`,
+          },
+        },
+        {
+          id: 'ruby-keyword-arguments',
+          title: { fr: 'Arguments par mot-clé : requis, défaut, **kwargs', en: 'Keyword arguments: required, default, **kwargs' },
+          code: `def creer(nom:, age: 18, **options)   # nom requis, age optionnel
+  puts "#{nom} (#{age}) #{options}"
+end
+creer(nom: "Ada")                     # age: 18, options: {}
+creer(nom: "Ada", ville: "Lyon")      # options: {ville: "Lyon"}
+# creer()                             # ArgumentError : missing keyword: :nom`,
+          note: {
+            fr: `Un paramètre nom: sans valeur par défaut est REQUIS — l'appeler sans lève ArgumentError, contrairement à un simple hash en dernier argument. **options capture tout mot-clé supplémentaire non déclaré explicitement.`,
+            en: `A nom: parameter with no default is REQUIRED — calling without it raises ArgumentError, unlike a plain trailing hash. **options captures any extra keyword not explicitly declared.`,
+          },
+        },
       ],
     },
     {
@@ -162,6 +191,24 @@ pairs, impairs = [1, 2, 3, 4].partition(&:even?)
           note: {
             fr: `tally compte les occurrences en une ligne, group_by indexe par le résultat du bloc, partition coupe en deux tableaux selon un prédicat.`,
             en: `tally counts occurrences in one line, group_by indexes by the block result, partition splits into two arrays based on a predicate.`,
+          },
+        },
+        {
+          id: 'ruby-enumerable-mixin',
+          title: { fr: 'include Enumerable : map/select gratuits', en: 'include Enumerable: free map/select' },
+          code: `class Playlist
+  include Enumerable
+  def initialize(*titres) = @titres = titres
+  def each
+    @titres.each { |t| yield t }   # seule méthode à fournir
+  end
+end
+pl = Playlist.new("a", "b", "c")
+pl.map(&:upcase)          # ["A", "B", "C"] — offert par Enumerable
+pl.select { |t| t > "a" } # ["b", "c"]`,
+          note: {
+            fr: `Enumerable ajoute map, select, sort, reduce, min, include?... à toute classe qui fournit each — le même mécanisme que Comparable avec <=> : un seul contrat, une API entière.`,
+            en: `Enumerable adds map, select, sort, reduce, min, include?... to any class providing each — the same mechanism as Comparable with <=>: one contract, an entire API.`,
           },
         },
       ],
@@ -332,6 +379,50 @@ end`,
           note: {
             fr: `method_missing intercepte les appels inconnus (délégation, DSL). Toujours définir respond_to_missing? en miroir, sinon respond_to? ment et method(:x) échoue.`,
             en: `method_missing intercepts unknown calls (delegation, DSLs). Always define respond_to_missing? to match, otherwise respond_to? lies and method(:x) fails.`,
+          },
+        },
+        {
+          id: 'ruby-struct',
+          title: { fr: 'Struct.new : value objects rapides', en: 'Struct.new: quick value objects' },
+          code: `Point = Struct.new(:x, :y) do
+  def distance_zero = Math.sqrt(x**2 + y**2)
+end
+p = Point.new(3, 4)
+p.x                   # 3
+p.distance_zero       # 5.0
+p == Point.new(3, 4)  # true — égalité par valeur générée`,
+          note: {
+            fr: `Struct.new génère une classe avec accessors, initialize, == et to_a/to_h en une ligne — idéal pour un petit objet de données sans passer par une classe complète.`,
+            en: `Struct.new generates a class with accessors, initialize, == and to_a/to_h in one line — ideal for a small data object without writing a full class.`,
+          },
+        },
+        {
+          id: 'ruby-comparable',
+          title: { fr: 'Comparable & <=>', en: 'Comparable & <=>' },
+          code: `class Version
+  include Comparable
+  attr_reader :num
+  def initialize(num) = @num = num
+  def <=>(autre) = num <=> autre.num  # le seul contrat à fournir
+end
+Version.new(2) > Version.new(1)        # true
+[Version.new(3), Version.new(1)].sort  # trié via <=>`,
+          note: {
+            fr: `Implémentez uniquement <=> (retourne -1, 0 ou 1) et include Comparable offre gratuitement <, >, <=, >=, ==, between? et sort. Un seul contrat, toute une API de comparaison.`,
+            en: `Implement only <=> (returning -1, 0 or 1) and include Comparable gives you <, >, <=, >=, ==, between? and sort for free. One contract, a whole comparison API.`,
+          },
+        },
+        {
+          id: 'ruby-equality',
+          title: { fr: '== vs eql? vs equal?', en: '== vs eql? vs equal?' },
+          code: `a = "abc"; b = "abc"
+a == b       # true  — égalité de VALEUR
+a.eql?(b)    # true  — comme == mais aussi le type (1 != 1.0 avec eql?)
+a.equal?(b)  # false — même OBJET en mémoire ? non, deux instances
+a.equal?(a)  # true`,
+          note: {
+            fr: `== compare des valeurs (redéfinissable), eql? est utilisé par Hash pour la clé (plus strict sur le type), equal? compare l'identité d'objet (comme object_id). Redéfinir == sans redéfinir hash casse l'utilisation en clé de Hash.`,
+            en: `== compares values (overridable), eql? is what Hash uses for keys (stricter on type), equal? compares object identity (like object_id). Overriding == without overriding hash breaks usage as a Hash key.`,
           },
         },
       ],
@@ -520,6 +611,66 @@ end`,
           note: {
             fr: `case/in (Ruby 3.x) destructure hashes et arrays en profondeur avec vérification de type et binding de variables. Sans clause in correspondante ni else, NoMatchingPatternError est levée (NoMatchingPatternKeyError est un cas plus spécifique, pour une clé de hash requise absente lors du deconstruct).`,
             en: `case/in (Ruby 3.x) deeply destructures hashes and arrays with type checks and variable binding. With no matching in clause and no else, NoMatchingPatternError is raised (NoMatchingPatternKeyError is a more specific case, for a required hash key missing during deconstruct).`,
+          },
+        },
+      ],
+    },
+    {
+      id: 'ruby-tests',
+      title: { fr: 'Tests', en: 'Tests' },
+      items: [
+        {
+          id: 'ruby-rspec-basics',
+          title: { fr: 'RSpec : describe, it, expect', en: 'RSpec: describe, it, expect' },
+          code: `RSpec.describe Compte do
+  describe "#retirer" do
+    it "diminue le solde du montant retiré" do
+      compte = Compte.new(100)
+      compte.retirer(30)
+      expect(compte.solde).to eq(70)
+    end
+    it "refuse un retrait supérieur au solde" do
+      expect { Compte.new(10).retirer(50) }.to raise_error(StockInsuffisantError)
+    end
+  end
+end`,
+          note: {
+            fr: `describe groupe les exemples par classe/méthode, it décrit un comportement, expect(...).to matcher vérifie le résultat. raise_error teste qu'un bloc lève bien l'exception attendue.`,
+            en: `describe groups examples by class/method, it describes one behavior, expect(...).to matcher checks the outcome. raise_error checks that a block actually raises the expected exception.`,
+          },
+        },
+        {
+          id: 'ruby-rspec-hooks-doubles',
+          title: { fr: 'Hooks & doubles (before, instance_double)', en: 'Hooks & doubles (before, instance_double)' },
+          code: `RSpec.describe Notifieur do
+  let(:client) { instance_double(EmailClient) }  # double typé, vérifié
+  subject { Notifieur.new(client) }
+  before { allow(client).to receive(:envoyer).and_return(true) }
+  it "délègue l'envoi au client" do
+    subject.notifier("ada@ex.com")
+    expect(client).to have_received(:envoyer)
+  end
+end`,
+          note: {
+            fr: `before s'exécute avant chaque exemple ; instance_double vérifie que la méthode stubée existe réellement sur la classe réelle, évitant les faux tests qui passent alors que l'API a changé.`,
+            en: `before runs before each example; instance_double checks the stubbed method actually exists on the real class, preventing false-positive tests that pass after the API changed.`,
+          },
+        },
+        {
+          id: 'ruby-minitest',
+          title: { fr: "Minitest : l'alternative sobre", en: 'Minitest: the lean alternative' },
+          code: `require "minitest/autorun"
+class CompteTest < Minitest::Test
+  def test_retrait_diminue_le_solde
+    compte = Compte.new(100)
+    compte.retirer(30)
+    assert_equal 70, compte.solde
+  end
+end
+# ruby compte_test.rb    — ou : rake test`,
+          note: {
+            fr: `Minitest utilise de simples assert_* en style xUnit, sans DSL describe/it : plus proche de Ruby pur, inclus dans la stdlib, préféré pour les libs légères là où RSpec est le standard des applis Rails.`,
+            en: `Minitest uses plain xUnit-style assert_* calls, no describe/it DSL: closer to plain Ruby, bundled in the stdlib, preferred for lightweight libs where RSpec is the Rails-app standard.`,
           },
         },
       ],

@@ -177,6 +177,32 @@ reg = Ridge(alpha=1.0).fit(X_tr, y_tr)`,
             en: `A clear train ≫ test gap signals overfitting: the model memorized noise. Fixes: more data, less complexity (depth), or regularization (Ridge/L2, Lasso/L1) that curbs the weights. The goal is generalization, not the training score.`,
           },
         },
+        {
+          id: 'py-ml-bias-variance',
+          title: { fr: 'Compromis biais-variance', en: 'Bias-variance tradeoff' },
+          code: `# Erreur totale ≈ biais² + variance + bruit irréductible
+# Biais fort (sous-apprentissage) : modèle trop simple, rate le motif
+#   -> ex: régression linéaire sur des données clairement non-linéaires
+# Variance forte (surapprentissage) : modèle trop sensible aux données
+#   -> ex: arbre de décision très profond, sans limite
+# Complexifier le modèle réduit le biais MAIS augmente la variance`,
+          note: {
+            fr: `Le compromis biais-variance explique pourquoi complexifier un modèle ne fait pas que l'améliorer : au-delà d'un certain point, le gain en biais se paie en variance (perte de généralisation). C'est le fondement théorique derrière le constat pratique du surapprentissage.`,
+            en: `The bias-variance tradeoff explains why making a model more complex doesn't just improve it: past a point, the bias gain is paid for by a variance loss (worse generalization). It is the theoretical foundation behind the practical symptom of overfitting.`,
+          },
+        },
+        {
+          id: 'py-ml-roc-auc',
+          title: { fr: 'Courbe ROC & AUC', en: 'ROC curve & AUC' },
+          code: `from sklearn.metrics import roc_auc_score, roc_curve
+proba = model.predict_proba(X_te)[:, 1]     # probabilité de la classe positive
+fpr, tpr, seuils = roc_curve(y_te, proba)
+print(roc_auc_score(y_te, proba))           # 0.5 = aléatoire, 1.0 = parfait`,
+          note: {
+            fr: `La courbe ROC trace le taux de vrais positifs contre le taux de faux positifs à TOUS les seuils possibles ; l'AUC résume cette courbe en un score unique, indépendant du seuil choisi — idéal pour comparer des modèles avant de fixer un seuil métier.`,
+            en: `The ROC curve plots the true positive rate against the false positive rate at EVERY possible threshold; AUC summarizes that curve into a single threshold-independent score — ideal for comparing models before picking a business threshold.`,
+          },
+        },
       ],
     },
     {
@@ -231,6 +257,17 @@ clf.support_vectors_          # points qui définissent la frontière
             en: `An SVM finds the boundary that maximizes the margin between classes; only the nearby points (support vectors) matter. The RBF kernel handles non-linearity. Powerful on medium-sized data, but requires standardized features and scales poorly to large volumes.`,
           },
         },
+        {
+          id: 'py-ml-naive-bayes',
+          title: { fr: 'Naive Bayes', en: 'Naive Bayes' },
+          code: `from sklearn.naive_bayes import MultinomialNB
+nb = MultinomialNB().fit(X_tr, y_tr)    # ex: comptage de mots pour du spam
+nb.predict_proba(X_te[:1])              # suppose les features indépendantes`,
+          note: {
+            fr: `Applique le théorème de Bayes en supposant (naïvement) que les features sont indépendantes entre elles sachant la classe ; hypothèse fausse en pratique mais le modèle reste étonnamment efficace, rapide à entraîner, et une baseline classique en classification de texte (spam, sentiment).`,
+            en: `Applies Bayes' theorem assuming (naively) that features are independent of each other given the class; the assumption is false in practice but the model stays surprisingly effective, fast to train, and a classic baseline for text classification (spam, sentiment).`,
+          },
+        },
       ],
     },
     {
@@ -274,6 +311,18 @@ km.predict([[1.0, 2.0]])   # cluster d'un point inédit`,
           note: {
             fr: `Apprentissage NON supervisé : aucune étiquette y, on cherche des groupes naturels (segmentation client, compression). On fixe k à l'avance (méthode du coude pour le choisir). Très sensible à l'échelle — standardisez les features d'abord.`,
             en: `UNsupervised learning: no labels y, you look for natural groups (customer segmentation, compression). You fix k in advance (elbow method to pick it). Very sensitive to scale — standardize features first.`,
+          },
+        },
+        {
+          id: 'py-ml-pca',
+          title: { fr: 'PCA (réduction de dimension)', en: 'PCA (dimensionality reduction)' },
+          code: `from sklearn.decomposition import PCA
+pca = PCA(n_components=2).fit(X_tr)     # 2 axes qui capturent le + de variance
+X_reduit = pca.transform(X_tr)
+print(pca.explained_variance_ratio_)    # % de variance expliquée par axe`,
+          note: {
+            fr: `PCA projette les données sur de nouveaux axes non corrélés (composantes principales), ordonnés par variance expliquée décroissante ; réduit la dimension pour visualiser, accélérer l'entraînement ou limiter le bruit — au prix de composantes moins interprétables que les features d'origine.`,
+            en: `PCA projects the data onto new, uncorrelated axes (principal components) ordered by decreasing explained variance; it reduces dimensionality to visualize, speed up training, or cut noise — at the cost of components being less interpretable than the original features.`,
           },
         },
       ],
@@ -334,6 +383,17 @@ X_enc = pre.fit_transform(df)   # "ville" -> colonnes 0/1`,
           note: {
             fr: `Les modèles ne consomment que des nombres : une colonne texte (« ville ») doit être encodée. OneHotEncoder crée une colonne 0/1 par catégorie (aucun ordre imposé, contrairement à un entier). ColumnTransformer applique le bon encodage par colonne ; handle_unknown="ignore" évite le crash sur une catégorie inédite en prod.`,
             en: `Models consume only numbers: a text column ("city") must be encoded. OneHotEncoder creates one 0/1 column per category (no artificial order, unlike a plain integer). ColumnTransformer applies the right encoding per column; handle_unknown="ignore" avoids crashing on an unseen category in prod.`,
+          },
+        },
+        {
+          id: 'py-ml-imbalanced',
+          title: { fr: 'Classes déséquilibrées', en: 'Imbalanced classes' },
+          code: `from sklearn.linear_model import LogisticRegression
+clf = LogisticRegression(class_weight="balanced").fit(X_tr, y_tr)
+# alternative : sur-échantillonner la classe minoritaire (SMOTE) avant fit`,
+          note: {
+            fr: `Sur des classes déséquilibrées, un modèle non ajusté prédit presque toujours la classe majoritaire ; class_weight="balanced" pénalise plus fortement les erreurs sur la classe rare, et le sur-échantillonnage (SMOTE) ou sous-échantillonnage rééquilibre les données avant l'entraînement.`,
+            en: `On imbalanced classes, an unadjusted model almost always predicts the majority class; class_weight="balanced" penalizes errors on the rare class more heavily, and oversampling (SMOTE) or undersampling rebalances the data before training.`,
           },
         },
       ],

@@ -402,6 +402,99 @@ onMounted(() => {
       ],
     },
     {
+      id: 'transitions',
+      title: { fr: 'Transitions & Teleport', en: 'Transitions & Teleport' },
+      items: [
+        {
+          id: 'vue-transition',
+          title: { fr: "Transition : animer l'entrée/sortie", en: 'Transition: animate enter/leave' },
+          code: `<Transition name="fondu">
+  <p v-if="visible">Contenu</p>
+</Transition>
+<style>
+.fondu-enter-active, .fondu-leave-active { transition: opacity 0.3s; }
+.fondu-enter-from, .fondu-leave-to { opacity: 0; }
+</style>`,
+          note: {
+            fr: `Transition applique automatiquement des classes CSS (name-enter-from, name-enter-active…) autour d'un v-if/v-show pour animer l'entrée et la sortie d'un seul élément.`,
+            en: `Transition automatically applies CSS classes (name-enter-from, name-enter-active…) around a v-if/v-show to animate a single element's enter and leave.`,
+          },
+        },
+        {
+          id: 'vue-transition-group',
+          title: { fr: 'TransitionGroup : animer une liste', en: 'TransitionGroup: animate a list' },
+          code: `<TransitionGroup name="liste" tag="ul">
+  <li v-for="t in taches" :key="t.id">{{ t.titre }}</li>
+</TransitionGroup>`,
+          note: {
+            fr: `Contrairement à Transition (un seul élément), TransitionGroup anime l'ajout/suppression/réordonnancement d'une liste et nécessite tag + :key stable sur chaque enfant.`,
+            en: `Unlike Transition (a single element), TransitionGroup animates the add/remove/reorder of a list and requires tag + a stable :key on each child.`,
+          },
+        },
+        {
+          id: 'vue-teleport',
+          title: { fr: 'Teleport : sortir du DOM parent', en: 'Teleport: escape the parent DOM' },
+          code: `<button @click="ouvert = true">Ouvrir</button>
+<Teleport to="body">
+  <div v-if="ouvert" class="modale">Contenu de la modale</div>
+</Teleport>`,
+          note: {
+            fr: `Teleport déplace le rendu vers un autre nœud du DOM (souvent body) tout en gardant le composant dans l'arbre logique Vue — indispensable pour les modales/tooltips qui doivent échapper à un parent avec overflow:hidden ou un z-index limité.`,
+            en: `Teleport renders into a different DOM node (often body) while keeping the component in Vue's logical tree — essential for modals/tooltips that need to escape a parent with overflow:hidden or a limited z-index.`,
+          },
+        },
+      ],
+    },
+    {
+      id: 'app-api',
+      title: { fr: 'API application & extensions', en: 'App API & extensions' },
+      items: [
+        {
+          id: 'vue-createapp',
+          title: { fr: 'createApp, app.use, app.component', en: 'createApp, app.use, app.component' },
+          code: `import { createApp } from 'vue'
+import App from './App.vue'
+import routeur from './routeur'
+
+const app = createApp(App)
+app.use(routeur)                      // installe un plugin
+app.component('MonBouton', MonBouton) // enregistrement global
+app.mount('#app')`,
+          note: {
+            fr: `createApp crée une instance d'application isolée (utile pour les tests, plusieurs apps sur une page) ; app.use installe un plugin (router, store), app.component enregistre un composant utilisable partout sans import.`,
+            en: `createApp creates an isolated app instance (handy for tests, multiple apps on one page); app.use installs a plugin (router, store), app.component registers a component usable everywhere without importing it.`,
+          },
+        },
+        {
+          id: 'vue-custom-directive',
+          title: { fr: 'Directive personnalisée', en: 'Custom directive' },
+          code: `const vFocus = {
+  mounted: (el) => el.focus(),   // hook appelé quand l'élément est inséré
+}
+// enregistrement global : app.directive('focus', vFocus)
+// utilisation : <input v-focus>`,
+          note: {
+            fr: `Une directive personnalisée manipule directement le DOM via des hooks (mounted, updated…) — utile pour des besoins impératifs que la réactivité ne couvre pas naturellement (focus, tooltip tiers, mesures).`,
+            en: `A custom directive manipulates the DOM directly via hooks (mounted, updated…) — useful for imperative needs that reactivity doesn't naturally cover (focus, third-party tooltip, measurements).`,
+          },
+        },
+        {
+          id: 'vue-async-suspense',
+          title: { fr: 'defineAsyncComponent & Suspense', en: 'defineAsyncComponent & Suspense' },
+          code: `const Lourd = defineAsyncComponent(() => import('./Lourd.vue'))
+// avec état de chargement pendant le fetch du chunk :
+<Suspense>
+  <template #default><Lourd /></template>
+  <template #fallback><Spinner /></template>
+</Suspense>`,
+          note: {
+            fr: `defineAsyncComponent charge un composant à la demande (code-splitting) ; Suspense affiche un fallback pendant que le composant (ou ses setup async) se résout, évitant un écran vide.`,
+            en: `defineAsyncComponent loads a component on demand (code-splitting); Suspense shows a fallback while the component (or its async setup) resolves, avoiding a blank screen.`,
+          },
+        },
+      ],
+    },
+    {
       id: 'ecosystem',
       title: { fr: 'Router & Pinia (essentiel)', en: 'Router & Pinia (essentials)' },
       items: [

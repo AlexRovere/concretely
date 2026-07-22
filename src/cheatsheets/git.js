@@ -304,6 +304,28 @@ export default {
             en: `Since Git 2.23, switching to a branch that only exists on the remote automatically creates the local one with tracking set up.`,
           },
         },
+        {
+          id: 'git-submodules',
+          title: { fr: 'Sous-modules : un repo dans un repo', en: 'Submodules: a repo inside a repo' },
+          code: `git submodule add https://github.com/org/lib.git vendor/lib
+git clone --recurse-submodules https://github.com/org/projet.git
+git submodule update --init --recursive   # sur un clone déjà fait`,
+          note: {
+            fr: `Un sous-module épingle un AUTRE dépôt à un commit précis dans un sous-dossier : le parent ne suit qu'un pointeur, pas le contenu. Piège classique : cloner sans --recurse-submodules laisse les dossiers vides, et un git pull sur le parent ne met JAMAIS à jour le sous-module tout seul.`,
+            en: `A submodule pins ANOTHER repo to a precise commit inside a subfolder: the parent only tracks a pointer, not the content. Classic trap: cloning without --recurse-submodules leaves the folders empty, and a git pull on the parent NEVER updates the submodule by itself.`,
+          },
+        },
+        {
+          id: 'git-remote-auth',
+          title: { fr: 'Authentification remote : SSH vs token HTTPS', en: 'Remote authentication: SSH vs HTTPS token' },
+          code: `git remote set-url origin git@github.com:org/projet.git      # SSH : clé locale
+git remote set-url origin https://github.com/org/projet.git  # HTTPS : token
+git config --global credential.helper osxkeychain   # ou 'cache', 'store'`,
+          note: {
+            fr: `En SSH, l'identité repose sur une paire de clés (~/.ssh) enregistrée une fois sur GitHub ; en HTTPS, sur un token personnel (les mots de passe classiques sont désactivés partout). credential.helper évite de retaper le token à chaque push en le stockant dans le trousseau du système.`,
+            en: `Over SSH, identity relies on a key pair (~/.ssh) registered once on GitHub; over HTTPS, on a personal access token (plain passwords are disabled everywhere now). credential.helper avoids retyping the token on every push by storing it in the system keychain.`,
+          },
+        },
       ],
     },
     {
@@ -422,6 +444,42 @@ export default {
           note: {
             fr: `Un format machine-lisible : feat déclenche une version mineure, fix un patch, ! une majeure — les changelogs et le versioning (semantic-release) se génèrent tout seuls. Le scope entre parenthèses situe la zone touchée.`,
             en: `A machine-readable format: feat triggers a minor version, fix a patch, ! a major — changelogs and versioning (semantic-release) generate themselves. The scope in parentheses pins down the touched area.`,
+          },
+        },
+        {
+          id: 'git-gitattributes',
+          title: { fr: '.gitattributes : fins de ligne et fichiers générés', en: '.gitattributes: line endings and generated files' },
+          code: `# .gitattributes à la racine du repo
+* text=auto                    # normalise LF dans le dépôt, CRLF sous Windows si besoin
+*.png binary                   # jamais de conversion sur du binaire
+dist/** linguist-generated=true  # exclu des stats de langage et du diff par défaut GitHub`,
+          note: {
+            fr: `Sans .gitattributes, un contributeur Windows peut committer des CRLF qui polluent chaque diff avec des changements de fin de ligne invisibles. text=auto laisse Git normaliser automatiquement ; linguist-generated masque le code généré des statistiques et de la review GitHub.`,
+            en: `Without .gitattributes, a Windows contributor can commit CRLF that pollute every diff with invisible line-ending changes. text=auto lets Git normalize automatically; linguist-generated hides generated code from GitHub's language stats and review view.`,
+          },
+        },
+        {
+          id: 'git-commit-signing',
+          title: { fr: 'Signer ses commits : -S et la vérification', en: 'Signing commits: -S and verification' },
+          code: `git config --global commit.gpgsign true       # signer automatiquement
+git config --global user.signingkey ABCD1234  # clé GPG (ou ssh-... pour SSH)
+git commit -S -m "fix: corrige la fuite mémoire"
+git log --show-signature -1                    # vérifier la signature`,
+          note: {
+            fr: `Un commit signé prouve cryptographiquement qu'il vient bien du détenteur de la clé, pas juste de quelqu'un ayant configuré le même user.name. GitHub/GitLab affichent un badge « Verified » — de plus en plus exigé sur les dépôts sensibles ou open source.`,
+            en: `A signed commit cryptographically proves it really came from the key's holder, not just anyone who set the same user.name. GitHub/GitLab show a "Verified" badge — increasingly required on sensitive or open-source repos.`,
+          },
+        },
+        {
+          id: 'git-hooks',
+          title: { fr: 'Git hooks : automatiser à chaque commit', en: 'Git hooks: automate on every commit' },
+          code: `# .git/hooks/pre-commit (rendu exécutable : chmod +x)
+#!/bin/sh
+npx eslint --quiet $(git diff --cached --name-only -- '*.js')
+# échec du script = commit bloqué`,
+          note: {
+            fr: `Un hook s'exécute automatiquement à une étape précise (pre-commit, pre-push, commit-msg) et peut bloquer l'action si le script échoue. .git/hooks n'est pas versionné par défaut : des outils comme Husky ou pre-commit le rendent partageable via le repo.`,
+            en: `A hook runs automatically at a specific step (pre-commit, pre-push, commit-msg) and can block the action if the script fails. .git/hooks isn't versioned by default: tools like Husky or pre-commit make it shareable through the repo.`,
           },
         },
       ],

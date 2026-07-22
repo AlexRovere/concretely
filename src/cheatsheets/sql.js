@@ -95,6 +95,32 @@ SELECT total / NULLIF(quantite, 0) FROM ventes; -- NULL si quantite = 0`,
             en: `NULL propagates: 1 + NULL = NULL, and NULL = NULL is never true (use IS NULL). COALESCE provides a fallback; NULLIF turns a trap value into NULL.`,
           },
         },
+        {
+          id: 'sql-union-all',
+          title: { fr: 'UNION vs UNION ALL', en: 'UNION vs UNION ALL' },
+          code: `SELECT ville FROM clients
+UNION
+SELECT ville FROM fournisseurs;      -- déduplique (tri implicite)
+-- même requête, sans dédoublonnage :
+SELECT ville FROM clients
+UNION ALL
+SELECT ville FROM fournisseurs;      -- garde les doublons, pas de tri`,
+          note: {
+            fr: `UNION combine deux résultats ET élimine les doublons, ce qui impose un tri ou un hachage coûteux sur l'ensemble complet. UNION ALL se contente de concaténer les lignes sans comparaison : nettement plus rapide, à utiliser dès qu'on sait qu'il n'y a pas de doublons ou qu'ils ne posent pas de problème.`,
+            en: `UNION combines two results AND removes duplicates, which forces an expensive sort or hash over the whole set. UNION ALL just concatenates rows with no comparison: noticeably faster, use it whenever duplicates are known to be absent or harmless.`,
+          },
+        },
+        {
+          id: 'sql-cast',
+          title: { fr: 'CAST et conversion de types', en: 'CAST and type conversion' },
+          code: `SELECT CAST('42' AS INTEGER) + 1;         -- SQL standard
+SELECT '42'::INTEGER + 1;                 -- raccourci PostgreSQL
+SELECT CAST(created_at AS DATE) FROM logs; -- tronque l'heure`,
+          note: {
+            fr: `SQL est typé : comparer ou calculer entre types différents échoue ou convertit implicitement selon des règles pas toujours intuitives (une chaîne '10' > '9' trie comme du texte, pas comme un nombre). CAST rend la conversion explicite et prévisible ; :: est un raccourci PostgreSQL non portable.`,
+            en: `SQL is typed: comparing or computing across different types either fails or implicitly converts following rules that aren't always intuitive (the string '10' > '9' sorts as text, not as a number). CAST makes the conversion explicit and predictable; :: is a non-portable PostgreSQL shortcut.`,
+          },
+        },
       ],
     },
     {
@@ -166,6 +192,20 @@ CROSS JOIN couleurs c;  -- 3 tailles × 4 couleurs = 12 lignes`,
           note: {
             fr: `Pas de condition ON : chaque ligne de gauche est combinée avec chaque ligne de droite. Utile pour générer des combinaisons ; dangereux par accident (un JOIN sans ON correct explose le nombre de lignes).`,
             en: `No ON condition: every left row is combined with every right row. Useful to generate combinations; dangerous by accident (a JOIN with a wrong ON explodes the row count).`,
+          },
+        },
+        {
+          id: 'sql-correlated-subquery',
+          title: { fr: 'Sous-requête corrélée vs scalaire', en: 'Correlated vs scalar subquery' },
+          code: `-- scalaire : indépendante, exécutée UNE fois
+SELECT (SELECT COUNT(*) FROM commandes) AS total;
+-- corrélée : référence la ligne externe, ré-exécutée PAR LIGNE
+SELECT u.nom,
+  (SELECT COUNT(*) FROM commandes c WHERE c.user_id = u.id) AS nb
+FROM users u;`,
+          note: {
+            fr: `Une sous-requête scalaire ne dépend de rien à l'extérieur : elle s'exécute une seule fois. Une sous-requête corrélée référence une colonne de la requête externe : le moteur la ré-évalue potentiellement pour chaque ligne, ce qui peut coûter cher sans le bon index — souvent réécrivable en JOIN plus rapide.`,
+            en: `A scalar subquery depends on nothing outside it: it runs once. A correlated subquery references a column from the outer query: the engine potentially re-evaluates it for every row, which can get expensive without the right index — often rewritable as a faster JOIN.`,
           },
         },
       ],
@@ -408,6 +448,32 @@ SELECT * FROM arbre ORDER BY niveau;`,
           note: {
             fr: `Le seul moyen en SQL standard de parcourir un arbre de profondeur inconnue (organigramme, catégories, graphe). L'ancrage démarre, la partie récursive s'exécute jusqu'à ne plus produire de lignes — attention aux cycles, qui bouclent à l'infini.`,
             en: `The only standard-SQL way to walk a tree of unknown depth (org chart, categories, graph). The anchor starts, the recursive part runs until it yields no more rows — beware of cycles, which loop forever.`,
+          },
+        },
+        {
+          id: 'sql-constraints',
+          title: { fr: 'Contraintes : PRIMARY KEY, FOREIGN KEY, UNIQUE, CHECK', en: 'Constraints: PRIMARY KEY, FOREIGN KEY, UNIQUE, CHECK' },
+          code: `CREATE TABLE commandes (
+  id SERIAL PRIMARY KEY,
+  user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  reference TEXT UNIQUE,
+  montant NUMERIC(10,2) CHECK (montant >= 0)
+);`,
+          note: {
+            fr: `PRIMARY KEY identifie chaque ligne, FOREIGN KEY garantit qu'une référence pointe vers une ligne existante, UNIQUE interdit les doublons, CHECK valide une condition arbitraire. ON DELETE CASCADE/RESTRICT/SET NULL décide quoi faire des enfants quand le parent est supprimé — un choix à faire consciemment, pas par défaut.`,
+            en: `PRIMARY KEY identifies each row, FOREIGN KEY guarantees a reference points to an existing row, UNIQUE forbids duplicates, CHECK validates an arbitrary condition. ON DELETE CASCADE/RESTRICT/SET NULL decides what happens to children when the parent is deleted — a choice to make consciously, not by default.`,
+          },
+        },
+        {
+          id: 'sql-isolation-levels',
+          title: { fr: "Niveaux d'isolation : READ COMMITTED vs SERIALIZABLE", en: 'Isolation levels: READ COMMITTED vs SERIALIZABLE' },
+          code: `BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+SELECT solde FROM comptes WHERE id = 1;   -- lu, puis recalculé...
+UPDATE comptes SET solde = solde - 100 WHERE id = 1;
+COMMIT;  -- échoue et doit être rejouée si une autre transaction a interféré`,
+          note: {
+            fr: `READ COMMITTED (défaut PostgreSQL) évite les dirty reads mais autorise les phantom reads (une autre transaction insère une ligne qui apparaît entre deux lectures). SERIALIZABLE empêche tout ça mais peut faire échouer une transaction en conflit — au code de la rejouer. Plus l'isolation est stricte, plus le débit chute.`,
+            en: `READ COMMITTED (PostgreSQL's default) prevents dirty reads but allows phantom reads (another transaction inserts a row that shows up between two reads). SERIALIZABLE blocks all of that but can abort a conflicting transaction — the app must retry it. The stricter the isolation, the lower the throughput.`,
           },
         },
       ],

@@ -87,6 +87,47 @@ tree -a -I node_modules                 # cachés inclus, ignore un dossier`,
       ],
     },
     {
+      id: 'lx-packages',
+      title: { fr: 'Gestion de paquets', en: 'Package management' },
+      items: [
+        {
+          id: 'lx-pkg-install-remove',
+          title: { fr: 'Installer / supprimer un paquet', en: 'Install / remove a package' },
+          code: `sudo apt install ripgrep      # Debian/Ubuntu
+sudo dnf install ripgrep      # Fedora/RHEL récents
+sudo apt remove ripgrep       # supprime le paquet, garde la config
+sudo apt purge ripgrep        # supprime aussi les fichiers de config`,
+          note: {
+            fr: `apt (Debian/Ubuntu) et dnf (Fedora/RHEL, successeur de yum) sont les deux gestionnaires les plus courants ; les commandes se ressemblent mais les noms de paquets diffèrent parfois d'une distribution à l'autre. remove garde la config résiduelle, purge fait place nette.`,
+            en: `apt (Debian/Ubuntu) and dnf (Fedora/RHEL, yum's successor) are the two most common managers; commands look similar but package names sometimes differ between distros. remove keeps leftover config, purge wipes everything.`,
+          },
+        },
+        {
+          id: 'lx-pkg-update-upgrade',
+          title: { fr: 'Mettre à jour le système', en: 'Update the system' },
+          code: `sudo apt update && sudo apt upgrade   # rafraîchit la liste, puis met à jour
+sudo apt autoremove                   # nettoie les dépendances orphelines
+sudo dnf upgrade --refresh            # équivalent dnf en une commande`,
+          note: {
+            fr: `apt update ne met rien à jour : il télécharge juste la liste des versions disponibles ; apt upgrade installe ensuite les nouvelles versions. Oublier update fait upgrader avec une liste périmée — le duo va toujours ensemble.`,
+            en: `apt update doesn't upgrade anything: it just downloads the list of available versions; apt upgrade then installs the new versions. Forgetting update means upgrading against a stale list — the pair always goes together.`,
+          },
+        },
+        {
+          id: 'lx-pkg-query',
+          title: { fr: 'Chercher et lister les paquets installés', en: 'Search and list installed packages' },
+          code: `apt list --installed | grep nginx    # Debian/Ubuntu : paquets installés
+dpkg -L nginx                        # quels fichiers appartiennent au paquet
+rpm -qa | grep nginx                 # équivalent Red Hat/Fedora
+apt show nginx                       # description, version, dépendances`,
+          note: {
+            fr: `dpkg/rpm répondent à « quel paquet possède ce fichier » ou « ce paquet est-il installé », en dessous du gestionnaire de haut niveau (apt/dnf) qui gère lui les dépendances et les dépôts distants. Utile pour diagnostiquer un binaire qui semble venir de nulle part.`,
+            en: `dpkg/rpm answer "which package owns this file" or "is this package installed", underneath the higher-level manager (apt/dnf) that handles dependencies and remote repositories. Useful for tracking down a binary that seems to come from nowhere.`,
+          },
+        },
+      ],
+    },
+    {
       id: 'search',
       title: { fr: 'Chercher', en: 'Search' },
       items: [
@@ -135,6 +176,18 @@ command -v node      # version portable (scripts)`,
           note: {
             fr: `which ne voit que les exécutables du PATH ; type révèle aussi les alias et builtins — utile quand une commande ne se comporte pas comme prévu. type -a liste les doublons du PATH.`,
             en: `which only sees executables on the PATH; type also reveals aliases and builtins — useful when a command misbehaves. type -a lists PATH duplicates.`,
+          },
+        },
+        {
+          id: 'lx-man-discovery',
+          title: { fr: 'man, --help, apropos : découvrir une commande', en: 'man, --help, apropos: discover a command' },
+          code: `man tar                # manuel complet, / pour chercher dedans, q pour quitter
+tar --help              # résumé rapide des options
+apropos "compress"      # cherche une commande par MOT-CLÉ de description
+man -k partition         # équivalent de apropos`,
+          note: {
+            fr: `man est la doc de référence (souvent longue), --help un pense-bête rapide propre à chaque outil. apropos cherche par mot-clé quand on ne connaît pas le nom exact de la commande — le réflexe avant de chercher sur le web.`,
+            en: `man is the reference doc (often long), --help a quick per-tool cheat sheet. apropos searches by keyword when you don't know the exact command name — the reflex before reaching for the web.`,
           },
         },
       ],
@@ -379,6 +432,18 @@ curl -I localhost:8080 # le serveur HTTP local répond-il ?`,
             en: `ss -tlnp (t TCP, l listening, n numeric ports, p process) is the modern replacement for netstat. lsof -i :port answers the eternal "address already in use": find the PID and kill it.`,
           },
         },
+        {
+          id: 'lx-ip-addr-route',
+          title: { fr: "ip addr / ip route : le remplaçant d'ifconfig", en: "ip addr / ip route: ifconfig's replacement" },
+          code: `ip addr show               # (ip a) : interfaces et adresses IP
+ip route show               # (ip r) : table de routage, passerelle par défaut
+ip link set eth0 up         # activer une interface
+ip -c a                     # coloré, plus lisible`,
+          note: {
+            fr: `ifconfig et route sont dépréciés depuis longtemps (paquet net-tools plus toujours installé par défaut) ; ip (paquet iproute2) fait tout en une syntaxe cohérente et gère aussi les namespaces réseau et les règles avancées.`,
+            en: `ifconfig and route have long been deprecated (net-tools isn't always installed by default anymore); ip (the iproute2 package) does it all in one consistent syntax and also handles network namespaces and advanced rules.`,
+          },
+        },
       ],
     },
     {
@@ -521,6 +586,21 @@ crontab -l             # les lister
           note: {
             fr: `Les 5 champs : minute, heure, jour du mois, mois, jour de semaine (0 = dimanche). Pièges classiques : cron a un PATH minimal (utilisez des chemins absolus) et n'affiche rien — redirigez vers un fichier de log.`,
             en: `The 5 fields: minute, hour, day of month, month, weekday (0 = Sunday). Classic gotchas: cron has a minimal PATH (use absolute paths) and shows nothing — redirect output to a log file.`,
+          },
+        },
+        {
+          id: 'lx-heredoc',
+          title: { fr: 'Here-doc : injecter du texte multi-ligne', en: 'Here-doc: feed in multi-line text' },
+          code: `cat <<EOF > config.yml
+host: localhost
+port: 8080
+EOF
+psql -U postgres <<SQL
+SELECT COUNT(*) FROM users;
+SQL`,
+          note: {
+            fr: `<<EOF ouvre un bloc de texte littéral jusqu'au marqueur de fin (EOF est une convention, n'importe quel mot fonctionne) : pratique pour générer un fichier ou envoyer plusieurs commandes à un programme interactif sans fichier temporaire. <<-EOF (avec un tiret) autorise l'indentation par tabulations.`,
+            en: `<<EOF opens a literal text block until the end marker (EOF is just a convention, any word works): handy for generating a file or feeding several commands to an interactive program without a temp file. <<-EOF (with a dash) allows tab-indentation.`,
           },
         },
       ],

@@ -93,6 +93,36 @@ System.out.println("ab".equals(s)); // ordre sûr si s peut être null`,
             en: `== compares references, equals compares content. The trap: Integer caches -128..127, so == "works" in tests and breaks in prod with larger values. Use equals everywhere for objects.`,
           },
         },
+        {
+          id: 'java-equals-hashcode-contract',
+          title: { fr: 'Le contrat equals()/hashCode()', en: 'The equals()/hashCode() contract' },
+          code: `@Override
+public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof Point p)) return false;
+    return x == p.x && y == p.y;
+}
+@Override
+public int hashCode() { return Objects.hash(x, y); }`,
+          note: {
+            fr: `Règle d'or : deux objets equals() DOIVENT avoir le même hashCode(). La casser corrompt silencieusement HashMap/HashSet (un objet devient introuvable après insertion). Utilisez Objects.hash(...) plutôt qu'un calcul manuel.`,
+            en: `Golden rule: two equals() objects MUST have the same hashCode(). Breaking it silently corrupts HashMap/HashSet (an object becomes unfindable after insertion). Use Objects.hash(...) instead of a hand-rolled calculation.`,
+          },
+        },
+        {
+          id: 'java-enum-behavior',
+          title: { fr: 'Enum avec comportement par constante', en: 'Enum with per-constant behavior' },
+          code: `enum Operation {
+    PLUS { public int apply(int a, int b) { return a + b; } },
+    MINUS { public int apply(int a, int b) { return a - b; } };
+    public abstract int apply(int a, int b);
+}
+int r = Operation.PLUS.apply(2, 3);  // 5`,
+          note: {
+            fr: `Chaque constante peut redéfinir une méthode abstraite avec son propre corps — plus sûr qu'un switch externe car le compilateur impose une implémentation par constante, y compris pour une nouvelle valeur ajoutée.`,
+            en: `Each constant can override an abstract method with its own body — safer than an external switch because the compiler enforces an implementation per constant, including for any newly added value.`,
+          },
+        },
       ],
     },
     {
@@ -348,6 +378,21 @@ var v = Objects.requireNonNullElse(param, "défaut"); // avec repli
             en: `Rethrowing without the cause (throw new X(msg)) destroys the original stack trace: debugging becomes impossible. Always pass the caught exception as second argument — the log's "Caused by:" then tells the whole story.`,
           },
         },
+        {
+          id: 'java-nio-files',
+          title: { fr: 'NIO : Files & Path', en: 'NIO: Files & Path' },
+          code: `Path path = Path.of("data.txt");
+List<String> lines = Files.readAllLines(path);
+Files.writeString(path, "contenu", StandardOpenOption.APPEND);
+boolean exists = Files.exists(path);
+try (Stream<Path> files = Files.list(Path.of("."))) {
+    files.forEach(System.out::println);
+}`,
+          note: {
+            fr: `Files/Path (java.nio.file, depuis Java 7) remplace l'ancien java.io.File : opérations en une ligne (readAllLines, writeString), exceptions plus précises (NoSuchFileException), et Files.list renvoie un Stream à fermer via try-with-resources.`,
+            en: `Files/Path (java.nio.file, since Java 7) replaces the old java.io.File: one-line operations (readAllLines, writeString), more precise exceptions (NoSuchFileException), and Files.list returns a Stream that must be closed via try-with-resources.`,
+          },
+        },
       ],
     },
     {
@@ -529,6 +574,98 @@ String out = mapper.writeValueAsString(u);
           note: {
             fr: `Depuis Jackson 2.12, les records se (dé)sérialisent nativement via leur constructeur canonique : zéro annotation pour le cas simple, des DTO immuables sans setters. @JsonProperty sur un composant gère les noms qui divergent du JSON.`,
             en: `Since Jackson 2.12, records (de)serialize natively through their canonical constructor: zero annotations for the simple case, immutable DTOs without setters. @JsonProperty on a component handles names that differ from the JSON.`,
+          },
+        },
+      ],
+    },
+    {
+      id: 'java-generics',
+      title: { fr: 'Génériques', en: 'Generics' },
+      items: [
+        {
+          id: 'java-generics-bounded',
+          title: { fr: 'Types bornés : <T extends X>', en: 'Bounded types: <T extends X>' },
+          code: `static <T extends Comparable<T>> T max(List<T> items) {
+    T best = items.get(0);
+    for (T item : items) if (item.compareTo(best) > 0) best = item;
+    return best;
+}`,
+          note: {
+            fr: `extends borne T aux sous-types de Comparable<T> (et Object implicitement) : ça donne accès à compareTo() sans cast, tout en gardant le typage statique de T à l'appel.`,
+            en: `extends bounds T to Comparable<T> subtypes (and implicitly Object): it gives access to compareTo() without a cast, while keeping T statically typed at the call site.`,
+          },
+        },
+        {
+          id: 'java-generics-wildcard-extends',
+          title: { fr: '? extends : lire un producer', en: '? extends: reading a producer' },
+          code: `static double sum(List<? extends Number> numbers) {
+    double total = 0;
+    for (Number n : numbers) total += n.doubleValue();  // lecture OK
+    // numbers.add(1);  // ERREUR : écriture interdite
+    return total;
+}
+sum(List.of(1, 2, 3));       // List<Integer> accepté
+sum(List.of(1.5, 2.5));      // List<Double> accepté aussi`,
+          note: {
+            fr: `List<? extends Number> accepte une liste de N'IMPORTE QUEL sous-type de Number en lecture, mais interdit l'écriture (le compilateur ne sait pas quel sous-type précis c'est) — le PECS : Producer Extends.`,
+            en: `List<? extends Number> accepts a list of ANY Number subtype for reading, but forbids writing (the compiler doesn't know the exact subtype) — PECS: Producer Extends.`,
+          },
+        },
+        {
+          id: 'java-generics-wildcard-super',
+          title: { fr: '? super : écrire dans un consumer', en: '? super: writing into a consumer' },
+          code: `static void addNumbers(List<? super Integer> list) {
+    list.add(1);          // écriture OK : Integer ou un ancêtre
+    // Integer n = list.get(0);  // lecture limitée à Object
+}
+List<Number> nums = new ArrayList<>();
+addNumbers(nums);          // List<Number> accepte des Integer`,
+          note: {
+            fr: `List<? super Integer> accepte une liste d'Integer OU d'un de ses ancêtres, et autorise l'écriture d'Integer — la lecture ne renvoie qu'un Object. PECS : Consumer Super.`,
+            en: `List<? super Integer> accepts a list of Integer OR one of its ancestors, and allows writing Integer values — reading only returns an Object. PECS: Consumer Super.`,
+          },
+        },
+      ],
+    },
+    {
+      id: 'java-time',
+      title: { fr: 'java.time', en: 'java.time' },
+      items: [
+        {
+          id: 'java-time-localdate',
+          title: { fr: 'LocalDate / LocalDateTime', en: 'LocalDate / LocalDateTime' },
+          code: `LocalDate today = LocalDate.now();
+LocalDate birthday = LocalDate.of(1990, Month.MARCH, 15);
+LocalDate nextWeek = today.plusWeeks(1);
+Period age = Period.between(birthday, today);
+System.out.println(age.getYears() + " ans");`,
+          note: {
+            fr: `LocalDate/LocalDateTime sont IMMUABLES (plusWeeks renvoie une nouvelle instance) et sans fuseau horaire — parfaits pour une date de naissance ou un rendez-vous "mur" indépendant du lieu.`,
+            en: `LocalDate/LocalDateTime are IMMUTABLE (plusWeeks returns a new instance) and timezone-free — perfect for a birthdate or a "wall clock" appointment independent of location.`,
+          },
+        },
+        {
+          id: 'java-time-instant-zone',
+          title: { fr: 'Instant & ZonedDateTime : le temps absolu', en: 'Instant & ZonedDateTime: absolute time' },
+          code: `Instant now = Instant.now();                      // point UTC unique
+ZonedDateTime paris = now.atZone(ZoneId.of("Europe/Paris"));
+ZonedDateTime tokyo = now.atZone(ZoneId.of("Asia/Tokyo"));
+long epochSeconds = now.getEpochSecond();`,
+          note: {
+            fr: `Instant représente un point sur la ligne du temps (UTC, epoch), indépendant de tout fuseau — l'idéal pour horodater un événement serveur. ZonedDateTime l'affiche localement pour un utilisateur.`,
+            en: `Instant represents a point on the timeline (UTC, epoch), independent of any timezone — ideal for timestamping a server event. ZonedDateTime displays it locally for a user.`,
+          },
+        },
+        {
+          id: 'java-time-duration',
+          title: { fr: 'Duration & Period : mesurer un écart', en: 'Duration & Period: measuring a gap' },
+          code: `Duration elapsed = Duration.between(start, Instant.now());
+System.out.println(elapsed.toMillis() + " ms");
+Period until = Period.between(LocalDate.now(), deadline);
+if (elapsed.compareTo(Duration.ofSeconds(30)) > 0) { /* timeout */ }`,
+          note: {
+            fr: `Duration mesure un écart en temps machine (secondes/nanos, pour un timeout ou un chrono) ; Period mesure un écart calendaire (années/mois/jours, pour un âge ou une échéance). Ne pas les confondre.`,
+            en: `Duration measures a machine-time gap (seconds/nanos, for a timeout or a stopwatch); Period measures a calendar gap (years/months/days, for an age or a deadline). Don't mix them up.`,
           },
         },
       ],

@@ -201,6 +201,30 @@ CMD ["node", "server.js"]`,
             en: `By default everything runs as root: an app vulnerability gives root in the container, and an escape gives root on the host. USER at the end of the Dockerfile costs 3 lines and kills that scenario.`,
           },
         },
+        {
+          id: 'dk-buildx-multiarch',
+          title: { fr: 'buildx : builds multi-architecture (--platform)', en: 'buildx: multi-architecture builds (--platform)' },
+          code: `docker buildx create --use --name multi
+docker buildx build --platform linux/amd64,linux/arm64 \\
+  -t ghcr.io/equipe/mon-api:1.2 --push .
+# Sans buildx : une seule arch, celle de la machine qui build
+docker build -t mon-api:1.2 .`,
+          note: {
+            fr: `Un build classique produit une image pour l'architecture de la machine qui build : un Mac Apple Silicon produira une image arm64 qui ne tourne pas sur un serveur x86 sans émulation. buildx --platform construit et pousse un manifest multi-arch en une commande, résolu automatiquement au pull selon le CPU du client.`,
+            en: `A classic build produces an image for the architecture of the build machine: an Apple Silicon Mac produces an arm64 image that won't run on an x86 server without emulation. buildx --platform builds and pushes a multi-arch manifest in one command, resolved automatically on pull based on the client's CPU.`,
+          },
+        },
+        {
+          id: 'dk-copy-vs-add',
+          title: { fr: 'COPY vs ADD : lequel utiliser', en: 'COPY vs ADD: which to use' },
+          code: `COPY ./src /app/src            # copie simple, prévisible — le bon défaut
+ADD archive.tar.gz /app/       # ADD extrait automatiquement les tar.*
+ADD https://exemple.fr/f.txt /app/f.txt   # ADD peut aussi télécharger une URL`,
+          note: {
+            fr: `ADD fait plus de choses "par magie" (extraction d'archive, téléchargement HTTP) que COPY, ce qui le rend imprévisible et affecte le cache de layer différemment. La recommandation quasi unanime : COPY par défaut, ADD seulement pour son cas d'usage précis (extraire une archive locale).`,
+            en: `ADD does more "magic" (archive extraction, HTTP download) than COPY, which makes it unpredictable and affects layer caching differently. The near-universal recommendation: COPY by default, ADD only for its specific use case (extracting a local archive).`,
+          },
+        },
       ],
     },
     {

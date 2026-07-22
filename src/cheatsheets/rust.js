@@ -91,6 +91,23 @@ while let Some(x) = pile.pop() { println!("{x}"); }`,
             en: `No C-style for: you always iterate over an iterator. 0..5 excludes the upper bound, 1..=3 includes it. while let loops as long as a pattern matches, ideal for draining a stack.`,
           },
         },
+        {
+          id: 'rust-struct-impl',
+          title: { fr: 'struct + impl : associer données et méthodes', en: 'struct + impl: pairing data and methods' },
+          code: `struct Rectangle { largeur: f64, hauteur: f64 }
+impl Rectangle {
+    fn new(largeur: f64, hauteur: f64) -> Self {  // fonction associée
+        Rectangle { largeur, hauteur }
+    }
+    fn aire(&self) -> f64 { self.largeur * self.hauteur } // méthode
+}
+let r = Rectangle::new(3.0, 4.0);
+println!("{}", r.aire());`,
+          note: {
+            fr: `Self::new (convention, pas un mot-clé réservé) construit l'instance ; &self emprunte pour lire, &mut self pour muter, self (sans &) consomme la valeur. Un impl peut être scindé en plusieurs blocs pour organiser le code.`,
+            en: `Self::new (a convention, not a reserved keyword) builds the instance; &self borrows to read, &mut self to mutate, self (no &) consumes the value. An impl block can be split across several impl blocks to organize code.`,
+          },
+        },
       ],
     },
     {
@@ -245,6 +262,21 @@ println!("on continue avec {v}");`,
           note: {
             fr: `match quand tous les cas comptent, if let quand un seul vous intéresse. let else (1.65+) garde le code « happy path » à plat : le bloc else doit diverger (return, break, panic).`,
             en: `Use match when every case matters, if let when only one does. let else (1.65+) keeps the happy path flat: the else block must diverge (return, break, panic).`,
+          },
+        },
+        {
+          id: 'rust-anyhow',
+          title: { fr: 'anyhow : erreurs d\'application avec contexte', en: 'anyhow: application errors with context' },
+          code: `use anyhow::{Context, Result};
+
+fn charger_config(chemin: &str) -> Result<String> {
+    let brut = std::fs::read_to_string(chemin)
+        .with_context(|| format!("lecture de {chemin} impossible"))?;
+    Ok(brut)
+}`,
+          note: {
+            fr: `anyhow::Result<T> encapsule N'IMPORTE QUELLE erreur qui implémente std::error::Error, pratique pour une application où seul l'humain lit le message. with_context ajoute une explication SANS créer de type d'erreur dédié — à réserver aux binaires, pas aux bibliothèques publiques.`,
+            en: `anyhow::Result<T> wraps ANY error implementing std::error::Error, handy for an application where only a human reads the message. with_context adds an explanation layer WITHOUT defining a dedicated error type — reserve it for binaries, not public libraries.`,
           },
         },
       ],
@@ -504,6 +536,20 @@ fn chauffe(t: impl Into<Celsius>) { let _t: Celsius = t.into(); }`,
             en: `Always implement From, never Into: Into is derived automatically. It is also the mechanism behind ? for converting error types, and impl Into<T> makes APIs flexible.`,
           },
         },
+        {
+          id: 'rust-closures-fn-traits',
+          title: { fr: 'Closures : Fn, FnMut, FnOnce', en: 'Closures: Fn, FnMut, FnOnce' },
+          code: `let facteur = 3;
+let multiplier = |x: i32| x * facteur;         // Fn : capture par référence
+let mut compteur = 0;
+let mut incr = || { compteur += 1; compteur }; // FnMut : capture mutable
+let nom = String::from("Ada");
+let consomme = move || println!("{nom}");      // move : capture par valeur`,
+          note: {
+            fr: `Fn emprunte l'environnement (appelable plusieurs fois), FnMut l'emprunte mutablement, FnOnce le consomme (appelable une seule fois). move force la capture par valeur — indispensable pour envoyer une closure à un autre thread.`,
+            en: `Fn borrows the environment (callable many times), FnMut borrows it mutably, FnOnce consumes it (callable once). move forces capture by value — required to send a closure to another thread.`,
+          },
+        },
       ],
     },
     {
@@ -584,6 +630,104 @@ json = ["dep:serde_json"] # active une dépendance optionnelle`,
           note: {
             fr: `Les features activent du code conditionnel (#[cfg(feature = "json")]) et des dépendances optionnelles : moins de features = compilation plus rapide. Elles sont additives : jamais de feature qui désactive du code.`,
             en: `Features enable conditional code (#[cfg(feature = "json")]) and optional dependencies: fewer features = faster builds. They are additive: never write a feature that disables code.`,
+          },
+        },
+      ],
+    },
+    {
+      id: 'rust-smart-pointers',
+      title: { fr: 'Pointeurs intelligents', en: 'Smart pointers' },
+      items: [
+        {
+          id: 'rust-box',
+          title: { fr: 'Box<T> : allocation sur le tas', en: 'Box<T>: heap allocation' },
+          code: `enum Arbre {
+    Feuille(i32),
+    Noeud(Box<Arbre>, Box<Arbre>), // Box : taille connue à la compilation
+}
+let a = Arbre::Noeud(Box::new(Arbre::Feuille(1)), Box::new(Arbre::Feuille(2)));
+let gros: Box<[i32; 1000]> = Box::new([0; 1000]); // déplace le tableau sur le tas`,
+          note: {
+            fr: `Box<T> place la valeur sur le tas et n'a qu'un seul propriétaire : indispensable pour les types récursifs (le compilateur doit connaître une taille fixe) et pour déplacer une grosse valeur sans la copier sur la pile.`,
+            en: `Box<T> places the value on the heap with a single owner: required for recursive types (the compiler needs a fixed size) and to move a large value without copying it on the stack.`,
+          },
+        },
+        {
+          id: 'rust-rc-arc',
+          title: { fr: 'Rc<T> & Arc<T> : propriété partagée', en: 'Rc<T> & Arc<T>: shared ownership' },
+          code: `use std::rc::Rc;
+let a = Rc::new(String::from("config partagée"));
+let b = Rc::clone(&a);                // incrémente le compteur, pas de copie
+println!("{}", Rc::strong_count(&a)); // 2
+// Arc<T> : même API, mais thread-safe (atomic) pour le multi-thread`,
+          note: {
+            fr: `Rc<T> permet plusieurs propriétaires en lecture seule dans un seul thread via un compteur de références ; clone() est peu coûteux (juste un incrément). Arc<T> est l'équivalent thread-safe, obligatoire dès qu'on partage entre threads.`,
+            en: `Rc<T> allows multiple read-only owners within a single thread via a reference count; clone() is cheap (just an increment). Arc<T> is the thread-safe equivalent, required as soon as you share across threads.`,
+          },
+        },
+        {
+          id: 'rust-refcell',
+          title: { fr: 'RefCell<T> : mutabilité intérieure', en: 'RefCell<T>: interior mutability' },
+          code: `use std::cell::RefCell;
+let cache = RefCell::new(Vec::new());
+cache.borrow_mut().push(42);       // emprunt mutable vérifié À L'EXÉCUTION
+println!("{:?}", cache.borrow());  // panique si un borrow_mut est encore actif`,
+          note: {
+            fr: `RefCell contourne la règle d'emprunt du compilateur en la vérifiant au runtime : deux borrow_mut() simultanés paniquent au lieu d'une erreur de compilation. Utile combiné à Rc<RefCell<T>> pour muter une donnée partagée.`,
+            en: `RefCell bypasses the compiler's borrow rule by checking it at runtime instead: two simultaneous borrow_mut() calls panic rather than fail to compile. Useful combined with Rc<RefCell<T>> to mutate shared data.`,
+          },
+        },
+      ],
+    },
+    {
+      id: 'rust-concurrency',
+      title: { fr: 'Concurrence', en: 'Concurrency' },
+      items: [
+        {
+          id: 'rust-thread-spawn',
+          title: { fr: 'std::thread::spawn & join', en: 'std::thread::spawn & join' },
+          code: `use std::thread;
+let handle = thread::spawn(|| {
+    (1..=5).sum::<i32>()            // le thread renvoie une valeur
+});
+let total = handle.join().unwrap(); // attend la fin, récupère le résultat
+println!("{total}");`,
+          note: {
+            fr: `spawn lance une closure sur un nouveau thread OS ; join() bloque jusqu'à sa fin et renvoie un Result contenant sa valeur de retour (ou l'erreur si le thread a paniqué). Sans join, main peut se terminer avant le thread.`,
+            en: `spawn runs a closure on a new OS thread; join() blocks until it finishes and returns a Result holding its return value (or the panic error). Without join, main can exit before the thread does.`,
+          },
+        },
+        {
+          id: 'rust-arc-mutex',
+          title: { fr: 'Arc<Mutex<T>> : état partagé entre threads', en: 'Arc<Mutex<T>>: shared state across threads' },
+          code: `use std::sync::{Arc, Mutex};
+use std::thread;
+let compteur = Arc::new(Mutex::new(0));
+let mut handles = vec![];
+for _ in 0..10 {
+    let c = Arc::clone(&compteur);
+    handles.push(thread::spawn(move || { *c.lock().unwrap() += 1; }));
+}
+for h in handles { h.join().unwrap(); }
+println!("{}", *compteur.lock().unwrap()); // 10`,
+          note: {
+            fr: `Arc partage la propriété entre threads, Mutex protège l'accès concurrent : lock() renvoie un garde qui déverrouille automatiquement à sa sortie de portée (comme defer en Go). Le compilateur refuse de compiler un accès sans le lock.`,
+            en: `Arc shares ownership across threads, Mutex guards concurrent access: lock() returns a guard that automatically unlocks when it goes out of scope (like defer in Go). The compiler refuses to compile an access without the lock.`,
+          },
+        },
+        {
+          id: 'rust-mpsc-channel',
+          title: { fr: 'mpsc::channel : envoyer entre threads', en: 'mpsc::channel: sending between threads' },
+          code: `use std::sync::mpsc;
+use std::thread;
+let (tx, rx) = mpsc::channel();
+thread::spawn(move || {
+    for i in 0..3 { tx.send(i).unwrap(); }  // tx déplacé dans le thread
+});
+for recu in rx { println!("{recu}"); }      // itère jusqu'à la fermeture des tx`,
+          note: {
+            fr: `mpsc = multi-producer single-consumer : plusieurs tx (clonables) peuvent envoyer vers un seul rx. Le canal se ferme automatiquement quand tous les tx sont droppés, ce qui termine naturellement la boucle for sur rx.`,
+            en: `mpsc = multi-producer single-consumer: several (clonable) tx senders can send to a single rx receiver. The channel closes automatically once every tx is dropped, which naturally ends the for loop over rx.`,
           },
         },
       ],

@@ -206,6 +206,35 @@ jobs:
             en: `Both spin up side containers (database, Redis…) for the job's lifetime. Gotcha: the service hostname differs — on GitLab it's the image name (postgres), on GitHub it's the key under services: (here also postgres, but you pick it).`,
           },
         },
+        {
+          id: 'cc-docker-build-push',
+          title: { fr: "Build & push d'image Docker depuis la CI", en: 'Docker image build & push from CI' },
+          code: `# --- GitLab : Docker-in-Docker (DinD) ---
+build_image:
+  image: docker:27
+  services: [docker:27-dind]
+  variables: { DOCKER_TLS_CERTDIR: "/certs" }
+  script:
+    - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA .
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+
+# --- GitLab : alternative sans démon Docker (kaniko) ---
+build_image_kaniko:
+  image: gcr.io/kaniko-project/executor:debug
+  script:
+    - /kaniko/executor --context . --destination $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+
+# --- GitHub : docker/build-push-action ---
+- uses: docker/build-push-action@v6
+  with:
+    push: true
+    tags: ghcr.io/equipe/mon-api:\${{ github.sha }}`,
+          note: {
+            fr: `DinD (Docker-in-Docker) lance un vrai démon Docker dans le job — pratique mais nécessite le mode privilégié du runner, un risque de sécurité sur un runner partagé. kaniko construit l'image SANS démon Docker ni privilège, adapté aux clusters Kubernetes stricts. Sur GitHub, docker/build-push-action encapsule build+push (avec cache GHA intégré via cache-from/cache-to).`,
+            en: `DinD (Docker-in-Docker) runs a real Docker daemon inside the job — convenient but requires privileged runner mode, a security risk on a shared runner. kaniko builds the image WITHOUT a Docker daemon or privileges, suited to strict Kubernetes clusters. On GitHub, docker/build-push-action wraps build+push (with built-in GHA caching via cache-from/cache-to).`,
+          },
+        },
       ],
     },
     {

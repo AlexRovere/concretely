@@ -94,6 +94,19 @@ while (ligne := input()) != "stop":
             en: `Much more than a switch: match destructures lists, dicts and objects (case Point(x=0, y=y)). Careful: "case name:" captures everything, it is not a comparison.`,
           },
         },
+        {
+          id: 'python-string-methods',
+          title: { fr: 'Méthodes de string essentielles', en: 'Essential string methods' },
+          code: `texte = "  Bonjour, Monde !  "
+texte.strip()                      # "Bonjour, Monde !" — trim
+texte.strip().split(", ")          # ['Bonjour', 'Monde !']
+"-".join(["a", "b", "c"])          # "a-b-c"
+texte.replace("Monde", "Ada")      # remplace toutes les occurrences`,
+          note: {
+            fr: `strip/split/join/replace couvrent 90% des manipulations de texte du quotidien : split découpe sur un séparateur, join est une méthode de STRING (pas de liste !) qui assemble un itérable. Aucune ne modifie la string en place (immuable).`,
+            en: `strip/split/join/replace cover 90% of everyday text manipulation: split breaks on a separator, join is a STRING method (not a list one!) that assembles an iterable. None of them mutate the string in place (immutable).`,
+          },
+        },
       ],
     },
     {
@@ -756,6 +769,57 @@ python -m pytest             # ajoute le cwd au sys.path`,
             en: `-m runs a module through the current interpreter: "python -m pip" guarantees installing into the right venv when several Pythons coexist. Many stdlib modules are hidden CLI tools.`,
           },
         },
+        {
+          id: 'python-mocking',
+          title: { fr: 'Mocker avec unittest.mock & monkeypatch', en: 'Mocking with unittest.mock & monkeypatch' },
+          code: `from unittest.mock import patch
+
+def test_envoi_email(monkeypatch):
+    appels = []
+    monkeypatch.setattr("app.smtp.envoyer", lambda to, msg: appels.append(to))
+    notifier("ada@ex.com")
+    assert appels == ["ada@ex.com"]`,
+          note: {
+            fr: `monkeypatch (fixture pytest) remplace un attribut le temps du test et le restaure automatiquement après ; unittest.mock.patch fait pareil en dehors de pytest. Ne mockez que les frontières externes (réseau, disque, horloge), pas votre propre logique.`,
+            en: `monkeypatch (a pytest fixture) replaces an attribute for the test's duration and restores it automatically afterwards; unittest.mock.patch does the same outside pytest. Only mock external boundaries (network, disk, clock), never your own logic.`,
+          },
+        },
+        {
+          id: 'python-typing-advanced',
+          title: { fr: 'Typing avancé : TypeVar, Generic, TypedDict', en: 'Advanced typing: TypeVar, Generic, TypedDict' },
+          code: `from typing import TypeVar, Generic, TypedDict
+
+T = TypeVar("T")
+class Pile(Generic[T]):             # classe générique classique
+    def __init__(self) -> None:
+        self._items: list[T] = []
+    def empiler(self, item: T) -> None:
+        self._items.append(item)
+
+class Utilisateur(TypedDict):       # dict à structure typée et vérifiée
+    nom: str
+    age: int`,
+          note: {
+            fr: `TypeVar + Generic permettent d'écrire une classe/fonction qui garde la cohérence de type interne (Pile[int] reste une pile d'int) ; TypedDict type un dict dont les clés sont fixes, utile pour des payloads JSON. Depuis 3.12, def f[T](x: T) -> T: est un raccourci pour le même TypeVar.`,
+            en: `TypeVar + Generic let you write a class/function that keeps internal type consistency (Pile[int] stays a stack of ints); TypedDict types a dict with fixed keys, handy for JSON payloads. Since 3.12, def f[T](x: T) -> T: is shorthand for the same TypeVar.`,
+          },
+        },
+        {
+          id: 'python-pyproject-toml',
+          title: { fr: 'pyproject.toml : le manifeste moderne', en: 'pyproject.toml: the modern manifest' },
+          code: `# pyproject.toml
+[project]
+name = "mon-projet"
+version = "0.1.0"
+dependencies = ["requests>=2.31", "pydantic>=2.0"]
+
+[tool.ruff]
+line-length = 100`,
+          note: {
+            fr: `pyproject.toml centralise dépendances, métadonnées et config des outils (ruff, mypy, pytest) dans un seul fichier standardisé (PEP 621), remplaçant setup.py/setup.cfg éparpillés. uv/poetry en génèrent un lockfile associé.`,
+            en: `pyproject.toml centralizes dependencies, metadata and tool config (ruff, mypy, pytest) in one standardized file (PEP 621), replacing scattered setup.py/setup.cfg. uv/poetry generate an associated lockfile from it.`,
+          },
+        },
       ],
     },
     {
@@ -830,6 +894,38 @@ async def bon():
           note: {
             fr: `Un seul appel bloquant (time.sleep, requests.get, gros calcul) gèle TOUTE la boucle d'événements et anéantit l'intérêt d'asyncio. Utilisez les équivalents async (asyncio.sleep, httpx/aiohttp) ou asyncio.to_thread pour le code bloquant ou CPU-bound.`,
             en: `A single blocking call (time.sleep, requests.get, heavy computation) freezes the WHOLE event loop and defeats the point of asyncio. Use the async equivalents (asyncio.sleep, httpx/aiohttp) or asyncio.to_thread for blocking or CPU-bound code.`,
+          },
+        },
+        {
+          id: 'python-threading-gil',
+          title: { fr: 'GIL & threading', en: 'GIL & threading' },
+          code: `import threading
+
+def telecharger(url, resultats, i):
+    resultats[i] = requests.get(url).content   # I/O : libère le GIL
+
+fils = [threading.Thread(target=telecharger, args=(u, resultats, i))
+        for i, u in enumerate(urls)]
+[f.start() for f in fils]
+[f.join() for f in fils]`,
+          note: {
+            fr: `Le GIL (Global Interpreter Lock) empêche deux threads Python d'exécuter du bytecode EN MÊME TEMPS : threading n'accélère donc que l'I/O-bound (le GIL est relâché pendant un appel réseau/disque), jamais le calcul pur.`,
+            en: `The GIL (Global Interpreter Lock) prevents two Python threads from running bytecode AT THE SAME TIME: threading therefore only speeds up I/O-bound work (the GIL is released during a network/disk call), never pure computation.`,
+          },
+        },
+        {
+          id: 'python-multiprocessing',
+          title: { fr: 'multiprocessing pour le CPU-bound', en: 'multiprocessing for CPU-bound work' },
+          code: `from multiprocessing import Pool
+
+def carre(n):
+    return n * n
+
+with Pool(processes=4) as pool:
+    resultats = pool.map(carre, range(1_000_000))  # vrai parallélisme`,
+          note: {
+            fr: `Chaque processus a son propre interpréteur et son propre GIL : multiprocessing contourne la limite pour du calcul intensif, au prix d'un coût mémoire/IPC plus élevé que threading.`,
+            en: `Each process has its own interpreter and its own GIL: multiprocessing sidesteps the limit for CPU-intensive work, at the cost of higher memory/IPC overhead than threading.`,
           },
         },
       ],

@@ -54,6 +54,74 @@ export default {
       ],
     },
     {
+      id: 'pat-more',
+      title: { fr: 'Patterns complémentaires', en: 'Additional patterns' },
+      items: [
+        {
+          id: 'cs-pat-prototype',
+          title: { fr: 'Prototype', en: 'Prototype' },
+          code: `class Shape {
+  constructor(color) { this.color = color; }
+  clone() { return new Shape(this.color); }
+}
+const original = new Shape('red');
+const copie = original.clone(); // copie.color === 'red', instance indépendante`,
+          note: {
+            fr: `Cloner un objet existant coûte souvent moins cher que le reconstruire depuis zéro (configuration onéreuse, état complexe à recopier) ; clone() garantit une nouvelle instance indépendante de l'originale.`,
+            en: `Cloning an existing object is often cheaper than rebuilding it from scratch (expensive configuration, complex state to copy); clone() guarantees a new instance independent from the original.`,
+          },
+        },
+        {
+          id: 'cs-pat-bridge',
+          title: { fr: 'Bridge', en: 'Bridge' },
+          code: `class Device { turnOn() { throw new Error('override me'); } }
+class TV extends Device { turnOn() { return 'TV allumée'; } }
+class Radio extends Device { turnOn() { return 'Radio allumée'; } }
+class RemoteControl {
+  constructor(device) { this.device = device; }
+  power() { return this.device.turnOn(); }
+}
+new RemoteControl(new TV()).power(); // "TV allumée"`,
+          note: {
+            fr: `Bridge sépare l'abstraction (RemoteControl) de son implémentation (Device) : les deux hiérarchies évoluent indépendamment, sans multiplier les sous-classes combinées (RemoteTV, RemoteRadio, TelecommandeAvanceeTV...).`,
+            en: `Bridge decouples the abstraction (RemoteControl) from its implementation (Device): both hierarchies evolve independently, without multiplying combined subclasses (RemoteTV, RemoteRadio, AdvancedRemoteTV...).`,
+          },
+        },
+        {
+          id: 'cs-pat-mediator',
+          title: { fr: 'Mediator', en: 'Mediator' },
+          code: `class ChatRoom {
+  showMessage(user, msg) { return \`\${user}: \${msg}\`; }
+}
+class User {
+  constructor(name, mediator) { this.name = name; this.mediator = mediator; }
+  send(msg) { return this.mediator.showMessage(this.name, msg); }
+}
+const room = new ChatRoom();
+new User('Ada', room).send('salut'); // "Ada: salut"`,
+          note: {
+            fr: `Les User ne se connaissent jamais entre eux : ils passent tous par ChatRoom. Ajouter un nouveau participant, ou changer la logique d'échange, ne demande de modifier aucune classe User existante.`,
+            en: `Users never reference each other directly: they all go through ChatRoom. Adding a new participant, or changing the exchange logic, requires touching no existing User class.`,
+          },
+        },
+        {
+          id: 'cs-pat-visitor',
+          title: { fr: 'Visitor', en: 'Visitor' },
+          code: `class Circle { accept(visitor) { return visitor.visitCircle(this); } }
+class Square { accept(visitor) { return visitor.visitSquare(this); } }
+class AreaVisitor {
+  visitCircle(c) { return 'aire cercle'; }
+  visitSquare(s) { return 'aire carré'; }
+}
+new Circle().accept(new AreaVisitor()); // "aire cercle"`,
+          note: {
+            fr: `Ajouter une nouvelle opération (un nouveau Visitor) ne touche pas les classes Circle/Square existantes ; en contrepartie, ajouter une nouvelle forme oblige à modifier TOUS les visiteurs déjà écrits.`,
+            en: `Adding a new operation (a new Visitor) leaves the existing Circle/Square classes untouched; in exchange, adding a new shape forces changes across EVERY visitor already written.`,
+          },
+        },
+      ],
+    },
+    {
       id: 'pat-bp',
       title: { fr: 'Bonnes pratiques', en: 'Best practices' },
       items: [

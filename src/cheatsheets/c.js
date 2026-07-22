@@ -425,6 +425,149 @@ clean:
       ],
     },
     {
+      id: 'c-file-io',
+      title: { fr: 'I/O fichier', en: 'File I/O' },
+      items: [
+        {
+          id: 'c-file-open-close',
+          title: { fr: 'fopen / fclose : ouvrir un fichier', en: 'fopen / fclose: opening a file' },
+          code: `FILE *f = fopen("data.txt", "r");   // "r" lecture, "w" écriture (écrase), "a" ajout
+if (f == NULL) {
+  perror("fopen");                  // toujours vérifier l'échec
+  return 1;
+}
+// ... utiliser f ...
+fclose(f);                          // toujours fermer, même en cas d'erreur`,
+          note: {
+            fr: `fopen renvoie NULL si le fichier n'existe pas ou n'est pas accessible : à vérifier systématiquement avant utilisation. Chaque fopen réussi doit avoir un fclose correspondant, sinon fuite de descripteur.`,
+            en: `fopen returns NULL if the file doesn't exist or isn't accessible: always check before use. Every successful fopen needs a matching fclose, or you leak a file descriptor.`,
+          },
+        },
+        {
+          id: 'c-file-read-write-binary',
+          title: { fr: 'fread / fwrite : données binaires', en: 'fread / fwrite: binary data' },
+          code: `int values[10];
+FILE *f = fopen("data.bin", "rb");         // "b" : mode binaire
+size_t n = fread(values, sizeof(int), 10, f);  // lit jusqu'à 10 int
+fwrite(values, sizeof(int), n, f2);            // écrit n int
+if (n < 10 && ferror(f)) { /* erreur de lecture */ }`,
+          note: {
+            fr: `fread/fwrite lisent/écrivent des blocs bruts de mémoire, pas du texte formaté : idéal pour des structs ou tableaux. Leur retour est le nombre d'éléments RÉELLEMENT traités — toujours le comparer au nombre demandé.`,
+            en: `fread/fwrite read/write raw memory blocks, not formatted text: ideal for structs or arrays. Their return value is the number of elements ACTUALLY processed — always compare it to what you asked for.`,
+          },
+        },
+        {
+          id: 'c-file-read-lines',
+          title: { fr: 'fgets : lire ligne par ligne', en: 'fgets: reading line by line' },
+          code: `char line[256];
+FILE *f = fopen("data.txt", "r");
+while (fgets(line, sizeof line, f) != NULL) {
+  printf("%s", line);          // line contient le \\n final
+}
+if (ferror(f)) { /* erreur distincte de la fin de fichier */ }
+fclose(f);`,
+          note: {
+            fr: `fgets s'arrête à sizeof(buffer)-1 caractères : jamais de dépassement, contrairement à gets() (supprimé du standard). NULL en retour signifie fin de fichier OU erreur — distinguer avec feof()/ferror().`,
+            en: `fgets stops at sizeof(buffer)-1 characters: never an overflow, unlike gets() (removed from the standard). A NULL return means end-of-file OR an error — tell them apart with feof()/ferror().`,
+          },
+        },
+      ],
+    },
+    {
+      id: 'c-linkage',
+      title: { fr: 'Portée & liaison', en: 'Scope & linkage' },
+      items: [
+        {
+          id: 'c-static-file-scope',
+          title: { fr: 'static au niveau fichier : liaison interne', en: 'File-scope static: internal linkage' },
+          code: `// util.c
+static int compteur = 0;          // invisible depuis un autre .c
+static void aideInterne(void) {}  // idem pour une fonction
+void incremente(void) { compteur++; }  // seule porte d'entrée publique`,
+          note: {
+            fr: `static sur une variable/fonction globale lui donne une liaison INTERNE : invisible en dehors de son fichier .c, même avec un extern. C'est l'encapsulation du C — cache les détails d'implémentation d'un module.`,
+            en: `static on a global variable/function gives it INTERNAL linkage: invisible outside its .c file, even with an extern declaration. It's C's encapsulation — hides a module's implementation details.`,
+          },
+        },
+        {
+          id: 'c-extern-multifile',
+          title: { fr: 'extern : partager entre fichiers', en: 'extern: sharing across files' },
+          code: `// config.h
+extern int configVersion;          // DÉCLARATION : "existe ailleurs"
+// config.c
+int configVersion = 3;             // DÉFINITION : réserve la mémoire
+// main.c
+#include "config.h"
+printf("%d\\n", configVersion);    // utilisable après inclusion du header`,
+          note: {
+            fr: `extern déclare qu'une variable existe SANS l'allouer (une seule définition, dans un seul .c) ; oublier extern dans le header ou définir deux fois provoque une erreur de linkage (duplicate symbol).`,
+            en: `extern declares that a variable exists WITHOUT allocating it (exactly one definition, in one .c file); forgetting extern in the header or defining it twice causes a linker error (duplicate symbol).`,
+          },
+        },
+        {
+          id: 'c-static-local',
+          title: { fr: 'static local : état persistant entre appels', en: 'Local static: state that persists across calls' },
+          code: `int nextId(void) {
+  static int compteur = 0;   // initialisé UNE SEULE fois, garde sa valeur
+  return ++compteur;
+}
+nextId(); // 1
+nextId(); // 2 — compteur a survécu à la sortie de la fonction précédente`,
+          note: {
+            fr: `Une variable locale static vit dans la mémoire statique (pas la pile) : elle garde sa valeur d'un appel à l'autre, mais reste invisible en dehors de la fonction. Piège : non thread-safe sans protection explicite.`,
+            en: `A local static variable lives in static memory (not the stack): it keeps its value across calls, but stays invisible outside the function. Gotcha: not thread-safe without explicit protection.`,
+          },
+        },
+      ],
+    },
+    {
+      id: 'c-fundamentals-extra',
+      title: { fr: 'Fondamentaux pratiques', en: 'Practical fundamentals' },
+      items: [
+        {
+          id: 'c-bitwise-ops',
+          title: { fr: 'Opérateurs bit à bit : & | ^ << >>', en: 'Bitwise operators: & | ^ << >>' },
+          code: `unsigned int flags = 0;
+flags |= (1 << 2);      // active le bit 2
+flags &= ~(1 << 2);     // désactive le bit 2
+int estActif = flags & (1 << 2);  // teste le bit 2
+unsigned int swapped = (flags << 4) | (flags >> 4);`,
+          note: {
+            fr: `| active des bits, & (avec ~) les désactive, ^ les inverse (toggle), << et >> décalent (équivalent à *2^n / /2^n pour un unsigned). Un masque de bits évite N booléens séparés pour représenter des options combinables.`,
+            en: `| sets bits, & (with ~) clears them, ^ flips them (toggle), << and >> shift (equivalent to *2^n / /2^n for an unsigned). A bitmask avoids N separate booleans to represent combinable options.`,
+          },
+        },
+        {
+          id: 'c-argc-argv',
+          title: { fr: 'argc / argv : arguments de la ligne de commande', en: 'argc / argv: command-line arguments' },
+          code: `int main(int argc, char *argv[]) {
+  printf("Programme : %s\\n", argv[0]);   // argv[0] = nom du programme
+  for (int i = 1; i < argc; i++) {
+    printf("Argument %d : %s\\n", i, argv[i]);
+  }
+  return 0;
+}`,
+          note: {
+            fr: `argc compte les arguments (au moins 1 : argv[0] est le nom du programme lui-même). argv[argc] vaut toujours NULL — utile pour parcourir sans connaître argc à l'avance.`,
+            en: `argc counts the arguments (at least 1: argv[0] is the program's own name). argv[argc] is always NULL — handy for iterating without knowing argc in advance.`,
+          },
+        },
+        {
+          id: 'c-function-macros',
+          title: { fr: 'Macros fonction : parenthèses et do{}while(0)', en: 'Function-like macros: parentheses and do{}while(0)' },
+          code: `#define SQUARE(x) ((x) * (x))          // parenthèses : évite SQUARE(a+b) = a+b*a+b
+#define SWAP(a, b) do { \\
+  int tmp = (a); (a) = (b); (b) = tmp; \\
+} while (0)                            // utilisable comme une instruction avec ;
+if (cond) SWAP(x, y); else SWAP(y, x); // sans do-while, le else casserait`,
+          note: {
+            fr: `Sans parenthèses autour de chaque paramètre ET de l'expression entière, une macro peut se comporter différemment selon le contexte d'appel. do{...}while(0) rend une macro multi-instructions sûre après un if sans accolades.`,
+            en: `Without parentheses around each parameter AND the whole expression, a macro can behave differently depending on the call context. do{...}while(0) makes a multi-statement macro safe after an if with no braces.`,
+          },
+        },
+      ],
+    },
+    {
       id: 'c-bp',
       title: { fr: 'Bonnes pratiques', en: 'Best practices' },
       items: [

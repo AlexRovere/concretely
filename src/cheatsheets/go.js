@@ -292,6 +292,18 @@ case int, float64:
             en: `v.(string) without the second return panics on type mismatch: prefer the comma-ok form or a type switch. Doing many assertions is often a sign an interface or generics would fit better.`,
           },
         },
+        {
+          id: 'go-interface-internals',
+          title: { fr: "Anatomie d'une interface : (type, valeur)", en: 'Interface anatomy: (type, value)' },
+          code: `var w io.Writer          // paire (type=nil, valeur=nil) : w == nil -> true
+var b *bytes.Buffer      // b == nil -> true (pointeur nil)
+w = b                    // paire (type=*bytes.Buffer, valeur=nil)
+fmt.Println(w == nil)    // false ! le TYPE n'est plus nil`,
+          note: {
+            fr: `En interne, une valeur d'interface est une paire (type concret, valeur). w == nil ne vaut true que si les DEUX champs sont nil : dès qu'un pointeur typé (même nil) y est stocké, le champ type se remplit et l'interface n'est plus nil.`,
+            en: `Internally, an interface value is a (concrete type, value) pair. w == nil is only true when BOTH fields are nil: as soon as a typed pointer (even nil) is stored in it, the type field gets set and the interface stops being nil.`,
+          },
+        },
       ],
     },
     {
@@ -370,6 +382,19 @@ func (e *ValidationError) Error() string {
           note: {
             fr: `panic est réservé aux bugs irrécupérables (index hors limites, invariant cassé), jamais au contrôle de flux. recover en bordure (handler HTTP, worker) convertit la panique en erreur au lieu de tuer le process.`,
             en: `panic is for unrecoverable bugs (index out of range, broken invariant), never for control flow. recover at boundaries (HTTP handler, worker) converts the panic into an error instead of killing the process.`,
+          },
+        },
+        {
+          id: 'go-errors-join',
+          title: { fr: 'errors.Join : combiner plusieurs erreurs', en: 'errors.Join: combining multiple errors' },
+          code: `errValidation := errors.New("champ requis")
+errReseau := errors.New("timeout")
+err := errors.Join(errValidation, errReseau) // agrège sans en choisir une
+fmt.Println(err) // 2 lignes : "champ requis" puis "timeout"
+errors.Is(err, errReseau) // true — Is/As parcourent aussi les erreurs jointes`,
+          note: {
+            fr: `errors.Join (Go 1.20+) fusionne plusieurs erreurs indépendantes en une seule, sans perdre l'identité de chacune : errors.Is/As continuent de fonctionner sur chaque erreur jointe. Utile pour rapporter plusieurs échecs de validation d'un coup.`,
+            en: `errors.Join (Go 1.20+) merges several independent errors into one without losing each one's identity: errors.Is/As still work against each joined error. Handy for reporting several validation failures at once.`,
           },
         },
       ],
@@ -601,6 +626,55 @@ go env GOOS GOARCH   # voir la cible courante`,
           note: {
             fr: `Le suffixe de fichier marche aussi : main_windows.go n'est compilé que sous Windows. La cross-compilation est triviale en Go (pas de toolchain à installer) tant qu'on n'utilise pas cgo — d'où sa popularité pour les CLI.`,
             en: `File suffixes work too: main_windows.go only compiles on Windows. Cross-compilation is trivial in Go (no toolchain to install) as long as you avoid cgo — hence its popularity for CLIs.`,
+          },
+        },
+      ],
+    },
+    {
+      id: 'go-stdlib',
+      title: { fr: 'Bibliothèque standard', en: 'Standard library' },
+      items: [
+        {
+          id: 'go-json-encoding',
+          title: { fr: 'encoding/json : Marshal & Unmarshal', en: 'encoding/json: Marshal & Unmarshal' },
+          code: `type User struct {
+    Name string \`json:"name"\`
+    Age  int    \`json:"age,omitempty"\`
+}
+data, err := json.Marshal(User{Name: "Ada", Age: 36}) // -> []byte
+var u User
+err = json.Unmarshal(data, &u)   // &u : Unmarshal écrit dans le pointeur`,
+          note: {
+            fr: `Marshal sérialise une struct en JSON en respectant les tags struct (json:"nom", omitempty pour omettre un champ vide) ; Unmarshal fait l'inverse et exige un POINTEUR pour écrire le résultat. Seuls les champs exportés (majuscule) sont (dé)sérialisés.`,
+            en: `Marshal serializes a struct to JSON following its struct tags (json:"name", omitempty to skip an empty field); Unmarshal does the reverse and requires a POINTER to write the result into. Only exported (capitalized) fields are (de)serialized.`,
+          },
+        },
+        {
+          id: 'go-http-handler',
+          title: { fr: 'net/http : handler & ListenAndServe', en: 'net/http: handler & ListenAndServe' },
+          code: `func hello(w http.ResponseWriter, r *http.Request) {
+    fmt.Fprintf(w, "Bonjour %s", r.URL.Query().Get("nom"))
+}
+func main() {
+    http.HandleFunc("/hello", hello)
+    log.Fatal(http.ListenAndServe(":8080", nil)) // bloque jusqu'à erreur
+}`,
+          note: {
+            fr: `Un handler est juste func(http.ResponseWriter, *http.Request) ; HandleFunc l'enregistre sur une route via le mux par défaut. Toute fonction avec cette signature satisfait déjà l'interface http.Handler — pas besoin de framework pour un serveur minimal.`,
+            en: `A handler is just func(http.ResponseWriter, *http.Request); HandleFunc registers it on a route via the default mux. Any function with that signature already satisfies the http.Handler interface — no framework needed for a minimal server.`,
+          },
+        },
+        {
+          id: 'go-embedded-interfaces',
+          title: { fr: 'Interfaces embarquées : io.ReadWriter', en: 'Embedded interfaces: io.ReadWriter' },
+          code: `type ReadWriter interface {
+    Reader   // embarque io.Reader : Read(p []byte) (int, error)
+    Writer   // embarque io.Writer : Write(p []byte) (int, error)
+}
+var rw io.ReadWriter = someBuffer // satisfait les DEUX méthodes`,
+          note: {
+            fr: `Une interface peut en embarquer d'autres : io.ReadWriter n'ajoute aucune méthode, elle exige simplement les méthodes de Reader ET Writer réunies. C'est la composition d'interfaces, l'équivalent de l'embedding de struct côté contrat.`,
+            en: `An interface can embed others: io.ReadWriter adds no method of its own, it simply requires both Reader's and Writer's methods together. This is interface composition — the contract-side equivalent of struct embedding.`,
           },
         },
       ],

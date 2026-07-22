@@ -303,6 +303,86 @@ const [ouvert, basculer] = useToggle()`,
       ],
     },
     {
+      id: 'advanced',
+      title: { fr: 'Rendu avancé & robustesse', en: 'Advanced rendering & robustness' },
+      items: [
+        {
+          id: 'react-error-boundary-scope',
+          title: { fr: 'Error Boundary : ce qu\'elle attrape (et pas)', en: "Error Boundary: what it catches (and doesn't)" },
+          code: `class Boundary extends React.Component {
+  state = { error: null }
+  static getDerivedStateFromError(error) { return { error } }  // rendu du fallback
+  componentDidCatch(error, info) { logErreur(error, info) }    // effet de bord (log)
+  render() { return this.state.error ? <Fallback /> : this.props.children }
+}
+// ✗ ne rattrape PAS : erreurs dans onClick, setTimeout, ou côté serveur (SSR)`,
+          note: {
+            fr: `getDerivedStateFromError calcule le state à afficher (rendu pur), componentDidCatch sert aux effets de bord (log, reporting) ; les deux ne couvrent que les erreurs de rendu/lifecycle des descendants — pas les handlers d'événements ni le code async, à entourer d'un try/catch classique.`,
+            en: `getDerivedStateFromError computes the state to render (pure), componentDidCatch is for side effects (logging, reporting); both only cover render/lifecycle errors from descendants — not event handlers or async code, which need a regular try/catch.`,
+          },
+        },
+        {
+          id: 'react-strictmode',
+          title: { fr: 'StrictMode : double invocation en dev', en: 'StrictMode: double invocation in dev' },
+          code: `<React.StrictMode>
+  <App />
+</React.StrictMode>
+// En dev seulement : render, useState initializer et useEffect
+// sont invoqués deux fois pour révéler les effets de bord impurs`,
+          note: {
+            fr: `StrictMode ne s'exécute qu'en développement et ne change rien en production : le double appel révèle les fonctions qui ne devraient pas avoir d'effets de bord (render impur, effect sans cleanup correct).`,
+            en: `StrictMode only runs in development and changes nothing in production: the double call surfaces functions that should not have side effects (impure render, effect without proper cleanup).`,
+          },
+        },
+        {
+          id: 'react-lazy-suspense',
+          title: { fr: 'React.lazy + Suspense (code splitting)', en: 'React.lazy + Suspense (code splitting)' },
+          code: `const Profil = React.lazy(() => import('./Profil'))
+
+function App() {
+  return (
+    <Suspense fallback={<Spinner />}>
+      <Profil />
+    </Suspense>
+  )
+}`,
+          note: {
+            fr: `React.lazy charge le composant à la demande (chunk séparé) ; Suspense affiche le fallback pendant le chargement — réduit le bundle initial pour les routes/écrans peu visités.`,
+            en: `React.lazy loads the component on demand (separate chunk); Suspense shows the fallback while loading — reduces the initial bundle for rarely visited routes/screens.`,
+          },
+        },
+        {
+          id: 'react-uselayouteffect',
+          title: { fr: 'useLayoutEffect vs useEffect', en: 'useLayoutEffect vs useEffect' },
+          code: `useLayoutEffect(() => {
+  const { height } = ref.current.getBoundingClientRect()
+  setHauteur(height)   // lu/écrit AVANT que le navigateur peigne l'écran
+}, [])
+// useEffect : après le paint — flash visuel possible pour ce cas`,
+          note: {
+            fr: `useLayoutEffect s'exécute de façon synchrone après le DOM mais avant le paint : nécessaire pour mesurer/ajuster le layout sans flash visuel. Sinon, préférez useEffect (non bloquant).`,
+            en: `useLayoutEffect runs synchronously after the DOM update but before paint: needed to measure/adjust layout without a visual flash. Otherwise, prefer useEffect (non-blocking).`,
+          },
+        },
+        {
+          id: 'react-createportal',
+          title: { fr: 'createPortal : rendre hors de l\'arbre DOM parent', en: 'createPortal: render outside the parent DOM tree' },
+          code: `import { createPortal } from 'react-dom'
+
+function Modale({ children }) {
+  return createPortal(
+    <div className="modale">{children}</div>,
+    document.getElementById('modal-root')   // nœud DOM cible
+  )
+}`,
+          note: {
+            fr: `createPortal rend des enfants dans un nœud DOM différent tout en gardant le composant dans l'arbre React logique (contexte, bubbling d'événements) — indispensable pour modales/tooltips au-dessus de tout le reste.`,
+            en: `createPortal renders children into a different DOM node while keeping the component in React's logical tree (context, event bubbling) — essential for modals/tooltips that must sit above everything else.`,
+          },
+        },
+      ],
+    },
+    {
       id: 'ecosystem',
       title: { fr: 'Écosystème (routing & data)', en: 'Ecosystem (routing & data)' },
       items: [

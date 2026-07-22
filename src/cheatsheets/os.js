@@ -380,6 +380,50 @@ systemd-run --scope -p MemoryMax=512M ./gourmand.sh`,
             en: `cgroups cap CPU, memory and I/O per process group: the machinery under Docker, Kubernetes and systemd. An "OOMKilled" container simply hit its memory.max.`,
           },
         },
+        {
+          id: 'os-namespaces',
+          title: { fr: "Namespaces : l'autre moitié des conteneurs", en: 'Namespaces: the other half of containers' },
+          code: `ls -l /proc/1234/ns/            # les namespaces d'un processus (pid, net, mnt...)
+sudo unshare --pid --fork --mount-proc bash   # nouveau namespace PID, isolé
+readlink /proc/self/ns/pid      # identifiant du namespace courant`,
+          note: {
+            fr: `cgroups limite les ressources qu'un groupe de processus peut consommer ; namespaces limite ce qu'il peut VOIR (ses propres PID, sa propre pile réseau, son propre montage racine). Les deux ensemble sont la mécanique complète derrière un conteneur Docker — sans namespaces, un « conteneur » verrait tous les processus de l'hôte.`,
+            en: `cgroups limits how much a process group can consume; namespaces limits what it can SEE (its own PIDs, its own network stack, its own root mount). Together they're the full machinery behind a Docker container — without namespaces, a "container" would see every process on the host.`,
+          },
+        },
+        {
+          id: 'os-core-dump-analysis',
+          title: { fr: 'Analyser un crash avec un core dump', en: 'Analyzing a crash with a core dump' },
+          code: `ulimit -c unlimited              # autoriser la génération d'un core pour ce shell
+./mon_app                        # plante avec SIGSEGV -> fichier core généré
+gdb ./mon_app core                # ouvre le core dans le débogueur
+(gdb) bt                          # backtrace : la pile au moment du crash`,
+          note: {
+            fr: `Un signal fatal non intercepté (SIGSEGV, SIGABRT...) peut déclencher un core dump : une image mémoire complète du processus au moment du crash. gdb bt affiche la pile d'appels exacte — souvent la seule façon de comprendre un crash qui ne se reproduit pas sous debugger direct.`,
+            en: `An uncaught fatal signal (SIGSEGV, SIGABRT...) can trigger a core dump: a full memory snapshot of the process at the moment of the crash. gdb's bt shows the exact call stack — often the only way to understand a crash that won't reproduce under a live debugger.`,
+          },
+        },
+        {
+          id: 'os-cpu-steal-time',
+          title: { fr: 'CPU steal time : le voisin bruyant du cloud', en: "CPU steal time: the cloud's noisy neighbor" },
+          code: `top                    # colonne %st dans la ligne CPU(s)
+vmstat 1 5             # dernière colonne : st (steal, en %)
+# st élevé = l'hyperviseur donne le CPU à d'AUTRES VMs, pas à la vôtre`,
+          note: {
+            fr: `Sur une VM cloud (EC2, GCE...), st mesure le temps où votre vCPU voulait tourner mais l'hyperviseur l'a donné à une autre machine virtuelle du même hôte physique. Un %st élevé explique une lenteur inexpliquée par vos propres processus — le fix est souvent de changer de taille/type d'instance, pas d'optimiser le code.`,
+            en: `On a cloud VM (EC2, GCE...), st measures time your vCPU wanted to run but the hypervisor gave it to another VM on the same physical host. High %st explains slowness your own processes can't account for — the fix is often a different instance size/type, not code optimization.`,
+          },
+        },
+        {
+          id: 'os-ebpf-bpftrace',
+          title: { fr: "eBPF / bpftrace : le successeur de strace", en: "eBPF / bpftrace: strace's successor" },
+          code: `sudo bpftrace -e 'tracepoint:syscalls:sys_enter_openat { printf("%s %s\\n", comm, str(args.filename)); }'
+sudo bpftrace -l 'tracepoint:syscalls:sys_enter_*'   # lister les points de trace disponibles`,
+          note: {
+            fr: `strace ralentit énormément le programme tracé (chaque appel passe par le débogueur) ; les programmes eBPF s'exécutent DANS le noyau, avec un surcoût minime, ce qui les rend utilisables en production. bpftrace en offre une syntaxe simple façon awk, sans écrire de C ni recompiler le noyau.`,
+            en: `strace drastically slows down the traced program (every call goes through the debugger); eBPF programs run INSIDE the kernel with minimal overhead, which makes them safe to use in production. bpftrace gives them an awk-like simple syntax, no C or kernel recompilation needed.`,
+          },
+        },
       ],
     },
     {

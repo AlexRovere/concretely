@@ -310,6 +310,15 @@ export default {
             en: `await inside a for loop serializes calls: 3 x 200 ms = 600 ms. map + Promise.all launches them in parallel (~200 ms) — unless sequential order is intended.`,
           },
         },
+        {
+          id: 'js-event-loop',
+          title: { fr: 'Event loop : microtâches vs macrotâches', en: 'Event loop: microtasks vs macrotasks' },
+          code: `console.log('1')                        // synchrone\nsetTimeout(() => console.log('2'), 0)   // macrotâche (timer)\nPromise.resolve().then(() => console.log('3')) // microtâche\nconsole.log('4')                        // synchrone\n// ordre réel : 1, 4, 3, 2 — les microtâches se vident avant la macrotâche suivante`,
+          note: {
+            fr: `Après chaque tâche synchrone, la file des microtâches (Promise.then, queueMicrotask) se vide entièrement avant qu'une seule macrotâche (setTimeout, I/O) ne s'exécute — d'où l'ordre 1, 4, 3, 2.`,
+            en: `After each synchronous task, the microtask queue (Promise.then, queueMicrotask) drains completely before a single macrotask (setTimeout, I/O) runs — hence the 1, 4, 3, 2 order.`,
+          },
+        },
       ],
     },
     {
@@ -359,6 +368,81 @@ export default {
           note: {
             fr: `Le débounce n'exécute fn qu'après un silence de N ms — indispensable pour les champs de recherche ou le resize. La closure sur timer garde l'état entre les appels.`,
             en: `Debounce only runs fn after N ms of silence — essential for search inputs or resize. The closure over timer keeps state between calls.`,
+          },
+        },
+      ],
+    },
+    {
+      id: 'classes',
+      title: { fr: 'Classes (ES6+)', en: 'Classes (ES6+)' },
+      items: [
+        {
+          id: 'js-class-basics',
+          title: { fr: 'Classe : constructor & méthodes', en: 'Class: constructor & methods' },
+          code: `class Compte {\n  constructor(solde = 0) {\n    this.solde = solde          // champ d'instance\n  }\n  crediter(montant) {\n    this.solde += montant\n    return this                 // permet le chaînage\n  }\n}\nconst c = new Compte(100).crediter(50)   // solde: 150`,
+          note: {
+            fr: `Une classe est du sucre syntaxique sur les prototypes : constructor initialise l'instance, les méthodes sont partagées via le prototype (pas copiées par instance).`,
+            en: `A class is syntactic sugar over prototypes: constructor initializes the instance, methods are shared via the prototype (not copied per instance).`,
+          },
+        },
+        {
+          id: 'js-class-private-fields',
+          title: { fr: 'Champs privés #x', en: 'Private fields #x' },
+          code: `class Compteur {\n  #valeur = 0                   // privé : invisible hors de la classe\n  incrementer() { return ++this.#valeur }\n}\nconst c = new Compteur()\nc.incrementer()      // 1\nc.#valeur             // SyntaxError hors de la classe`,
+          note: {
+            fr: `Le préfixe # (ES2022) impose une vraie encapsulation vérifiée par le moteur JS, contrairement à la convention _valeur qui reste accessible de l'extérieur.`,
+            en: `The # prefix (ES2022) enforces real encapsulation checked by the JS engine, unlike the _value convention which remains accessible from outside.`,
+          },
+        },
+        {
+          id: 'js-class-static',
+          title: { fr: 'Membres static', en: 'Static members' },
+          code: `class Compteur {\n  static instances = 0            // partagé par la classe, pas les instances\n  constructor() { Compteur.instances++ }\n  static reset() { Compteur.instances = 0 }\n}\nnew Compteur(); new Compteur()\nCompteur.instances     // 2`,
+          note: {
+            fr: `static attache une propriété ou méthode à la classe elle-même (fabriques, compteurs, constantes) plutôt qu'à chaque instance créée.`,
+            en: `static attaches a property or method to the class itself (factories, counters, constants) rather than to each created instance.`,
+          },
+        },
+        {
+          id: 'js-class-inheritance',
+          title: { fr: 'Héritage : extends & super', en: 'Inheritance: extends & super' },
+          code: `class Animal {\n  constructor(nom) { this.nom = nom }\n  parler() { return \`\${this.nom} fait un bruit\` }\n}\nclass Chien extends Animal {\n  parler() { return \`\${super.parler()} : Ouaf !\` }   // super = accès au parent\n}\nnew Chien('Rex').parler()  // 'Rex fait un bruit : Ouaf !'`,
+          note: {
+            fr: `extends établit la chaîne de prototypes, super() doit être appelé dans le constructor enfant avant d'utiliser this ; super.methode() appelle l'implémentation du parent.`,
+            en: `extends sets up the prototype chain, super() must be called in the child constructor before using this; super.method() calls the parent's implementation.`,
+          },
+        },
+      ],
+    },
+    {
+      id: 'fundamentals',
+      title: { fr: 'Fondamentaux : portée, erreurs & modules', en: 'Fundamentals: scope, errors & modules' },
+      items: [
+        {
+          id: 'js-hoisting-tdz',
+          title: { fr: 'Hoisting & Temporal Dead Zone', en: 'Hoisting & Temporal Dead Zone' },
+          code: `console.log(a)     // undefined — var hoisté et initialisé\nvar a = 1\nconsole.log(b)     // ReferenceError — TDZ : b existe mais inaccessible\nlet b = 2`,
+          note: {
+            fr: `var est hoisté ET initialisé à undefined ; let/const sont hoistés mais restent dans la Temporal Dead Zone jusqu'à leur déclaration — y accéder avant lève une erreur, ce qui évite des bugs silencieux.`,
+            en: `var is hoisted AND initialized to undefined; let/const are hoisted but stay in the Temporal Dead Zone until their declaration — accessing them earlier throws, preventing silent bugs.`,
+          },
+        },
+        {
+          id: 'js-error-handling',
+          title: { fr: 'throw, Error personnalisée & cause', en: 'throw, custom Error & cause' },
+          code: `class ValidationError extends Error {\n  constructor(message, { cause } = {}) {\n    super(message, { cause })     // cause (ES2022) : chaîne l'erreur d'origine\n    this.name = 'ValidationError'\n  }\n}\nthrow new ValidationError('email invalide', { cause: err })`,
+          note: {
+            fr: `Étendre Error permet de créer des types d'erreurs distinguables (instanceof), et l'option cause (ES2022) préserve l'erreur d'origine sans la perdre dans un nouveau throw.`,
+            en: `Extending Error lets you create distinguishable error types (instanceof), and the cause option (ES2022) preserves the original error instead of losing it in a new throw.`,
+          },
+        },
+        {
+          id: 'js-modules',
+          title: { fr: 'Modules ES : import / export', en: 'ES modules: import / export' },
+          code: `// math.js\nexport const PI = 3.14              // export nommé\nexport default function carre(x) { return x * x }  // export par défaut\n// app.js\nimport carre, { PI } from './math.js'    // défaut + nommé\nimport * as math from './math.js'        // tout sous un namespace`,
+          note: {
+            fr: `Un module peut avoir un seul export default mais autant d'exports nommés que nécessaire ; contrairement aux scripts classiques, un module a sa propre portée et est en mode strict par défaut.`,
+            en: `A module can have one default export but as many named exports as needed; unlike classic scripts, a module has its own scope and is strict mode by default.`,
           },
         },
       ],

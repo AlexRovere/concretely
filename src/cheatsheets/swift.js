@@ -185,6 +185,19 @@ for (name, year) in zip(names, years) {
             en: `enumerated yields an offset (0, 1, 2…) — not necessarily the real index on an ArraySlice. zip stops at the shorter of the two sequences.`,
           },
         },
+        {
+          id: 'swift-string-unicode',
+          title: { fr: "String n'est pas indexable par Int", en: "String isn't indexable by Int" },
+          code: `let s = "café"
+// s[0]              // ERREUR : pas de subscript Int
+let first = s[s.startIndex]         // 'c' — via un String.Index
+let count = s.count                 // 4 — compte les graphèmes, pas les octets
+let utf8Count = s.utf8.count        // 5 — 'é' prend 2 octets en UTF-8`,
+          note: {
+            fr: `Swift compte les caractères visibles (graphèmes Unicode), pas les unités mémoire : String.Index encode cette complexité et empêche un accès O(1) par entier. s.utf8/s.unicodeScalars donnent les vues bas niveau si besoin.`,
+            en: `Swift counts visible characters (Unicode grapheme clusters), not memory units: String.Index encodes that complexity and prevents O(1) integer indexing. s.utf8/s.unicodeScalars give the low-level views when needed.`,
+          },
+        },
       ],
     },
     {
@@ -273,6 +286,19 @@ extension Int: Describable {         // rétrofit sur un type existant
             en: `Fired on every write (except during initialization). didSet is great for syncing derived state; beware of loops if you re-assign the same property.`,
           },
         },
+        {
+          id: 'swift-access-control',
+          title: { fr: "Contrôle d'accès : private / internal / public", en: 'Access control: private / internal / public' },
+          code: `private var secret = "x"        // ce fichier (+ extensions dans le même fichier)
+fileprivate var shared = 1      // tout le fichier
+internal var normal = 2         // le module (défaut, souvent omis)
+public class Widget {}          // visible hors du module, pas sous-classable ailleurs
+open class Base {}              // visible ET sous-classable hors du module`,
+          note: {
+            fr: `Swift a 5 niveaux, du plus restrictif au plus large : private, fileprivate, internal (défaut), public, open. open n'existe que pour class/méthode : seul lui autorise l'héritage/override depuis un autre module.`,
+            en: `Swift has 5 levels, most to least restrictive: private, fileprivate, internal (default), public, open. open only applies to class/method: it's the only one allowing subclassing/override from another module.`,
+          },
+        },
       ],
     },
     {
@@ -339,6 +365,19 @@ greet("Ada")`,
           note: {
             fr: `L'étiquette externe (from) sert à l'appelant, le nom interne (origin) au corps de la fonction. _ supprime l'étiquette — les bonnes étiquettes rendent l'appel lisible comme une phrase.`,
             en: `The external label (from) serves the caller, the internal name (origin) serves the body. _ removes the label — good labels make calls read like sentences.`,
+          },
+        },
+        {
+          id: 'swift-arc-basics',
+          title: { fr: 'ARC : comptage de références', en: 'ARC: reference counting' },
+          code: `class Session {}
+var a: Session? = Session()   // retainCount = 1
+var b = a                     // retainCount = 2 (même instance)
+a = nil                       // retainCount = 1 : b garde l'objet vivant
+b = nil                       // retainCount = 0 : deinit appelé, mémoire libérée`,
+          note: {
+            fr: `Chaque référence forte à une instance de classe incrémente son compteur ARC ; l'objet est désalloué (deinit) quand ce compteur atteint zéro. weak/unowned ne comptent pas — c'est ce qui casse les cycles de rétention (cf. [weak self]).`,
+            en: `Every strong reference to a class instance increments its ARC counter; the object is deallocated (deinit) when the counter hits zero. weak/unowned don't count — that's what breaks retain cycles (see [weak self]).`,
           },
         },
       ],
@@ -586,6 +625,121 @@ let user = try result.get()        // pont vers le monde throws`,
           note: {
             fr: `defer s'exécute à la sortie de la portée — return, throw ou fin normale. Plusieurs defer s'exécutent en ordre INVERSE de déclaration (LIFO) : déclarez le nettoyage juste après l'acquisition.`,
             en: `defer runs when the scope exits — return, throw, or normal end. Multiple defers run in REVERSE declaration order (LIFO): declare cleanup right after acquisition.`,
+          },
+        },
+        {
+          id: 'swift-codable-json',
+          title: { fr: 'Codable : encoder/décoder du JSON', en: 'Codable: encoding/decoding JSON' },
+          code: `struct User: Codable {
+  let name: String
+  let age: Int
+  enum CodingKeys: String, CodingKey { case name, age = "user_age" }
+}
+let user = try JSONDecoder().decode(User.self, from: jsonData)
+let data = try JSONEncoder().encode(user)`,
+          note: {
+            fr: `Codable = Encodable + Decodable, synthétisé automatiquement si toutes les propriétés le sont. CodingKeys permet de mapper un nom JSON différent (user_age) sans casser le nom Swift (age).`,
+            en: `Codable = Encodable + Decodable, auto-synthesized when every property is too. CodingKeys lets you map a differently named JSON field (user_age) without breaking the Swift name (age).`,
+          },
+        },
+      ],
+    },
+    {
+      id: 'swift-generics',
+      title: { fr: 'Génériques', en: 'Generics' },
+      items: [
+        {
+          id: 'swift-generics-function',
+          title: { fr: 'Fonction générique <T>', en: 'Generic function <T>' },
+          code: `func firstElement<T>(_ items: [T]) -> T? {
+  items.first
+}
+let n = firstElement([1, 2, 3])       // T inféré = Int
+let s = firstElement(["a", "b"])      // T inféré = String`,
+          note: {
+            fr: `<T> est un paramètre de type : la même fonction s'adapte à n'importe quel type sans dupliquer le code, tout en restant typée statiquement (pas de Any).`,
+            en: `<T> is a type parameter: the same function adapts to any type without duplicating code, while staying statically typed (no Any).`,
+          },
+        },
+        {
+          id: 'swift-generics-where',
+          title: { fr: 'Contraintes : <T: Protocol> et where', en: 'Constraints: <T: Protocol> and where' },
+          code: `func sum<T: Numeric>(_ items: [T]) -> T {
+  items.reduce(0, +)
+}
+func printAll<S: Sequence>(_ seq: S) where S.Element: CustomStringConvertible {
+  for item in seq { print(item.description) }
+}`,
+          note: {
+            fr: `<T: Protocol> restreint T aux types conformes (ici Numeric pour utiliser +). where ajoute des contraintes sur les types associés d'un protocole générique, comme S.Element ici.`,
+            en: `<T: Protocol> restricts T to conforming types (here Numeric to use +). where adds constraints on a generic protocol's associated types, like S.Element here.`,
+          },
+        },
+        {
+          id: 'swift-generics-associatedtype',
+          title: { fr: 'associatedtype : protocoles génériques', en: 'associatedtype: generic protocols' },
+          code: `protocol Container {
+  associatedtype Item
+  var items: [Item] { get }
+  mutating func add(_ item: Item)
+}
+struct Stack<Item>: Container {
+  var items: [Item] = []
+  mutating func add(_ item: Item) { items.append(item) }
+}`,
+          note: {
+            fr: `associatedtype rend un protocole générique : chaque type conforme choisit son propre Item. Contrairement aux génériques de fonction, le protocole ne peut pas être utilisé comme type nu (any Container), seulement via some/génériques.`,
+            en: `associatedtype makes a protocol generic: each conforming type picks its own Item. Unlike function generics, the protocol can't be used as a bare type (any Container), only via some/generics.`,
+          },
+        },
+      ],
+    },
+    {
+      id: 'swift-testing',
+      title: { fr: 'Tests', en: 'Tests' },
+      items: [
+        {
+          id: 'swift-testing-suite',
+          title: { fr: '@Suite : organiser des tests', en: '@Suite: organizing tests' },
+          code: `@Suite("Authentification")
+struct AuthTests {
+  @Test func loginWithValidCredentials() async throws {
+    #expect(try await auth.login("ada", "pwd") == .success)
+  }
+}`,
+          note: {
+            fr: `@Suite regroupe des @Test liés dans un type (struct/class) : setup partagé via init(), pas de héritage XCTestCase requis, et les tests d'une même suite tournent en parallèle par défaut.`,
+            en: `@Suite groups related @Test functions in a type (struct/class): shared setup via init(), no XCTestCase inheritance required, and tests in the same suite run in parallel by default.`,
+          },
+        },
+        {
+          id: 'swift-testing-parameterized',
+          title: { fr: 'Tests paramétrés : @Test(arguments:)', en: 'Parameterized tests: @Test(arguments:)' },
+          code: `@Test(arguments: ["", " ", "\\t"])
+func rejectsBlankInput(_ input: String) {
+  #expect(Validator.isValid(input) == false)
+}`,
+          note: {
+            fr: `@Test(arguments:) exécute la même fonction pour chaque valeur du tableau — un test, plusieurs cas, chacun rapporté séparément en cas d'échec (contrairement à une boucle for dans un seul test).`,
+            en: `@Test(arguments:) runs the same function once per array value — one test, several cases, each reported separately on failure (unlike a for loop inside a single test).`,
+          },
+        },
+        {
+          id: 'swift-testing-async',
+          title: { fr: "Tester l'async et les callbacks", en: 'Testing async code and callbacks' },
+          code: `@Test func fetchesUserAsync() async throws {
+  let user = try await service.fetchUser(id: 1)
+  #expect(user.name == "Ada")
+}
+@Test func notifiesOnce() async {
+  await confirmation() { confirm in
+    service.onUpdate = { confirm() }
+    service.trigger()
+  }
+}`,
+          note: {
+            fr: `Les fonctions @Test peuvent être async throws directement : pas d'expectation XCTest à gérer. confirmation() vérifie qu'un callback non-async (ex. delegate) est bien appelé, avec un nombre d'appels attendu.`,
+            en: `@Test functions can be async throws directly: no XCTest expectation plumbing needed. confirmation() verifies a non-async callback (e.g. a delegate) actually fires, with an expected call count.`,
           },
         },
       ],

@@ -86,6 +86,35 @@ sans échappement : C:\\dossier""".trimIndent())`,
             en: `when is an expression: it returns a value, so else is required unless the compiler proves exhaustiveness (enum, sealed). A great replacement for if/else chains.`,
           },
         },
+        {
+          id: 'kotlin-try-catch-finally',
+          title: { fr: 'try / catch / finally', en: 'try / catch / finally' },
+          code: `fun parseAge(s: String): Int {
+    return try {
+        s.toInt()
+    } catch (e: NumberFormatException) {
+        -1
+    } finally {
+        println("tentative de parsing terminée")
+    }
+}`,
+          note: {
+            fr: `try est une EXPRESSION en Kotlin : elle retourne la valeur du bloc try ou du catch qui matche. finally s'exécute toujours (succès, exception, ou même return dans le bloc).`,
+            en: `try is an EXPRESSION in Kotlin: it returns the value of the try block or the matching catch. finally always runs (success, exception, or even a return inside the block).`,
+          },
+        },
+        {
+          id: 'kotlin-platform-types',
+          title: { fr: 'Platform types : interop avec Java (String!)', en: 'Platform types: Java interop (String!)' },
+          code: `// Java: public String getName() { return name; } // peut renvoyer null
+val name = javaObject.getName()   // type: String! (platform type)
+name.length                       // compile, mais NPE possible à l'exécution !
+val safe: String? = javaObject.getName()  // traité explicitement comme nullable`,
+          note: {
+            fr: `Le compilateur Kotlin ne connaît pas la nullabilité d'une API Java sans annotation (@Nullable/@NonNull) : il expose un type plateforme (String!) qui désactive les vérifications null-safety. Traitez toujours le retour Java comme nullable par précaution.`,
+            en: `The Kotlin compiler doesn't know a Java API's nullability without annotations (@Nullable/@NonNull): it exposes a platform type (String!) that disables null-safety checks. Always treat Java return values as nullable to be safe.`,
+          },
+        },
       ],
     },
     {
@@ -243,6 +272,19 @@ val Int.dp: Float                      // extension property
             en: `Adds methods to existing types without inheriting — resolved statically (no real polymorphism). Has no access to the extended type's private members.`,
           },
         },
+        {
+          id: 'kotlin-interface-delegation',
+          title: { fr: "Délégation d'interface : by", en: 'Interface delegation: by' },
+          code: `interface Logger { fun log(msg: String) }
+class ConsoleLogger : Logger { override fun log(msg: String) = println(msg) }
+class Service(logger: Logger) : Logger by logger {
+    fun run() = log("démarrage")   // délégué à logger, pas réimplémenté
+}`,
+          note: {
+            fr: `class X : Interface by obj délègue automatiquement toutes les méthodes de l'interface à obj — sans écrire un seul override. Utile pour composer des comportements (decorator) sans hériter d'une classe.`,
+            en: `class X : Interface by obj automatically forwards every interface method to obj — without writing a single override. Handy for composing behavior (decorator) without inheriting from a class.`,
+          },
+        },
       ],
     },
     {
@@ -314,6 +356,17 @@ val nom = brut.takeUnless { it.isBlank() } ?: "anonyme"`,
           note: {
             fr: `takeIf retourne l'objet si le prédicat est vrai, sinon null — transforme une validation en chaîne nullable élégante avec ?:. takeUnless est l'inverse.`,
             en: `takeIf returns the object if the predicate is true, otherwise null — turns validation into an elegant nullable chain with ?:. takeUnless is the inverse.`,
+          },
+        },
+        {
+          id: 'kotlin-inline-reified',
+          title: { fr: 'inline + reified : génériques qui survivent à l\'effacement', en: 'inline + reified: generics that survive erasure' },
+          code: `inline fun <reified T> Gson.fromJson(json: String): T =
+    fromJson(json, T::class.java)   // T accessible à l'exécution !
+val user: User = gson.fromJson(json)   // pas besoin de User::class.java`,
+          note: {
+            fr: `La JVM efface les types génériques à l'exécution ; inline fun <reified T> copie le corps à chaque site d'appel, ce qui rend T::class réellement accessible. C'est ce que apply/let/run utilisent déjà en interne (inline) pour être gratuits en performance.`,
+            en: `The JVM erases generic types at runtime; inline fun <reified T> copies the body into every call site, making T::class actually accessible. It's what apply/let/run already use internally (inline) to be free at runtime.`,
           },
         },
       ],
@@ -578,6 +631,91 @@ val ui = combine(users, filtre) { u, f ->  // recombine à chaque émission
           note: {
             fr: `debounce + distinctUntilChanged + flatMapLatest est le trio classique de la barre de recherche. combine fusionne plusieurs flows et réémet dès que l'un d'eux change.`,
             en: `debounce + distinctUntilChanged + flatMapLatest is the classic search-bar trio. combine merges several flows and re-emits whenever any of them changes.`,
+          },
+        },
+      ],
+    },
+    {
+      id: 'kotlin-generics',
+      title: { fr: 'Génériques', en: 'Generics' },
+      items: [
+        {
+          id: 'kotlin-generics-basics',
+          title: { fr: 'Classe/fonction générique <T>', en: 'Generic class/function <T>' },
+          code: `class Box<T>(var value: T)
+fun <T> firstOrNull(items: List<T>): T? = items.firstOrNull()
+val box = Box("hello")           // Box<String> inféré
+val n = firstOrNull(listOf(1, 2)) // Int?`,
+          note: {
+            fr: `<T> paramètre le type au lieu de dupliquer le code pour chaque type concret ; le compilateur infère T depuis les arguments dans la plupart des cas.`,
+            en: `<T> parameterizes the type instead of duplicating code for every concrete type; the compiler infers T from the arguments in most cases.`,
+          },
+        },
+        {
+          id: 'kotlin-generics-variance',
+          title: { fr: 'Variance : out / in', en: 'Variance: out / in' },
+          code: `interface Producer<out T> { fun produce(): T }       // out : lecture seule
+interface Consumer<in T> { fun consume(item: T) }     // in : écriture seule
+val p: Producer<Any> = object : Producer<String> { override fun produce() = "x" }`,
+          note: {
+            fr: `out rend le type covariant (Producer<String> devient un Producer<Any>, comme List<out T>). in le rend contravariant (l'inverse, comme Comparator<in T>). Sans variance, Box<String> et Box<Any> seraient incompatibles.`,
+            en: `out makes the type covariant (Producer<String> becomes a Producer<Any>, like List<out T>). in makes it contravariant (the reverse, like Comparator<in T>). Without variance, Box<String> and Box<Any> would be incompatible.`,
+          },
+        },
+        {
+          id: 'kotlin-generics-where',
+          title: { fr: 'Contraintes multiples : where', en: 'Multiple bounds: where' },
+          code: `fun <T> maxOf(a: T, b: T): T where T : Comparable<T>, T : CharSequence =
+    if (a.length > 0 && a > b) a else b`,
+          note: {
+            fr: `<T : Bound> pose une seule contrainte ; where T : A, T : B en impose plusieurs à la fois sur le même paramètre de type — utile quand un seul bound ne suffit pas à décrire ce dont la fonction a besoin.`,
+            en: `<T : Bound> sets a single constraint; where T : A, T : B applies several at once to the same type parameter — useful when a single bound doesn't capture what the function needs.`,
+          },
+        },
+      ],
+    },
+    {
+      id: 'kotlin-testing',
+      title: { fr: 'Tests', en: 'Tests' },
+      items: [
+        {
+          id: 'kotlin-testing-runtest',
+          title: { fr: 'runTest : tester les coroutines', en: 'runTest: testing coroutines' },
+          code: `@Test
+fun \`charge le profil\`() = runTest {
+    val vm = ProfileViewModel(fakeRepo)
+    vm.load()
+    advanceUntilIdle()             // exécute delay()/launch en attente
+    assertEquals("Ada", vm.name)
+}`,
+          note: {
+            fr: `runTest exécute les coroutines sur un scheduler de test virtuel : les delay() passent instantanément, et advanceUntilIdle() attend que toutes les coroutines en attente se terminent — sans vrai temps d'attente.`,
+            en: `runTest runs coroutines on a virtual test scheduler: delay() calls pass instantly, and advanceUntilIdle() waits for all pending coroutines to finish — with no real wall-clock wait.`,
+          },
+        },
+        {
+          id: 'kotlin-testing-mockk',
+          title: { fr: 'MockK : mocker en Kotlin', en: 'MockK: mocking in Kotlin' },
+          code: `val repo = mockk<UserRepository>()
+every { repo.findById(1) } returns User("Ada")
+val vm = ProfileViewModel(repo)
+vm.load()
+verify { repo.findById(1) }`,
+          note: {
+            fr: `MockK gère nativement les classes final (par défaut en Kotlin, contrairement à Java) sans les rouvrir en open. every/returns stub le comportement, verify confirme qu'un appel a bien eu lieu.`,
+            en: `MockK natively handles final classes (Kotlin's default, unlike Java) without reopening them as open. every/returns stubs behavior, verify confirms a call actually happened.`,
+          },
+        },
+        {
+          id: 'kotlin-testing-kotest-assertions',
+          title: { fr: 'Kotest : assertions lisibles', en: 'Kotest: readable assertions' },
+          code: `result shouldBe expected
+list shouldContain "Ada"
+map shouldHaveSize 3
+exception shouldBe instanceOf<IllegalStateException>()`,
+          note: {
+            fr: `Les matchers Kotest (shouldBe, shouldContain...) se lisent comme une phrase et produisent un message d'échec détaillé, contrairement à assertEquals qui ne dit que 'expected X got Y'.`,
+            en: `Kotest matchers (shouldBe, shouldContain...) read like a sentence and produce a detailed failure message, unlike assertEquals which only says 'expected X got Y'.`,
           },
         },
       ],

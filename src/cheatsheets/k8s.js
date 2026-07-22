@@ -270,6 +270,41 @@ kubectl get hpa                               # cible vs actuel`,
             en: `liveness restarts, readiness cuts traffic, startup protects boot time. Classic mistake: an overly aggressive liveness killing a healthy-but-slow app → restart loop.`,
           },
         },
+        {
+          id: 'k8s-jobs-cronjobs',
+          title: { fr: 'Job & CronJob : tâches ponctuelles et planifiées', en: 'Job & CronJob: one-off and scheduled tasks' },
+          code: `apiVersion: batch/v1
+kind: Job
+metadata: { name: migration-db }
+spec:
+  backoffLimit: 3          # nb de retries avant d'abandonner
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: migrate
+          image: mon-api:1.2
+          command: ["npm", "run", "migrate"]
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata: { name: nightly-backup }
+spec:
+  schedule: "0 3 * * *"     # 3h du matin, syntaxe cron classique
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: backup
+              image: mon-api:1.2
+              command: ["./backup.sh"]`,
+          note: {
+            fr: `Un Job garantit qu'un traitement va au bout (retry via backoffLimit), contrairement à un pod nu qui disparaît silencieusement en cas d'échec. Un CronJob crée un nouveau Job à chaque déclenchement — restartPolicy: Never est obligatoire (Always n'a pas de sens pour une tâche qui se termine).`,
+            en: `A Job guarantees a task runs to completion (retried via backoffLimit), unlike a bare pod that silently disappears on failure. A CronJob creates a fresh Job on every trigger — restartPolicy: Never is mandatory (Always makes no sense for a task meant to finish).`,
+          },
+        },
       ],
     },
     {
@@ -547,6 +582,66 @@ kubectl run test --rm -it --image=busybox -- wget -qO- http://mon-svc`,
           note: {
             fr: `Checklist dans l'ordre : endpoints vides → selector qui ne matche pas les labels, ou readiness probe en échec (READY 0/1). Le pod jetable confirme ensuite la joignabilité réelle.`,
             en: `Checklist in order: empty endpoints → selector not matching the labels, or failing readiness probe (READY 0/1). The throwaway pod then confirms actual reachability.`,
+          },
+        },
+      ],
+    },
+    {
+      id: 'admin',
+      title: { fr: 'Administration & sécurité', en: 'Administration & security' },
+      items: [
+        {
+          id: 'k8s-rbac-basics',
+          title: { fr: 'RBAC : Role, RoleBinding, ClusterRole', en: 'RBAC: Role, RoleBinding, ClusterRole' },
+          code: `apiVersion: rbac.authorization.k8s.io/v1
+kind: Role                      # limité à un namespace
+metadata: { namespace: equipe-a, name: pod-reader }
+rules:
+  - apiGroups: [""]
+    resources: [pods]
+    verbs: [get, list, watch]
+---
+kind: RoleBinding                # relie le Role à un sujet (user/SA/group)
+metadata: { name: lire-pods, namespace: equipe-a }
+roleRef: { kind: Role, name: pod-reader, apiGroup: rbac.authorization.k8s.io }
+subjects:
+  - kind: ServiceAccount
+    name: ci-bot
+    namespace: equipe-a`,
+          note: {
+            fr: `Role/RoleBinding sont limités à un namespace ; ClusterRole/ClusterRoleBinding s'appliquent à tout le cluster (ou sont réutilisés dans plusieurs RoleBindings namespacés). Un Role sans RoleBinding ne donne aucun droit : les deux objets sont indissociables. kubectl auth can-i --as=system:serviceaccount:equipe-a:ci-bot get pods vérifie les droits réels.`,
+            en: `Role/RoleBinding are namespace-scoped; ClusterRole/ClusterRoleBinding apply cluster-wide (or get reused across several namespaced RoleBindings). A Role without a RoleBinding grants nothing: the two objects are inseparable. kubectl auth can-i --as=system:serviceaccount:equipe-a:ci-bot get pods checks actual permissions.`,
+          },
+        },
+        {
+          id: 'k8s-node-maintenance',
+          title: { fr: "cordon / drain / uncordon : maintenance d'un nœud", en: 'cordon / drain / uncordon: node maintenance' },
+          code: `kubectl cordon noeud-3          # marque Unschedulable, aucun nouveau pod
+kubectl drain noeud-3 --ignore-daemonsets --delete-emptydir-data
+# évince proprement les pods existants (respecte les PodDisruptionBudget)
+# ... maintenance / upgrade du nœud ...
+kubectl uncordon noeud-3        # redevient schedulable`,
+          note: {
+            fr: `cordon seul n'évince rien : il empêche juste le scheduler d'y placer de nouveaux pods. drain fait le vrai travail — il évince les pods existants en respectant les PodDisruptionBudget, donc peut rester bloqué si le budget interdit toute indisponibilité. --ignore-daemonsets est presque toujours nécessaire (les DaemonSets ne migrent pas).`,
+            en: `cordon alone evicts nothing: it just stops the scheduler from placing new pods there. drain does the real work — it evicts existing pods while respecting PodDisruptionBudgets, so it can hang if the budget forbids any unavailability. --ignore-daemonsets is almost always needed (DaemonSets don't migrate).`,
+          },
+        },
+        {
+          id: 'k8s-taints-tolerations',
+          title: { fr: 'Taints & tolerations : repousser, sauf exception', en: 'Taints & tolerations: repel, unless excepted' },
+          code: `# Sur le nœud : repousse tous les pods sauf ceux qui tolèrent
+kubectl taint nodes noeud-gpu dedicated=gpu:NoSchedule
+# Sur le pod : la seule exception autorisée à s'y poser
+tolerations:
+  - key: dedicated
+    operator: Equal
+    value: gpu
+    effect: NoSchedule
+# Retirer le taint :
+kubectl taint nodes noeud-gpu dedicated=gpu:NoSchedule-`,
+          note: {
+            fr: `Un taint est une propriété du NŒUD, une toleration une propriété du POD — c'est l'inverse du nodeSelector/affinity qui attire plutôt que de repousser. NoSchedule bloque les nouveaux pods, NoExecute évince même les pods déjà en place qui ne tolèrent pas. C'est le mécanisme derrière les "nœuds dédiés" (GPU, spot instances).`,
+            en: `A taint is a property of the NODE, a toleration a property of the POD — the opposite of nodeSelector/affinity, which attracts rather than repels. NoSchedule blocks new pods, NoExecute even evicts pods already running that don't tolerate it. This is the mechanism behind "dedicated nodes" (GPU, spot instances).`,
           },
         },
       ],
