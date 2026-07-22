@@ -684,5 +684,109 @@ function permutations(reste, courant = [], res = []) {
         },
       ],
     },
+    {
+      id: 'tests',
+      title: { fr: 'Tests', en: 'Testing' },
+      items: [
+        {
+          id: 'gen-test-pyramid',
+          title: { fr: 'La pyramide des tests', en: 'The testing pyramid' },
+          code: `// unitaire   : 1 fonction isolée, aucune I/O   -> ms   (des centaines)
+// intégration: modules + DB/API réels          -> 100ms (des dizaines)
+// E2E        : navigateur -> vrai backend       -> s    (une poignée)
+test('additionne', () => {
+  expect(somme(2, 3)).toBe(5)   // unitaire : rapide, déterministe
+})`,
+          note: {
+            fr: `Large base d'unitaires (rapides, isolés), une couche fine d'intégration, très peu d'E2E : les tests hauts coûtent cher et cassent souvent. Réservez l'E2E aux parcours critiques (login, paiement).`,
+            en: `A broad base of unit tests (fast, isolated), a thin integration layer, very few E2E: high-level tests are costly and flaky. Reserve E2E for critical journeys (login, checkout).`,
+          },
+        },
+        {
+          id: 'gen-test-tdd',
+          title: { fr: 'TDD : red / green / refactor', en: 'TDD: red / green / refactor' },
+          code: `// 1. RED : écrire un test qui échoue
+test('panier vide coûte 0', () => expect(total([])).toBe(0))
+// 2. GREEN : le minimum pour passer
+function total(items) { return 0 }
+// 3. REFACTOR : généraliser sans casser le test
+function total(items) { return items.reduce((s, i) => s + i.prix, 0) }`,
+          note: {
+            fr: `Écrire le test d'abord force à définir le comportement attendu avant l'implémentation, et garantit que chaque ligne de code existe pour une raison testée.`,
+            en: `Writing the test first forces you to define expected behavior before implementation, and guarantees every line of code exists for a tested reason.`,
+          },
+        },
+        {
+          id: 'gen-test-doubles',
+          title: { fr: 'Doubles de test : stub / mock / fake / spy', en: 'Test doubles: stub / mock / fake / spy' },
+          code: `// stub : renvoie une valeur figée (contrôle une entrée)
+const horloge = { now: () => 1700000000 }
+// mock : vérifie une interaction sortante attendue
+const mailer = { envoyer: jest.fn() }
+service.inscrire(user)
+expect(mailer.envoyer).toHaveBeenCalledWith(user.email)
+// fake : implémentation légère réelle (ex. DB en mémoire)
+// spy  : enveloppe le vrai objet et enregistre les appels`,
+          note: {
+            fr: `Stub pour contrôler une entrée (temps, réseau), mock pour vérifier une sortie (un mail est-il parti ?), fake pour remplacer une dépendance lourde, spy pour observer sans remplacer.`,
+            en: `Stub to control an input (time, network), mock to verify an outgoing interaction (was a mail sent?), fake to replace a heavy dependency, spy to observe without replacing.`,
+          },
+        },
+        {
+          id: 'gen-test-aaa-first',
+          title: { fr: "Anatomie d'un bon test (AAA + FIRST)", en: 'Anatomy of a good test (AAA + FIRST)' },
+          code: `test('retire le montant du solde', () => {
+  const c = new Compte(100)      // Arrange
+  c.retirer(30)                  // Act
+  expect(c.solde).toBe(70)       // Assert
+})
+// FIRST : Fast, Isolated, Repeatable, Self-validating, Timely`,
+          note: {
+            fr: `Arrange-Act-Assert rend un test lisible d'un coup d'œil. Un bon test est rapide, isolé (aucun ordre imposé), reproductible (pas de hasard ni d'horloge réelle) et auto-vérifiant.`,
+            en: `Arrange-Act-Assert makes a test readable at a glance. A good test is fast, isolated (no required order), repeatable (no randomness or real clock) and self-validating.`,
+          },
+        },
+        {
+          id: 'gen-test-behavior',
+          title: { fr: "Tester le comportement, pas l'implémentation", en: 'Test behavior, not implementation' },
+          code: `// ✗ teste un détail interne : casse au moindre refactor
+expect(service._cache.size).toBe(1)
+// ✓ teste le comportement observable via l'API publique
+const u = await service.getUser(1)
+expect(u.nom).toBe('Ada')
+expect(await service.getUser(1)).toBe(u)  // mis en cache : même instance`,
+          note: {
+            fr: `Tester l'API publique (entrées -> sorties) plutôt que les détails internes permet de refactorer librement sans réécrire les tests. Un test qui casse à chaque refacto teste la mauvaise chose.`,
+            en: `Testing the public API (inputs -> outputs) rather than internal details lets you refactor freely without rewriting tests. A test that breaks on every refactor is testing the wrong thing.`,
+          },
+        },
+        {
+          id: 'gen-test-coverage',
+          title: { fr: 'La couverture est un outil, pas un but', en: 'Coverage is a tool, not a goal' },
+          code: `// 100% de couverture ne prouve PAS l'absence de bug :
+function abs(x) { return x > 0 ? x : x }   // bug ! (devrait être -x)
+test('abs', () => expect(abs(5)).toBe(5))  // passe, ligne couverte à 100%
+// la ligne s'exécute, mais aucune assertion ne teste le cas négatif`,
+          note: {
+            fr: `La couverture mesure quelles lignes s'exécutent, pas si elles sont correctement vérifiées. Utile pour repérer le code non testé, trompeuse comme objectif chiffré.`,
+            en: `Coverage measures which lines run, not whether they are correctly asserted. Useful to spot untested code, misleading as a numeric target.`,
+          },
+        },
+        {
+          id: 'gen-test-parametrized',
+          title: { fr: 'Tests paramétrés & property-based', en: 'Parametrized & property-based tests' },
+          code: `// paramétré : un cas = une ligne, au lieu de copier-coller
+test.each([
+  [2, 3, 5], [-1, 1, 0], [0, 0, 0],
+])('somme(%i, %i) = %i', (a, b, r) => expect(somme(a, b)).toBe(r))
+// property-based : l'outil génère des centaines d'entrées aléatoires
+// et cherche un contre-exemple (ex. commutativité : a+b === b+a)`,
+          note: {
+            fr: `Les tests paramétrés couvrent d'un coup les cas limites (0, négatif, vide). Le property-based va plus loin : il cherche activement un contre-exemple à une propriété censée toujours tenir.`,
+            en: `Parametrized tests cover edge cases (0, negative, empty) in one place. Property-based goes further: it actively searches for a counter-example to a property that should always hold.`,
+          },
+        },
+      ],
+    },
   ],
 };
