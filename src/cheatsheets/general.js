@@ -1129,5 +1129,159 @@ GET /articles?status=published&sort=-createdAt`,
         },
       ],
     },
+    {
+      id: 'concurrency',
+      title: { fr: 'Concurrence & parallélisme', en: 'Concurrency & parallelism' },
+      items: [
+        {
+          id: 'gen-conc-vs-parallel',
+          title: { fr: 'Concurrence ≠ parallélisme', en: 'Concurrency ≠ parallelism' },
+          code: `// concurrence : plusieurs tâches progressent, entrelacées
+// parallélisme : elles s'exécutent VRAIMENT en même temps (plusieurs cœurs)
+await Promise.all([chargerA(), chargerB()])  // concurrent (I/O en parallèle)
+// 1 seul thread + async = concurrent, mais pas parallèle`,
+          note: {
+            fr: `La concurrence structure des tâches qui avancent en s'entrelaçant ; le parallélisme les exécute littéralement en même temps sur plusieurs cœurs. On peut être concurrent sans être parallèle (un seul thread, I/O asynchrone).`,
+            en: `Concurrency structures interleaved tasks making progress; parallelism runs them literally at the same time on multiple cores. You can be concurrent without being parallel (single thread, async I/O).`,
+          },
+        },
+        {
+          id: 'gen-conc-race',
+          title: { fr: 'Race condition', en: 'Race condition' },
+          code: `let solde = 100
+// A et B lisent 100, chacun retire 60 -> l'un écrase l'autre
+async function retirer(x) {
+  const s = await lire(solde)     // lecture
+  await ecrire(solde, s - x)      // écriture : l'autre a pu passer entre les deux
+}`,
+          note: {
+            fr: `Une race condition survient quand le résultat dépend de l'ordre d'exécution non contrôlé de tâches concurrentes. Le cycle lire-puis-écrire sur un état partagé est le cas classique à protéger.`,
+            en: `A race condition happens when the result depends on the uncontrolled execution order of concurrent tasks. The read-then-write cycle on shared state is the classic case to protect.`,
+          },
+        },
+        {
+          id: 'gen-conc-lock',
+          title: { fr: 'Verrou (mutex) & deadlock', en: 'Lock (mutex) & deadlock' },
+          code: `await mutex.lock()
+try { solde -= x } finally { mutex.unlock() }
+// ✗ deadlock : A tient L1 et attend L2, B tient L2 et attend L1
+// -> toujours acquérir les verrous dans le MÊME ordre`,
+          note: {
+            fr: `Un mutex sérialise l'accès à une section critique : un seul détenteur à la fois. Mais deux verrous pris dans des ordres opposés se bloquent mutuellement (deadlock) — verrouillez toujours dans le même ordre.`,
+            en: `A mutex serializes access to a critical section: one holder at a time. But two locks taken in opposite orders block each other (deadlock) — always lock in the same order.`,
+          },
+        },
+        {
+          id: 'gen-conc-io-cpu',
+          title: { fr: 'I/O-bound vs CPU-bound', en: 'I/O-bound vs CPU-bound' },
+          code: `// I/O-bound (réseau, disque) : async/await suffit, le CPU est libre
+await fetch(url)
+// CPU-bound (calcul lourd) : il faut de VRAIS cœurs
+new Worker('./calcul.js')        // décharge le thread principal`,
+          note: {
+            fr: `Choisissez le modèle selon la charge : pour de l'I/O (attente), l'asynchrone libère le thread sans parallélisme ; pour du calcul intensif, il faut de vrais cœurs (workers, multiprocessing).`,
+            en: `Match the model to the workload: for I/O (waiting), async frees the thread without parallelism; for heavy computation you need real cores (workers, multiprocessing).`,
+          },
+        },
+        {
+          id: 'gen-conc-shared-state',
+          title: { fr: "Supprimer l'état mutable partagé", en: 'Remove shared mutable state' },
+          code: `// ✓ immutabilité : chaque tâche travaille sur sa copie
+const suivant = { ...etat, count: etat.count + 1 }
+// ✓ message passing : communiquer par messages, pas par mémoire commune
+worker.postMessage({ type: 'job', data })`,
+          note: {
+            fr: `Le moyen le plus sûr d'éviter les races est de supprimer l'état mutable partagé : données immuables (copie au lieu de mutation) ou communication par messages (chaque tâche possède son état).`,
+            en: `The safest way to avoid races is to remove shared mutable state: immutable data (copy instead of mutate) or message passing (each task owns its state).`,
+          },
+        },
+        {
+          id: 'gen-conc-atomic',
+          title: { fr: 'Opérations atomiques', en: 'Atomic operations' },
+          code: `counter++                        // ✗ 3 étapes : lire, +1, écrire (race !)
+await redis.incr('counter')      // ✓ atomique côté serveur
+// ou compare-and-swap (CAS), transaction, verrou optimiste (version)`,
+          note: {
+            fr: `counter++ n'est pas atomique (lecture, incrément, écriture) : deux threads peuvent perdre un incrément. Utilisez une opération atomique, une transaction, ou un verrou optimiste par version.`,
+            en: `counter++ is not atomic (read, increment, write): two threads can lose an increment. Use an atomic operation, a transaction, or optimistic version-based locking.`,
+          },
+        },
+      ],
+    },
+    {
+      id: 'observability',
+      title: { fr: 'Logging & observabilité', en: 'Logging & observability' },
+      items: [
+        {
+          id: 'gen-obs-pillars',
+          title: { fr: "Les 3 piliers de l'observabilité", en: 'The 3 pillars of observability' },
+          code: `// LOGS    : événements datés ("commande 42 payée")
+// METRICS : agrégats chiffrés (req/s, latence p95, taux d'erreur)
+// TRACES  : le parcours d'une requête à travers les services`,
+          note: {
+            fr: `Logs (ce qui s'est passé), métriques (combien, à quelle vitesse) et traces (le chemin d'une requête entre services) répondent à des questions différentes. Les trois ensemble permettent de comprendre un système en production.`,
+            en: `Logs (what happened), metrics (how much, how fast) and traces (a request's path across services) answer different questions. Together they let you understand a system in production.`,
+          },
+        },
+        {
+          id: 'gen-obs-levels',
+          title: { fr: 'Niveaux de log', en: 'Log levels' },
+          code: `log.debug('payload reçu', body)    // dev/diagnostic, coupé en prod
+log.info('commande 42 créée')      // événement métier normal
+log.warn('retry 2/3 sur paiement') // anormal mais géré
+log.error('paiement échoué', err)  // échec nécessitant attention`,
+          note: {
+            fr: `Un niveau par intention : DEBUG pour diagnostiquer, INFO pour le flux normal, WARN pour l'anormal-mais-géré, ERROR pour ce qui demande une action. Le niveau permet de filtrer le bruit en production.`,
+            en: `One level per intent: DEBUG to diagnose, INFO for normal flow, WARN for handled-but-abnormal, ERROR for what needs action. The level lets you filter noise in production.`,
+          },
+        },
+        {
+          id: 'gen-obs-structured',
+          title: { fr: 'Logs structurés (JSON)', en: 'Structured logs (JSON)' },
+          code: `// ✗ texte libre : impossible à requêter/agréger
+console.log('user 42 a payé 30 EUR')
+// ✓ log structuré : filtrable, indexable
+log.info({ event: 'payment', userId: 42, amount: 30, currency: 'EUR' })`,
+          note: {
+            fr: `Un log texte se lit mais ne se requête pas. Des logs structurés (JSON, champs clé/valeur) se filtrent, s'agrègent et déclenchent des alertes — indispensable dès qu'un humain ne lit plus chaque ligne.`,
+            en: `A text log reads but doesn't query. Structured logs (JSON, key/value fields) can be filtered, aggregated and alerted on — essential once a human no longer reads every line.`,
+          },
+        },
+        {
+          id: 'gen-obs-no-secrets',
+          title: { fr: 'Ne jamais logger secrets ni données personnelles', en: 'Never log secrets or personal data' },
+          code: `// ✗ fuite durable dans les logs
+log.info({ user, password, cardNumber })
+// ✓ masquer/omettre les champs sensibles
+log.info({ userId: user.id, card: '****4242' })`,
+          note: {
+            fr: `Les logs sont copiés, indexés, conservés longtemps et vus par beaucoup : y écrire un mot de passe, un token ou un numéro de carte est une fuite durable. Masquez ou omettez toute donnée sensible.`,
+            en: `Logs are copied, indexed, kept for a long time and seen by many: writing a password, token or card number there is a lasting leak. Redact or omit any sensitive data.`,
+          },
+        },
+        {
+          id: 'gen-obs-correlation',
+          title: { fr: 'Id de corrélation (traçabilité distribuée)', en: 'Correlation id (distributed tracing)' },
+          code: `// gateway -> auth -> paiement : tous logguent le même requestId
+log.info({ requestId: 'req-7f3a', service: 'payment', event: 'charged' })
+// -> reconstituer le parcours complet en filtrant sur requestId`,
+          note: {
+            fr: `Dans un système distribué, un même id de corrélation propagé de service en service permet de reconstituer le parcours complet d'une requête et de localiser où elle a échoué.`,
+            en: `In a distributed system, one correlation id propagated across services lets you reconstruct a request's full path and pinpoint where it failed.`,
+          },
+        },
+        {
+          id: 'gen-obs-golden-signals',
+          title: { fr: 'Golden signals & alerter juste', en: 'Golden signals & alert wisely' },
+          code: `// surveiller les 4 golden signals (SRE) :
+// LATENCE (p95) · TRAFIC (req/s) · ERREURS (taux 5xx) · SATURATION (CPU/mém)
+// alerter sur les SYMPTÔMES ressentis par l'utilisateur, pas chaque cause`,
+          note: {
+            fr: `Surveillez latence, trafic, erreurs et saturation. Alertez sur les symptômes que l'utilisateur ressent (erreurs, lenteur), pas sur chaque cause interne — sinon l'équipe se noie sous les alertes et les ignore.`,
+            en: `Watch latency, traffic, errors and saturation. Alert on user-facing symptoms (errors, slowness), not on every internal cause — otherwise the team drowns in alerts and ignores them.`,
+          },
+        },
+      ],
+    },
   ],
 };
