@@ -32,4 +32,5 @@ export const CATEGORY_META = {
   web: { icon: '🌐', group: 'tools', tagline: { fr: 'HTTP, CORS & cache', en: 'HTTP, CORS & caching' } },
   docker: { icon: '🐳', group: 'tools', tagline: { fr: 'Conteneurs', en: 'Containers' } },
   k8s: { icon: '☸️', group: 'tools', tagline: { fr: 'Kubernetes', en: 'Kubernetes' } },
+  cicd: { icon: '🔁', group: 'tools', tagline: { fr: 'CI/CD : GitLab & GitHub', en: 'CI/CD: GitLab & GitHub' } },
 };

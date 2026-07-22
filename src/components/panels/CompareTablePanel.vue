@@ -5,9 +5,11 @@ import { highlight } from '@/highlight.js';
 import { useI18n } from '@/composables/useI18n';
 
 // Tableau comparatif générique (dimensions x candidats) + code de référence.
-// `id` vient d'un wrapper court (un par comparaison).
+// `id` résout une comparaison du registre Swift ; `data` fournit une comparaison
+// directement (autres catégories, ex. CI/CD) sans passer par ce registre.
 const props = defineProps({
-  id: { type: String, required: true },
+  id: { type: String, default: '' },
+  data: { type: Object, default: null },
   cat: { type: String, default: 'swift' },
   query: { type: String, default: '' },
 });
@@ -15,7 +17,9 @@ const props = defineProps({
 const { t, locale } = useI18n();
 const L = (v) => v?.[locale.value] ?? v?.fr ?? '';
 
-const cmp = computed(() => comparisonFor(props.id));
+const cmp = computed(() => props.data ?? comparisonFor(props.id));
+// Certaines comparaisons (ex. CI/CD) n'ont que le tableau, sans code de référence.
+const hasCode = computed(() => cmp.value?.candidates?.some((c) => c.code));
 </script>
 
 <template>
@@ -39,18 +43,22 @@ const cmp = computed(() => comparisonFor(props.id));
       </table>
     </div>
 
-    <h3 class="cmp-h">{{ t('cmp.code') }}</h3>
-    <div class="cmp-cards">
-      <article v-for="c in cmp.candidates" :key="c.id" class="cmp-card">
-        <header class="cmp-card-head"><code>{{ c.label }}</code></header>
-        <pre class="cmp-code"><code v-html="highlight(c.code, 'swift')"></code></pre>
-        <p class="cmp-when"><b>{{ t('cmp.when') }} :</b> {{ L(c.when) }}</p>
-      </article>
-    </div>
+    <template v-if="hasCode">
+      <h3 class="cmp-h">{{ t('cmp.code') }}</h3>
+      <div class="cmp-cards">
+        <article v-for="c in cmp.candidates" :key="c.id" class="cmp-card">
+          <header class="cmp-card-head"><code>{{ c.label }}</code></header>
+          <pre v-if="c.code" class="cmp-code"><code v-html="highlight(c.code, 'swift')"></code></pre>
+          <p v-if="c.when" class="cmp-when"><b>{{ t('cmp.when') }} :</b> {{ L(c.when) }}</p>
+        </article>
+      </div>
+    </template>
 
-    <h3 class="cmp-h">{{ t('cmp.notes') }}</h3>
-    <ul class="cmp-notes">
-      <li v-for="(n, i) in cmp.notes" :key="i">{{ L(n) }}</li>
-    </ul>
+    <template v-if="cmp.notes && cmp.notes.length">
+      <h3 class="cmp-h">{{ t('cmp.notes') }}</h3>
+      <ul class="cmp-notes">
+        <li v-for="(n, i) in cmp.notes" :key="i">{{ L(n) }}</li>
+      </ul>
+    </template>
   </section>
 </template>

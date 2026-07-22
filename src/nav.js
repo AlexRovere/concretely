@@ -5,5 +5,5 @@
  */
 export const CATEGORIES = [
   'general', 'patterns', 'js', 'ts', 'python', 'vue', 'swift', 'ruby', 'kotlin', 'java', 'go', 'rust', 'c', 'ml',
-  'sql', 'git', 'linux', 'os', 'web', 'docker', 'k8s',
+  'sql', 'git', 'linux', 'os', 'web', 'docker', 'k8s', 'cicd',
 ];
