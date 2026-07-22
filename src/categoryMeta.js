@@ -11,7 +11,7 @@ export const GROUP_LABEL = {
 };
 
 export const CATEGORY_META = {
-  general: { icon: '🧮', group: 'concepts', tagline: { fr: 'Algorithmes & structures de données', en: 'Algorithms & data structures' } },
+  general: { icon: '🧮', group: 'concepts', tagline: { fr: 'Fondamentaux d’ingénierie logicielle', en: 'Software engineering fundamentals' } },
   patterns: { icon: '🧩', group: 'concepts', tagline: { fr: 'Design patterns essentiels', en: 'Essential design patterns' } },
   ml: { icon: '🤖', group: 'concepts', tagline: { fr: 'Machine learning, visualisé', en: 'Machine learning, visualized' } },
   js: { icon: '🟨', group: 'languages', tagline: { fr: 'JavaScript & event loop', en: 'JavaScript & the event loop' } },
