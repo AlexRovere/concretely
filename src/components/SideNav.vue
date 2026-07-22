@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import { CATEGORIES } from '@/nav.js';
 import { CATEGORY_META, GROUPS, GROUP_LABEL } from '@/categoryMeta.js';
+import CategoryIcon from '@/components/CategoryIcon.vue';
 import SettingsFields from '@/components/SettingsFields.vue';
 import { useI18n } from '@/composables/useI18n';
 
@@ -43,7 +44,7 @@ const groups = computed(() =>
           :class="{ active: props.view === 'panel' && props.cat === c }"
           @click="emit('pick', c)"
         >
-          <span class="sidenav-cat-icon" aria-hidden="true">{{ CATEGORY_META[c].icon }}</span>{{ t('cat.' + c) }}
+          <CategoryIcon :cat="c" class="sidenav-cat-icon" />{{ t('cat.' + c) }}
         </button>
       </div>
     </nav>

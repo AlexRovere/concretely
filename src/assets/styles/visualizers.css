@@ -1355,6 +1355,10 @@ h1.brand:hover { opacity: 0.85; }
   border-color: var(--accent);
 }
 .sidenav-cat-icon { font-size: 1.05rem; line-height: 1; width: 1.4rem; text-align: center; }
+/* Logos de catégorie (SVG de marque en currentColor, ou emoji en repli) */
+.cat-logo { display: inline-flex; align-items: center; justify-content: center; vertical-align: -0.15em; }
+.cat-logo-svg { display: inline-flex; }
+.cat-logo-svg svg { width: 1em; height: 1em; fill: currentColor; }
 .sidenav-cats { display: flex; flex-direction: column; gap: var(--space-3); margin-top: 0.4rem; }
 .sidenav-group { display: flex; flex-direction: column; gap: 2px; }
 .sidenav-group-label {

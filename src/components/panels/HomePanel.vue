@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import { CATEGORIES } from '@/nav.js';
 import { CATEGORY_META, GROUPS, GROUP_LABEL } from '@/categoryMeta.js';
+import CategoryIcon from '@/components/CategoryIcon.vue';
 import { useI18n } from '@/composables/useI18n';
 
 const emit = defineEmits(['pick']);
@@ -35,7 +36,7 @@ const tagline = (cat) => {
           class="home-card"
           @click="emit('pick', cat)"
         >
-          <span class="home-card-icon" aria-hidden="true">{{ CATEGORY_META[cat].icon }}</span>
+          <CategoryIcon :cat="cat" class="home-card-icon" />
           <span class="home-card-name">{{ t('cat.' + cat) }}</span>
           <span class="home-card-tag">{{ tagline(cat) }}</span>
         </button>
