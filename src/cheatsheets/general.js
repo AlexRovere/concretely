@@ -961,5 +961,173 @@ console.assert(user.id !== undefined, 'id manquant en amont')
         },
       ],
     },
+    {
+      id: 'perf',
+      title: { fr: 'Performance & profiling', en: 'Performance & profiling' },
+      items: [
+        {
+          id: 'gen-perf-measure',
+          title: { fr: "Mesurer avant d'optimiser", en: 'Measure before optimizing' },
+          code: `// l'intuition sur le goulot est souvent fausse : mesurer d'abord
+console.time('requete'); await charger(); console.timeEnd('requete')
+// puis un vrai profiler (Chrome DevTools, node --prof, py-spy)`,
+          note: {
+            fr: `Optimiser sans mesurer complexifie souvent du code qui n'était pas le problème. Profilez pour trouver le vrai goulot — souvent une requête, pas la boucle qu'on soupçonnait.`,
+            en: `Optimizing without measuring often complicates code that wasn't the problem. Profile to find the real bottleneck — usually a query, not the loop you suspected.`,
+          },
+        },
+        {
+          id: 'gen-perf-algo',
+          title: { fr: "L'algorithme bat la micro-optimisation", en: 'Algorithm beats micro-optimization' },
+          code: `// à grande échelle, la complexité domine la constante
+arr.includes(x)           // O(n) répété -> O(n²)
+const set = new Set(arr)  // O(n) une fois
+set.has(x)                // O(1) ensuite`,
+          note: {
+            fr: `Passer de O(n²) à O(n) fait plus qu'un gain de constante : à n grand, aucun réglage bas niveau ne rattrape une meilleure complexité. Choisissez d'abord le bon algorithme et la bonne structure.`,
+            en: `Going from O(n²) to O(n) beats any constant-factor tweak: at large n, no low-level tuning catches up with better complexity. Pick the right algorithm and structure first.`,
+          },
+        },
+        {
+          id: 'gen-perf-nplusone',
+          title: { fr: 'Le piège du N+1', en: 'The N+1 trap' },
+          code: `// ✗ N+1 : une requête par élément dans une boucle
+for (const u of users) u.cmds = await db.query('... WHERE user=?', [u.id])
+// ✓ une requête groupée (IN / JOIN) : un aller-retour au lieu de N
+const cmds = await db.query('... WHERE user IN (?)', [users.map(u => u.id)])`,
+          note: {
+            fr: `Le N+1 (1 requête puis N requêtes en boucle) écroule les perfs dès que N grandit. Regroupez en une requête (IN, JOIN) ou un batch : un seul aller-retour au lieu de N.`,
+            en: `The N+1 (1 query then N looped queries) collapses performance as N grows. Batch into one query (IN, JOIN): a single round-trip instead of N.`,
+          },
+        },
+        {
+          id: 'gen-perf-cache',
+          title: { fr: "Cache : gagner du temps, gérer l'invalidation", en: 'Cache: buy time, manage invalidation' },
+          code: `const cache = new Map()
+function fib(n) {
+  if (cache.has(n)) return cache.get(n)
+  const r = n < 2 ? n : fib(n - 1) + fib(n - 2)
+  cache.set(n, r); return r
+}
+// le vrai défi : invalider quand la donnée source change`,
+          note: {
+            fr: `Le cache échange de la mémoire contre du temps sur un calcul répété. Facile à ajouter, difficile à invalider : un cache périmé sert des données fausses — définissez sa durée de vie et son invalidation.`,
+            en: `Caching trades memory for time on a repeated computation. Easy to add, hard to invalidate: a stale cache serves wrong data — define its TTL and invalidation.`,
+          },
+        },
+        {
+          id: 'gen-perf-lazy',
+          title: { fr: 'Ne pas tout charger (pagination, lazy)', en: "Don't load everything (paginate, lazy)" },
+          code: `// paginer les listes
+db.query('SELECT * FROM logs LIMIT 50 OFFSET ?', [page * 50])
+// charger le code/les images à la demande, pas au démarrage
+import('./gros-module.js').then(m => m.run())`,
+          note: {
+            fr: `Charger un million de lignes ou tout le code au démarrage gaspille mémoire et temps. Paginez les listes et chargez à la demande (lazy) ce qui n'est pas immédiatement visible.`,
+            en: `Loading a million rows or all code upfront wastes memory and time. Paginate lists and lazy-load whatever isn't immediately visible.`,
+          },
+        },
+        {
+          id: 'gen-perf-percentiles',
+          title: { fr: 'Percentiles, pas la moyenne', en: 'Percentiles, not the average' },
+          code: `// la MOYENNE cache les pires cas ; regardez la queue
+// p50 = 20ms · p95 = 120ms · p99 = 900ms  -> 1% des users souffrent
+// optimiser p95/p99 améliore l'expérience réelle`,
+          note: {
+            fr: `Une latence moyenne faible masque une longue traîne : 1 % de requêtes lentes ruinent l'expérience. Mesurez p95/p99 et ciblez la queue de distribution, pas la moyenne.`,
+            en: `A low average latency hides a long tail: 1% of slow requests ruin the experience. Measure p95/p99 and target the distribution tail, not the average.`,
+          },
+        },
+      ],
+    },
+    {
+      id: 'api',
+      title: { fr: 'Conception d\'API REST', en: 'REST API design' },
+      items: [
+        {
+          id: 'gen-api-resources',
+          title: { fr: 'Ressources & verbes HTTP', en: 'Resources & HTTP verbs' },
+          code: `GET    /articles           // lister
+GET    /articles/42        // un élément
+POST   /articles           // créer
+PATCH  /articles/42        // modifier partiellement
+DELETE /articles/42        // supprimer`,
+          note: {
+            fr: `Modélisez des ressources (noms au pluriel), pas des actions dans l'URL (/getArticles ✗). Le verbe HTTP porte l'intention, l'URL identifie la ressource.`,
+            en: `Model resources (plural nouns), not actions in the URL (/getArticles ✗). The HTTP verb carries the intent, the URL identifies the resource.`,
+          },
+        },
+        {
+          id: 'gen-api-status',
+          title: { fr: 'Codes de statut qui disent la vérité', en: 'Status codes that tell the truth' },
+          code: `200 OK · 201 Created · 204 No Content
+400 Bad Request · 401 Unauthorized · 403 Forbidden
+404 Not Found · 409 Conflict · 422 Unprocessable · 429 Too Many
+500 Internal · 503 Service Unavailable`,
+          note: {
+            fr: `Le code de statut est la première info du client : 4xx = faute du client, 5xx = du serveur. Ne renvoyez jamais 200 avec un message d'erreur dans le corps.`,
+            en: `The status code is the client's first signal: 4xx = client's fault, 5xx = server's. Never return 200 with an error message in the body.`,
+          },
+        },
+        {
+          id: 'gen-api-idempotence',
+          title: { fr: 'Idempotence & retries', en: 'Idempotence & retries' },
+          code: `// GET/PUT/DELETE idempotents : rejouables sans effet supplémentaire
+// POST non idempotent : 2 appels = 2 créations
+// -> clé d'idempotence pour sécuriser un POST au retry :
+POST /payments   Idempotency-Key: 7f3a...   // le serveur dédoublonne`,
+          note: {
+            fr: `Un client qui retente après un timeout ne doit pas doubler l'effet. GET/PUT/DELETE sont idempotents par nature ; pour un POST (paiement, création), une clé d'idempotence évite le doublon.`,
+            en: `A client retrying after a timeout must not double the effect. GET/PUT/DELETE are idempotent by nature; for a POST (payment, creation), an idempotency key prevents duplicates.`,
+          },
+        },
+        {
+          id: 'gen-api-versioning',
+          title: { fr: 'Versionner sans casser les clients', en: 'Version without breaking clients' },
+          code: `GET /v1/articles          // version dans l'URL (simple, visible)
+// ou via en-tête : Accept: application/vnd.api+json; version=2
+// règle d'or : ajouter un champ est sûr, en retirer/renommer casse`,
+          note: {
+            fr: `Une API publique a des clients hors de votre contrôle : versionnez pour évoluer sans casser. Ajouter un champ est rétrocompatible ; en retirer ou en renommer un ne l'est pas.`,
+            en: `A public API has clients beyond your control: version it to evolve without breaking. Adding a field is backward-compatible; removing or renaming one is not.`,
+          },
+        },
+        {
+          id: 'gen-api-pagination',
+          title: { fr: 'Pagination, filtres, tri', en: 'Pagination, filtering, sorting' },
+          code: `// ne jamais renvoyer une collection non bornée
+GET /articles?limit=20&offset=40           // offset (simple)
+GET /articles?limit=20&cursor=eyJpZCI6NDB9 // curseur (stable, scalable)
+GET /articles?status=published&sort=-createdAt`,
+          note: {
+            fr: `Une liste sans limite finit par renvoyer des millions de lignes. Paginez (offset simple, ou curseur stable si la donnée bouge), et exposez filtres et tri en paramètres de requête.`,
+            en: `An unbounded list eventually returns millions of rows. Paginate (simple offset, or stable cursor if data shifts), and expose filters and sorting as query parameters.`,
+          },
+        },
+        {
+          id: 'gen-api-errors',
+          title: { fr: 'Erreurs cohérentes et exploitables', en: 'Consistent, machine-readable errors' },
+          code: `// 422 Unprocessable Entity
+{ "error": { "code": "email_taken",
+             "message": "Cet email est déjà utilisé",
+             "field": "email" } }`,
+          note: {
+            fr: `Une enveloppe d'erreur stable (code machine + message humain + champ) permet au client de réagir par programme. Un code applicatif survit aux reformulations du message.`,
+            en: `A stable error envelope (machine code + human message + field) lets clients react programmatically. An application code survives message rewording.`,
+          },
+        },
+        {
+          id: 'gen-api-auth',
+          title: { fr: 'Auth par en-tête, jamais dans l\'URL', en: 'Auth in a header, never in the URL' },
+          code: `Authorization: Bearer eyJhbGci...
+// ✗ GET /data?token=... -> fuit dans logs, historique, Referer
+// HTTPS obligatoire ; valider l'autorisation à CHAQUE requête`,
+          note: {
+            fr: `Transportez le jeton dans l'en-tête Authorization, jamais dans l'URL (loggée, mise en cache, envoyée en Referer). Servez l'API en HTTPS et vérifiez l'autorisation à chaque appel.`,
+            en: `Carry the token in the Authorization header, never in the URL (logged, cached, sent as Referer). Serve the API over HTTPS and check authorization on every call.`,
+          },
+        },
+      ],
+    },
   ],
 };
