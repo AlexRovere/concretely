@@ -19,7 +19,7 @@ test('parseHash: empty / "#/" / "#" → home', () => {
 test('parseHash: category only and category/mode', () => {
   assert.deepEqual(parseHash('#/swift'), { view: 'panel', cat: 'swift' });
   assert.deepEqual(parseHash('#/swift/arc'), { view: 'panel', cat: 'swift', mode: 'arc' });
-  assert.deepEqual(parseHash('#/swift/arc/extra'), { view: 'panel', cat: 'swift', mode: 'arc' });
+  assert.deepEqual(parseHash('#/swift/arc/extra'), { view: 'panel', cat: 'swift', mode: 'arc', item: 'extra' });
 });
 
 test('formatRoute: home and panels', () => {
@@ -32,6 +32,27 @@ test('formatRoute: home and panels', () => {
 test('parse ∘ format round-trips a concrete route', () => {
   const r = { view: 'panel', cat: 'swift', mode: 'arc' };
   assert.deepEqual(parseHash(formatRoute(r)), r);
+});
+
+test('deep-link item: parse, format, round-trip', () => {
+  assert.deepEqual(parseHash('#/python/cheatsheet/py-ml-kmeans'), {
+    view: 'panel', cat: 'python', mode: 'cheatsheet', item: 'py-ml-kmeans',
+  });
+  assert.equal(formatRoute({ view: 'panel', cat: 'python', mode: 'cheatsheet', item: 'py-ml-kmeans' }), '#/python/cheatsheet/py-ml-kmeans');
+  const r = { view: 'panel', cat: 'python', mode: 'cheatsheet', item: 'py-fstrings' };
+  assert.deepEqual(parseHash(formatRoute(r)), r);
+});
+
+test('resolveRoute carries a valid item through, ignores it on invalid mode', () => {
+  assert.deepEqual(
+    resolveRoute({ view: 'panel', cat: 'swift', mode: 'arc', item: 'x' }, nav),
+    { view: 'panel', cat: 'swift', mode: 'arc', item: 'x' },
+  );
+  // mode invalide → 1er onglet, l'item tombe
+  assert.deepEqual(
+    resolveRoute({ view: 'panel', cat: 'general', mode: 'ghost', item: 'x' }, nav),
+    { view: 'panel', cat: 'general', mode: 'sorting' },
+  );
 });
 
 test('resolveRoute: valid, category-only → first tab, invalid → home', () => {

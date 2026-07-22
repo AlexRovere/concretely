@@ -94,6 +94,33 @@ onMounted(() => {
   canvas.addEventListener('mousemove', (ev) => { if (drawing) paint(ev) })
   window.addEventListener('mouseup', () => { if (drawing) { drawing = false; regenerate() } })
 
+  // Édition au clavier (accessibilité) : le canvas est focusable ; les flèches
+  // déplacent un curseur, Espace/Entrée bascule le mur sous le curseur.
+  let cursor = [0, 0]
+  canvas.addEventListener('focus', () => renderer.setCursor(cursor))
+  canvas.addEventListener('blur', () => renderer.setCursor(null))
+  canvas.addEventListener('keydown', (ev) => {
+    const moves = { ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1] }
+    if (moves[ev.key]) {
+      ev.preventDefault()
+      const [dr, dc] = moves[ev.key]
+      cursor = [
+        Math.max(0, Math.min(ROWS - 1, cursor[0] + dr)),
+        Math.max(0, Math.min(COLS - 1, cursor[1] + dc)),
+      ]
+      renderer.setCursor(cursor)
+    } else if (ev.key === ' ' || ev.key === 'Enter') {
+      ev.preventDefault()
+      const [r, c] = cursor
+      if (!isEndpoint(r, c)) {
+        setWall(grid, r, c, !isWall(grid, r, c))
+        renderer.draw()
+        renderer.setCursor(cursor)
+        regenerate()
+      }
+    }
+  })
+
   const setLabel = wirePlayerButtons({ playBtn: $('grid-play'), stepBtn: $('grid-step'), resetBtn: $('grid-reset'), player })
 
   regenerate()
@@ -124,9 +151,16 @@ onUnmounted(() => player?.stop())
     </div>
     <div id="grid-complexity" class="complexity"></div>
     <div id="grid-metrics" class="metrics"></div>
-    <canvas id="grid-canvas" width="960" height="600"></canvas>
+    <canvas
+      id="grid-canvas"
+      width="960"
+      height="600"
+      tabindex="0"
+      role="img"
+      :aria-label="tt('path.canvasAria')"
+    ></canvas>
     <div class="status-row">
-      <span id="grid-status" class="status"></span>
+      <span id="grid-status" class="status" role="status" aria-live="polite"></span>
       <span class="legend">
         <i class="sw" style="background:#22c55e"></i><span>{{ tt('legend.start') }}</span>
         <i class="sw" style="background:#ef4444"></i><span>{{ tt('legend.end') }}</span>

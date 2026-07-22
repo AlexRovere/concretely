@@ -151,9 +151,9 @@ onUnmounted(() => player?.stop())
     </div>
     <div id="sort-complexity" class="complexity"></div>
     <div id="sort-metrics" class="metrics"></div>
-    <canvas id="sort-canvas" width="960" height="420"></canvas>
+    <canvas id="sort-canvas" width="960" height="420" role="img" :aria-label="tt('sort.canvasAria')"></canvas>
     <div class="status-row">
-      <span id="sort-status" class="status"></span>
+      <span id="sort-status" class="status" role="status" aria-live="polite"></span>
       <span class="legend">
         <i class="sw" style="background: #475569"></i><span>{{ tt('legend.value') }}</span>
         <i class="sw" style="background: #eab308"></i><span>{{ tt('legend.compare') }}</span>

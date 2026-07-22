@@ -24,7 +24,14 @@ export class GridRenderer {
     this.grid = grid;
     this.start = start;
     this.end = end;
+    this.cursor = null; // curseur clavier optionnel [r, c]
     this.clearOverlay();
+  }
+
+  /** Positionne (ou masque avec null) le curseur clavier et redessine. */
+  setCursor(cell) {
+    this.cursor = cell;
+    this.draw();
   }
 
   clearOverlay() {
@@ -78,5 +85,11 @@ export class GridRenderer {
     ctx.fillRect(this.start[1] * cs, this.start[0] * cs, cs - 1, cs - 1);
     ctx.fillStyle = COLORS.end;
     ctx.fillRect(this.end[1] * cs, this.end[0] * cs, cs - 1, cs - 1);
+    if (this.cursor) {
+      const [r, c] = this.cursor;
+      ctx.strokeStyle = COLORS.path;
+      ctx.lineWidth = 2;
+      ctx.strokeRect(c * cs + 1, r * cs + 1, cs - 3, cs - 3);
+    }
   }
 }

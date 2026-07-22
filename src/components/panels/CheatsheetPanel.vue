@@ -1,13 +1,15 @@
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, nextTick } from 'vue';
 import { cheatsheetFor } from '@/cheatsheets/index.js';
 import { highlight } from '@/highlight.js';
 import { useI18n } from '@/composables/useI18n';
 
 // `cat` follows the app's category selector; `query` is seeded by the Ctrl+K palette.
+// `item` is a deep-link target (#/cat/cheatsheet/<id>) to scroll to + highlight.
 const props = defineProps({
   cat: { type: String, default: 'general' },
   query: { type: String, default: '' },
+  item: { type: String, default: '' },
 });
 const { t, tf, locale } = useI18n();
 
@@ -47,10 +49,41 @@ async function copy(item) {
     copyTimer = setTimeout(() => { copied.value = ''; }, 1200);
   } catch { /* clipboard unavailable (http) — silently ignore */ }
 }
+
+// Deep-link : surbrillance de l'item ciblé + scroll, et copie du lien partageable.
+const root = ref(null);
+const highlighted = ref('');
+let hlTimer = null;
+
+function focusItem(id) {
+  if (!id) return;
+  nextTick(() => {
+    const el = root.value?.querySelector(`[data-item="${CSS.escape(id)}"]`);
+    if (!el) return;
+    el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    highlighted.value = id;
+    clearTimeout(hlTimer);
+    hlTimer = setTimeout(() => { highlighted.value = ''; }, 2000);
+  });
+}
+watch(() => props.item, focusItem, { immediate: true });
+watch(() => props.cat, () => { highlighted.value = ''; });
+
+const linked = ref('');
+let linkTimer = null;
+async function copyLink(item) {
+  const url = `${location.origin}${location.pathname}#/${props.cat}/cheatsheet/${item.id}`;
+  try {
+    await navigator.clipboard.writeText(url);
+    linked.value = item.id;
+    clearTimeout(linkTimer);
+    linkTimer = setTimeout(() => { linked.value = ''; }, 1200);
+  } catch { /* clipboard indisponible (http) */ }
+}
 </script>
 
 <template>
-  <section class="panel">
+  <section ref="root" class="panel">
     <div class="controls cs-controls">
       <label class="cs-search">
         <span>🔍</span>
@@ -67,12 +100,23 @@ async function copy(item) {
     <div v-for="s in filtered" :key="s.id" class="cs-section">
       <h2 class="cs-section-title">{{ L(s.title) }}</h2>
       <div class="cs-grid">
-        <article v-for="it in s.items" :key="it.id" class="cs-card">
+        <article
+          v-for="it in s.items"
+          :key="it.id"
+          class="cs-card"
+          :class="{ 'cs-hl': highlighted === it.id }"
+          :data-item="it.id"
+        >
           <header class="cs-card-head">
             <h3>{{ L(it.title) }}</h3>
-            <button class="cs-copy" :title="t('cheat.copy')" @click="copy(it)">
-              {{ copied === it.id ? t('cheat.copied') : '📋' }}
-            </button>
+            <span class="cs-actions">
+              <button class="cs-copy" :title="t('cheat.link')" @click="copyLink(it)">
+                {{ linked === it.id ? t('cheat.copied') : '🔗' }}
+              </button>
+              <button class="cs-copy" :title="t('cheat.copy')" @click="copy(it)">
+                {{ copied === it.id ? t('cheat.copied') : '📋' }}
+              </button>
+            </span>
           </header>
           <pre class="cs-code"><code v-html="highlight(it.code, it.lang ?? sheet.lang)"></code></pre>
           <p class="cs-note">{{ L(it.note) }}</p>

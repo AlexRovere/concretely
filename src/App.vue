@@ -243,15 +243,21 @@ const nav = {
   firstMode: (c: string) => modesForCat(c)[0] ?? null,
   isValidMode: (c: string, m: string) => modesForCat(c).includes(m)
 }
+// Deep-link item (ex. snippet de cheatsheet ciblé) : transporté via l'URL,
+// consommé par le panneau, effacé dès qu'on change d'onglet/catégorie.
+const item = ref('')
+
 // Apply the current URL hash to the app state (invalid → home).
 function applyHash() {
   const resolved = resolveRoute(parseHash(window.location.hash), nav)
   if (resolved.view === 'home') {
     view.value = 'home'
+    item.value = ''
   } else {
     view.value = 'panel'
     cat.value = resolved.cat as string
     mode.value = resolved.mode as string
+    item.value = (resolved as { item?: string }).item ?? ''
   }
 }
 // Reflect the app state back into the URL (guarded to avoid a write loop).
@@ -259,7 +265,7 @@ function syncHash() {
   const route =
     view.value === 'home'
       ? { view: 'home' as const }
-      : { view: 'panel' as const, cat: cat.value, mode: mode.value }
+      : { view: 'panel' as const, cat: cat.value, mode: mode.value, item: item.value || undefined }
   const h = formatRoute(route)
   if (window.location.hash !== h) window.location.hash = h
 }
@@ -271,7 +277,7 @@ onMounted(() => {
   window.addEventListener('hashchange', applyHash)
 })
 onUnmounted(() => window.removeEventListener('hashchange', applyHash))
-watch([cat, mode, view], syncHash)
+watch([cat, mode, view, item], syncHash)
 
 // Mobile: auto-hide the sticky header on scroll down, reveal on scroll up
 // (the transform only applies ≤920px — see visualizers.css).
@@ -300,11 +306,20 @@ function onGoto(target: string) {
   const tab = TABS.find((tb) => tb.mode === target)
   if (tab && tab.cat !== '*') cat.value = tab.cat
   mode.value = target
+  item.value = ''
   view.value = 'panel'
+}
+// Onglet cliqué : change de vue et abandonne tout item deep-link résiduel.
+function selectMode(m: string) {
+  mode.value = m
+  item.value = ''
 }
 
 // ---- Global search (Ctrl+K palette) -------------------------------------
 const palette = ref<InstanceType<typeof SearchPalette> | null>(null)
+// Étiquette du raccourci de recherche : ⌘K sur macOS, Ctrl K ailleurs.
+const isMac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent)
+const shortcutLabel = isMac ? '⌘K' : 'Ctrl K'
 // Seed handed to the CheatsheetPanel so a picked snippet is filtered in.
 const cheatQuery = ref('')
 
@@ -316,6 +331,7 @@ function onPick(e: { kind: string; mode: string; cat: string; titleFr: string; t
   cat.value = e.cat
   mode.value = 'cheatsheet'
   cheatQuery.value = locale.value === 'fr' ? e.titleFr : e.titleEn
+  item.value = ''
   view.value = 'panel'
 }
 
@@ -325,6 +341,7 @@ function selectCat(c: string) {
   if (!visibleTabs.value.some((tb) => tb.mode === mode.value)) {
     mode.value = visibleTabs.value[0].mode
   }
+  item.value = ''
   view.value = 'panel'
 }
 // Mobile drawer (☰): navigation + options in a side panel.
@@ -347,6 +364,7 @@ function toggleNav() {
 </script>
 
 <template>
+  <a class="skip-link" href="#main">{{ t('a11y.skip') }}</a>
   <div class="app-shell" :class="{ 'nav-collapsed': sidebarCollapsed }">
     <SideNav :cat="cat" :view="view" @pick="selectCat" @home="goHome" />
     <div class="app-main">
@@ -367,20 +385,20 @@ function toggleNav() {
             :key="tab.mode"
             class="tab"
             :class="{ active: mode === tab.mode }"
-            @click="mode = tab.mode"
+            @click="selectMode(tab.mode)"
           >
             {{ t(tab.key) }}
           </button>
         </nav>
-        <button class="search-btn" :title="t('search.btn') + ' (Ctrl K)'" @click="palette?.show()">
-          🔍 <kbd>Ctrl K</kbd>
+        <button class="search-btn" :title="t('search.btn') + ` (${shortcutLabel})`" @click="palette?.show()">
+          🔍 <kbd>{{ shortcutLabel }}</kbd>
         </button>
       </header>
 
-      <main>
+      <main id="main">
         <!-- :cat syncs the Quiz pool & the Cheatsheet; :query seeds the Cheatsheet filter. -->
         <KeepAlive>
-          <component :is="currentPanel" :cat="cat" :query="cheatQuery" @goto="onGoto" @pick="selectCat" />
+          <component :is="currentPanel" :cat="cat" :query="cheatQuery" :item="item" @goto="onGoto" @pick="selectCat" />
         </KeepAlive>
       </main>
     </div>
