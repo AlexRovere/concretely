@@ -188,12 +188,12 @@ reg = Ridge(alpha=1.0).fit(X_tr, y_tr)`,
           title: { fr: 'Régression linéaire', en: 'Linear regression' },
           code: `from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score
-reg = LinearRegression().fit(X, y)     # y continu : prix, température…
-print(reg.coef_, reg.intercept_)       # poids appris, interprétables
-print(r2_score(y, reg.predict(X)))     # 1.0 = ajustement parfait`,
+reg = LinearRegression().fit(X_tr, y_tr)  # y continu : prix, température…
+print(reg.coef_, reg.intercept_)          # poids appris, interprétables
+print(r2_score(y_te, reg.predict(X_te)))  # sur X_te : 1.0 = ajustement parfait`,
           note: {
-            fr: `Prédire une valeur continue en ajustant une droite (y = a·x + b) qui minimise l'erreur quadratique. Rapide, interprétable (chaque coefficient = impact d'une variable) : c'est la baseline à battre avant tout modèle plus complexe.`,
-            en: `Predict a continuous value by fitting a line (y = a·x + b) that minimizes squared error. Fast, interpretable (each coefficient = a variable's impact): it is the baseline to beat before any fancier model.`,
+            fr: `Prédire une valeur continue en ajustant un hyperplan (y = w·x + b, une droite en 1D) qui minimise l'erreur quadratique. Rapide, interprétable (chaque coefficient = impact d'une variable) : c'est la baseline à battre avant tout modèle plus complexe. Comme pour tout modèle, r2_score s'évalue sur des données jamais vues (X_te) — jamais sur les données d'entraînement.`,
+            en: `Predict a continuous value by fitting a hyperplane (y = w·x + b, a line in 1D) that minimizes squared error. Fast, interpretable (each coefficient = a variable's impact): it is the baseline to beat before any fancier model. As with any model, r2_score must be evaluated on unseen data (X_te) — never on the training data.`,
           },
         },
         {
@@ -334,6 +334,63 @@ X_enc = pre.fit_transform(df)   # "ville" -> colonnes 0/1`,
           note: {
             fr: `Les modèles ne consomment que des nombres : une colonne texte (« ville ») doit être encodée. OneHotEncoder crée une colonne 0/1 par catégorie (aucun ordre imposé, contrairement à un entier). ColumnTransformer applique le bon encodage par colonne ; handle_unknown="ignore" évite le crash sur une catégorie inédite en prod.`,
             en: `Models consume only numbers: a text column ("city") must be encoded. OneHotEncoder creates one 0/1 column per category (no artificial order, unlike a plain integer). ColumnTransformer applies the right encoding per column; handle_unknown="ignore" avoids crashing on an unseen category in prod.`,
+          },
+        },
+      ],
+    },
+    {
+      id: 'ml-bp',
+      title: { fr: 'Bonnes pratiques', en: 'Best practices' },
+      items: [
+        {
+          id: 'ml-bp-split-before-anything',
+          title: { fr: 'Split train/test AVANT tout prétraitement', en: 'Train/test split BEFORE any preprocessing' },
+          code: `X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.2, random_state=42)
+scaler = StandardScaler().fit(X_tr)   # jamais fit sur X_te`,
+          note: {
+            fr: `Ajuster un scaler ou imputer sur l'ensemble complet avant le split fait fuiter de l'information du test vers l'entraînement (data leakage), gonflant artificiellement le score.`,
+            en: `Fitting a scaler or imputer on the full dataset before splitting leaks test information into training (data leakage), artificially inflating the score.`,
+          },
+        },
+        {
+          id: 'ml-bp-baseline-first',
+          title: { fr: 'Établir une baseline simple avant un modèle complexe', en: 'Establish a simple baseline before a complex model' },
+          code: `from sklearn.dummy import DummyClassifier
+baseline = DummyClassifier(strategy="most_frequent").fit(X_tr, y_tr)
+print(baseline.score(X_te, y_te))   # à battre par tout modèle "sérieux"`,
+          note: {
+            fr: `Sans baseline, impossible de savoir si un XGBoost à 85 % d'accuracy est réellement bon ou si prédire la classe majoritaire donnait déjà 84 %.`,
+            en: `Without a baseline, you can't tell if an 85% accuracy XGBoost is actually good, or if predicting the majority class already gave 84%.`,
+          },
+        },
+        {
+          id: 'ml-bp-crossval-small-data',
+          title: { fr: 'Validation croisée sur petit jeu ou classes déséquilibrées', en: 'Cross-validation on small or imbalanced data' },
+          code: `from sklearn.model_selection import StratifiedKFold
+cross_val_score(model, X, y, cv=StratifiedKFold(5), scoring="f1")`,
+          note: {
+            fr: `Un split unique sur peu de données dépend fortement du tirage aléatoire ; la validation croisée stratifiée moyenne plusieurs découpages pour une estimation fiable.`,
+            en: `A single split on little data depends heavily on the random draw; stratified cross-validation averages several folds for a reliable estimate.`,
+          },
+        },
+        {
+          id: 'ml-bp-metric-matches-business',
+          title: { fr: 'Choisir la métrique selon le coût métier', en: 'Pick the metric based on business cost' },
+          code: `# fraude: privilégier le rappel (rater une fraude coûte cher)
+# spam: privilégier la précision (bloquer un vrai email coûte cher)`,
+          note: {
+            fr: `L'accuracy par défaut ignore le coût asymétrique des erreurs ; choisir précision/rappel/F1/AUC selon ce que coûte réellement un faux positif vs un faux négatif évite d'optimiser la mauvaise chose.`,
+            en: `Default accuracy ignores the asymmetric cost of errors; choosing precision/recall/F1/AUC based on what a false positive vs false negative actually costs avoids optimizing the wrong thing.`,
+          },
+        },
+        {
+          id: 'ml-bp-version-everything',
+          title: { fr: 'Versionner code, données ET hyperparamètres', en: 'Version code, data AND hyperparameters' },
+          code: `joblib.dump({"model": pipe, "params": search.best_params_,
+             "data_hash": hash_of(X_tr)}, "modele_v3.joblib")`,
+          note: {
+            fr: `Sauver uniquement le fichier .joblib ne suffit pas : sans la version exacte des données d'entraînement et des hyperparamètres, un modèle en production devient impossible à reproduire ou déboguer.`,
+            en: `Saving just the .joblib file isn't enough: without the exact training data version and hyperparameters, a production model becomes impossible to reproduce or debug.`,
           },
         },
       ],

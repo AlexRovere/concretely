@@ -231,7 +231,7 @@ valeur.value = 'nouvelle valeur'        // remonte au parent
           id: 'vue-scoped-slots',
           title: { fr: 'Scoped slots (données de l\'enfant)', en: 'Scoped slots (child data)' },
           code: `<!-- Enfant : expose des données au parent via le slot -->
-<slot v-for="item in items" :item="item" :index="i" />
+<slot v-for="(item, i) in items" :item="item" :index="i" />
 <!-- Parent : récupère les props du slot -->
 <Liste #default="{ item }">
   <strong>{{ item.nom }}</strong>
@@ -467,6 +467,57 @@ const { ajouter } = panier                      // ✓ les actions, directement
           note: {
             fr: `Un store est un reactive : le déstructurer directement fige les valeurs ; storeToRefs pour l'état/getters, déstructuration simple pour les actions.`,
             en: `A store is a reactive object: destructuring it directly freezes values; storeToRefs for state/getters, plain destructuring for actions.`,
+          },
+        },
+      ],
+    },
+    {
+      id: 'vue-bp',
+      title: { fr: 'Bonnes pratiques', en: 'Best practices' },
+      items: [
+        {
+          id: 'vue-bp-no-prop-mutation',
+          title: { fr: 'Ne jamais muter une prop', en: 'Never mutate a prop' },
+          code: `// ✗ props.count++\nfunction incrementer() { emit('update:count', props.count + 1) }`,
+          note: {
+            fr: `Une prop est un flux à sens unique (parent → enfant) ; la muter localement désynchronise l'affichage de l'état réel du parent, et Vue émet un avertissement en dev.`,
+            en: `A prop is one-way data flow (parent → child); mutating it locally desyncs the view from the parent's real state, and Vue warns about it in dev.`,
+          },
+        },
+        {
+          id: 'vue-bp-computed-over-watch',
+          title: { fr: 'computed plutôt que watch pour dériver un état', en: 'computed over watch to derive state' },
+          code: `// ✗ watch(items, () => { total.value = calc(items.value) })\nconst total = computed(() => calc(items.value))  // ✓`,
+          note: {
+            fr: `watch pour dériver une valeur ajoute un état intermédiaire à resynchroniser manuellement ; computed est déclaratif et toujours à jour, sans étape de recalcul manuelle.`,
+            en: `Using watch to derive a value adds an intermediate state to resync manually; computed is declarative and always up to date, with no manual recompute step.`,
+          },
+        },
+        {
+          id: 'vue-bp-scoped-styles',
+          title: { fr: 'Scoper les styles des composants', en: 'Scope component styles' },
+          code: `<style scoped>\n.carte { padding: 1rem; }\n</style>`,
+          note: {
+            fr: `Sans scoped (ou CSS modules), une classe comme .carte peut entrer en collision avec une autre du même nom ailleurs dans l'app et casser un style sans lien apparent.`,
+            en: `Without scoped (or CSS modules), a class like .carte can collide with another of the same name elsewhere in the app and break an unrelated style.`,
+          },
+        },
+        {
+          id: 'vue-bp-small-composables',
+          title: { fr: 'Composables petits et à responsabilité unique', en: 'Small, single-purpose composables' },
+          code: `function useUser(id) { /* fetch + état utilisateur */ }\nfunction usePermissions(user) { /* dérive les droits */ }\n// le composant combine les deux, chacun reste testable seul`,
+          note: {
+            fr: `Un composable qui mélange fetch, formulaire et navigation devient impossible à tester et à réutiliser ; plusieurs petits composables composés restent isolés et testables.`,
+            en: `A composable mixing fetch, form logic and navigation becomes untestable and unreusable; several small composed composables stay isolated and testable.`,
+          },
+        },
+        {
+          id: 'vue-bp-flat-state',
+          title: { fr: 'Garder un state réactif plat', en: 'Keep reactive state flat' },
+          code: `// ✗ const state = reactive({ user: { profile: { address: {...} } } })\nconst userId = ref(null)\nconst userProfile = ref(null)   // état plat, plus facile à observer`,
+          note: {
+            fr: `Un state reactive profondément imbriqué alourdit le proxy réactif et complique les watch deep ; un état plat est plus simple à observer, tester et déboguer.`,
+            en: `A deeply nested reactive state adds proxy overhead and complicates deep watching; flat state is simpler to observe, test and debug.`,
           },
         },
       ],

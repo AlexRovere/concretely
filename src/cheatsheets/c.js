@@ -111,10 +111,12 @@ printf("%d\\n", *p);    // sûr seulement après le test`,
 if (t == NULL) {
   perror("malloc");   // toujours gérer l'échec
   return 1;
-}`,
+}
+// n * sizeof *t peut déborder pour un n énorme -> sous-allocation silencieuse
+// calloc(n, sizeof *t) fait cette vérification d'overflow pour vous`,
           note: {
-            fr: `malloc peut échouer et renvoyer NULL : l'ignorer mène à un crash plus loin, difficile à relier à la cause. Pas besoin de caster le retour en C (contrairement au C++).`,
-            en: `malloc can fail and return NULL: ignoring it leads to a crash later, hard to trace back to the cause. No need to cast the return value in C (unlike C++).`,
+            fr: `malloc peut échouer et renvoyer NULL : l'ignorer mène à un crash plus loin, difficile à relier à la cause. Pas besoin de caster le retour en C (contrairement au C++). Attention : n * sizeof *t peut déborder pour un n très grand et allouer moins que prévu ; calloc(n, sizeof *t) détecte cet overflow en interne, malloc non.`,
+            en: `malloc can fail and return NULL: ignoring it leads to a crash later, hard to trace back to the cause. No need to cast the return value in C (unlike C++). Careful: n * sizeof *t can overflow for a very large n and allocate less than expected; calloc(n, sizeof *t) checks for this overflow internally, malloc does not.`,
           },
         },
         {
@@ -418,6 +420,66 @@ clean:
           note: {
             fr: `make recompile seulement ce qui a changé, via la règle implicite .c -> .o qui utilise déjà CFLAGS. Piège historique : les recettes DOIVENT être indentées par une tabulation, jamais des espaces.`,
             en: `make rebuilds only what changed, via the implicit .c -> .o rule which already uses CFLAGS. Historic trap: recipes MUST be indented with a tab, never spaces.`,
+          },
+        },
+      ],
+    },
+    {
+      id: 'c-bp',
+      title: { fr: 'Bonnes pratiques', en: 'Best practices' },
+      items: [
+        {
+          id: 'c-bp-init-vars',
+          title: { fr: 'Initialiser les variables à la déclaration', en: 'Initialize variables at declaration' },
+          code: `int total = 0;
+char buf[64] = {0};`,
+          note: {
+            fr: `Une variable non initialisée contient une valeur indéterminée : la lire avant écriture est un comportement indéfini, source de bugs non reproductibles.`,
+            en: `An uninitialized variable holds an indeterminate value: reading it before writing is undefined behavior, a source of non-reproducible bugs.`,
+          },
+        },
+        {
+          id: 'c-bp-bounds-check',
+          title: { fr: "Valider les tailles avant d'écrire dans un buffer", en: 'Validate sizes before writing into a buffer' },
+          code: `if (len >= sizeof buf) { return -1; }
+memcpy(buf, src, len);`,
+          note: {
+            fr: `Ne jamais faire confiance à une taille venant de l'extérieur (réseau, fichier, argv) : un dépassement de buffer est la première cause de faille de sécurité en C.`,
+            en: `Never trust a size coming from outside (network, file, argv): a buffer overflow is the #1 cause of security vulnerabilities in C.`,
+          },
+        },
+        {
+          id: 'c-bp-goto-cleanup',
+          title: { fr: 'goto cleanup pour la gestion de ressources multiples', en: 'goto cleanup for multi-resource handling' },
+          code: `FILE *f = fopen(path, "r");
+if (!f) goto cleanup;
+char *buf = malloc(n);
+if (!buf) goto cleanup;
+cleanup:
+free(buf);
+if (f) fclose(f);`,
+          note: {
+            fr: `Sans exceptions, libérer plusieurs ressources en cas d'erreur multiplie les if imbriqués ; goto cleanup centralise la libération en un seul point de sortie.`,
+            en: `Without exceptions, freeing several resources on error multiplies nested ifs; goto cleanup centralizes teardown into a single exit point.`,
+          },
+        },
+        {
+          id: 'c-bp-const-params',
+          title: { fr: 'const sur les paramètres pointeurs en lecture seule', en: 'const on read-only pointer parameters' },
+          code: `size_t compte_voyelles(const char *s) { /* ... */ }`,
+          note: {
+            fr: `const documente l'intention (cette fonction ne modifie pas la donnée pointée) et laisse le compilateur détecter une écriture accidentelle.`,
+            en: `const documents intent (this function won't modify the pointed-to data) and lets the compiler catch an accidental write.`,
+          },
+        },
+        {
+          id: 'c-bp-named-constants',
+          title: { fr: 'Constantes nommées plutôt que nombres magiques', en: 'Named constants over magic numbers' },
+          code: `#define MAX_USERS 256
+enum { BUFFER_SIZE = 4096 };`,
+          note: {
+            fr: `Un 4096 répété dans le code ne dit pas pourquoi ; une constante nommée documente l'intention et centralise la valeur en un seul endroit à changer.`,
+            en: `A repeated 4096 in code doesn't say why; a named constant documents intent and centralizes the value to one place to change.`,
           },
         },
       ],

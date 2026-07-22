@@ -296,8 +296,8 @@ const [ouvert, basculer] = useToggle()`,
 })
 // Le parent peut viser le <input> interne : <Input ref={monRef} />`,
           note: {
-            fr: `forwardRef laisse un composant transmettre une ref à un nœud interne. Combinez avec useImperativeHandle pour exposer une API (focus, reset).`,
-            en: `forwardRef lets a component forward a ref to an inner node. Combine with useImperativeHandle to expose an API (focus, reset).`,
+            fr: `forwardRef laisse un composant transmettre une ref à un nœud interne. Combinez avec useImperativeHandle pour exposer une API (focus, reset). Depuis React 19, ref peut aussi être reçu comme une prop normale sur un composant fonction : forwardRef reste supporté mais n'est plus nécessaire pour du code neuf.`,
+            en: `forwardRef lets a component forward a ref to an inner node. Combine with useImperativeHandle to expose an API (focus, reset). Since React 19, ref can also be received as a plain prop on function components: forwardRef still works but is no longer required for new code.`,
           },
         },
       ],
@@ -345,6 +345,73 @@ navigate('/login', { replace: true })`,
           note: {
             fr: `Pour un formulaire simple, laissez le DOM porter les valeurs et lisez FormData à la soumission — moins d'état que de tout contrôler à la main.`,
             en: `For a simple form, let the DOM hold the values and read FormData on submit — less state than controlling everything by hand.`,
+          },
+        },
+      ],
+    },
+    {
+      id: 'react-bp',
+      title: { fr: 'Bonnes pratiques', en: 'Best practices' },
+      items: [
+        {
+          id: 'react-bp-error-boundary',
+          title: { fr: 'Isoler les erreurs de rendu avec un Error Boundary', en: 'Isolate render errors with an Error Boundary' },
+          code: `class ErrorBoundary extends React.Component {
+  state = { error: null }
+  static getDerivedStateFromError(error) { return { error } }
+  render() {
+    if (this.state.error) return <Fallback />
+    return this.props.children
+  }
+}`,
+          note: {
+            fr: `Sans error boundary, une exception dans le rendu démonte toute l'arborescence React au-dessus ; l'error boundary isole l'échec à une zone précise de l'UI.`,
+            en: `Without an error boundary, an exception during render unmounts the whole React tree above it; the error boundary contains the failure to one UI area.`,
+          },
+        },
+        {
+          id: 'react-bp-colocate-state',
+          title: { fr: "Garder l'état local au plus près de son usage", en: 'Keep state as local as possible' },
+          code: `// ✗ tout dans un contexte global "AppState"
+function SearchBar() {
+  const [query, setQuery] = useState('')  // ✓ local au composant
+}`,
+          note: {
+            fr: `Remonter un state qui n'est utilisé que par un composant force tous ses parents à re-render inutilement ; garder l'état local limite la portée des re-rendus.`,
+            en: `Lifting state that only one component needs forces all its parents to re-render unnecessarily; keeping state local limits the blast radius of re-renders.`,
+          },
+        },
+        {
+          id: 'react-bp-async-race-guard',
+          title: { fr: 'Protéger les effets async contre les races', en: 'Guard async effects against race conditions' },
+          code: `useEffect(() => {
+  let annule = false
+  fetchUser(id).then(u => { if (!annule) setUser(u) })
+  return () => { annule = true }
+}, [id])`,
+          note: {
+            fr: `Sans garde, une réponse lente pour l'ancien id peut arriver après une réponse rapide pour le nouveau et écraser des données à jour avec des données obsolètes.`,
+            en: `Without a guard, a slow response for the old id can arrive after a fast response for the new one and overwrite fresh data with stale data.`,
+          },
+        },
+        {
+          id: 'react-bp-immutable-state-updates',
+          title: { fr: "Toujours remplacer l'état, jamais le muter", en: 'Always replace state, never mutate it' },
+          code: `// ✗ items.push(nouveau); setItems(items)   — même référence, pas de re-render
+setItems(prev => [...prev, nouveau])        // ✓ nouvelle référence`,
+          note: {
+            fr: `React compare les références pour décider de re-render : muter le tableau/objet existant garde la même référence et React ignore le changement silencieusement.`,
+            en: `React compares references to decide whether to re-render: mutating the existing array/object keeps the same reference, so React silently ignores the change.`,
+          },
+        },
+        {
+          id: 'react-bp-semantic-elements',
+          title: { fr: 'Préférer les éléments sémantiques aux div cliquables', en: 'Prefer semantic elements over clickable divs' },
+          code: `// ✗ <div onClick={submit}>Valider</div>  — pas focusable, pas de rôle
+<button type="button" onClick={submit}>Valider</button>  // ✓`,
+          note: {
+            fr: `Un div cliquable n'est ni focusable au clavier ni annoncé comme bouton par les lecteurs d'écran ; les éléments sémantiques (button, a) offrent ce comportement gratuitement.`,
+            en: `A clickable div is neither keyboard-focusable nor announced as a button by screen readers; semantic elements (button, a) provide that behavior for free.`,
           },
         },
       ],

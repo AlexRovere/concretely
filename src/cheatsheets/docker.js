@@ -18,8 +18,8 @@ docker run -d -p 8080:80 --name web nginx
 # -e injecte une variable d'environnement
 docker run -d -e POSTGRES_PASSWORD=secret postgres:16`,
           note: {
-            fr: `-p publie un port (hôte:conteneur, dans cet ordre — l'inverser est le piège classique). --name évite les noms aléatoires type "vibrant_curie" et permet docker stop web.`,
-            en: `-p publishes a port (host:container, in that order — swapping them is the classic trap). --name avoids random names like "vibrant_curie" and enables docker stop web.`,
+            fr: `-p publie un port (hôte:conteneur, dans cet ordre — l'inverser est le piège classique). --name évite les noms aléatoires type "vibrant_curie" et permet docker stop web. Attention : une valeur passée en -e reste visible en clair via docker inspect et dans l'historique du shell — pour un vrai secret, préférez --env-file ou un gestionnaire de secrets.`,
+            en: `-p publishes a port (host:container, in that order — swapping them is the classic trap). --name avoids random names like "vibrant_curie" and enables docker stop web. Careful: a value passed via -e stays visible in plain text via docker inspect and in shell history — for a real secret, prefer --env-file or a secrets manager.`,
           },
         },
         {
@@ -446,6 +446,60 @@ docker logs --tail 50 web                 # derniers mots
           note: {
             fr: `Un conteneur vit tant que son PID 1 vit : si le process principal sort (ou si CMD lance un démon qui se met en arrière-plan), le conteneur s'arrête. Préférez la forme exec CMD ["app"] à la forme shell, qui intercale un sh et casse les signaux.`,
             en: `A container lives as long as its PID 1 lives: if the main process exits (or CMD starts a daemon that backgrounds itself), the container stops. Prefer exec form CMD ["app"] over shell form, which inserts an sh and breaks signal handling.`,
+          },
+        },
+      ],
+    },
+    {
+      id: 'docker-bp',
+      title: { fr: 'Bonnes pratiques', en: 'Best practices' },
+      items: [
+        {
+          id: 'docker-bp-pin-base-digest',
+          title: { fr: 'Épingler l\'image de base par digest, pas seulement par tag', en: 'Pin the base image by digest, not just by tag' },
+          code: `FROM node:22-alpine@sha256:9d7f1b6c2e5a4f0b8c3d2e1a9f8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d3e2f1a0b`,
+          note: {
+            fr: `Un tag comme node:22-alpine peut être republié avec un contenu différent (rebuild upstream), cassant un build qui marchait la veille. Le digest sha256 pointe un contenu exact, garanti immuable — la seule vraie reproductibilité.`,
+            en: `A tag like node:22-alpine can be republished with different content (upstream rebuild), breaking a build that worked yesterday. The sha256 digest points to exact content, guaranteed immutable — the only real reproducibility.`,
+          },
+        },
+        {
+          id: 'docker-bp-healthcheck-instruction',
+          title: { fr: 'HEALTHCHECK : détecter un conteneur bloqué, pas juste planté', en: 'HEALTHCHECK: detect a hung container, not just a crashed one' },
+          code: `HEALTHCHECK --interval=30s --timeout=3s --retries=3 \\
+  CMD curl -f http://localhost:8080/healthz || exit 1`,
+          note: {
+            fr: `Sans HEALTHCHECK, docker ps affiche Up même pour une app bloquée en deadlock qui ne répond plus : le process vit, mais ne sert plus rien. Avec HEALTHCHECK, le statut passe à unhealthy et un orchestrateur peut agir (redémarrer, retirer du LB).`,
+            en: `Without HEALTHCHECK, docker ps shows Up even for an app stuck in a deadlock that no longer responds: the process is alive but serves nothing. With HEALTHCHECK, status turns unhealthy and an orchestrator can act (restart, pull from the LB).`,
+          },
+        },
+        {
+          id: 'docker-bp-readonly-rootfs',
+          title: { fr: 'Rootfs en lecture seule + tmpfs pour les dossiers d\'écriture', en: 'Read-only rootfs + tmpfs for writable dirs' },
+          code: `docker run --read-only --tmpfs /tmp -d mon-api`,
+          note: {
+            fr: `Un conteneur en lecture seule ne peut pas être modifié par un attaquant qui exploite l'app (webshell, binaire déposé) : nulle part où écrire hors des tmpfs explicitement autorisés. Coûte juste d'identifier les dossiers réellement nécessaires en écriture.`,
+            en: `A read-only container can't be modified by an attacker exploiting the app (webshell, dropped binary): nowhere to write outside explicitly allowed tmpfs mounts. The only cost is identifying which folders genuinely need write access.`,
+          },
+        },
+        {
+          id: 'docker-bp-resource-limits-runtime',
+          title: { fr: 'Toujours plafonner --memory et --cpus en prod', en: 'Always cap --memory and --cpus in prod' },
+          code: `docker run -d --memory=512m --memory-swap=512m --cpus=1.0 mon-api`,
+          note: {
+            fr: `Sans plafond, un conteneur qui fuit peut manger toute la RAM de l'hôte et faire tomber les autres services (bruyant voisin). --memory-swap égal à --memory désactive le swap, évitant un ralentissement silencieux avant l'OOM.`,
+            en: `Without a cap, a leaking container can eat all the host's RAM and take down other services (noisy neighbor). Setting --memory-swap equal to --memory disables swap, avoiding silent slowdown before the OOM kill.`,
+          },
+        },
+        {
+          id: 'docker-bp-buildkit-secret-mount',
+          title: { fr: 'Secrets de build via --secret (BuildKit), jamais via ARG/ENV', en: 'Build secrets via --secret (BuildKit), never via ARG/ENV' },
+          code: `RUN --mount=type=secret,id=npmrc,target=/root/.npmrc npm ci
+# côté build :
+docker build --secret id=npmrc,src=$HOME/.npmrc -t mon-api .`,
+          note: {
+            fr: `Un ARG ou ENV contenant un secret reste gravé dans l'historique de l'image (docker history) même après un RUN qui le supprime. --mount=type=secret l'expose seulement pendant l'exécution de l'instruction, sans jamais toucher une couche.`,
+            en: `An ARG or ENV holding a secret stays baked into the image history (docker history) even after a RUN that deletes it. --mount=type=secret exposes it only during that instruction's execution, never touching a layer.`,
           },
         },
       ],

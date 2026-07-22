@@ -518,8 +518,73 @@ else
   puts "config invalide"
 end`,
           note: {
-            fr: `case/in (Ruby 3.x) destructure hashes et arrays en profondeur avec vérification de type et binding de variables. Sans clause in correspondante ni else, NoMatchingPatternKeyError est levée.`,
-            en: `case/in (Ruby 3.x) deeply destructures hashes and arrays with type checks and variable binding. With no matching in clause and no else, NoMatchingPatternKeyError is raised.`,
+            fr: `case/in (Ruby 3.x) destructure hashes et arrays en profondeur avec vérification de type et binding de variables. Sans clause in correspondante ni else, NoMatchingPatternError est levée (NoMatchingPatternKeyError est un cas plus spécifique, pour une clé de hash requise absente lors du deconstruct).`,
+            en: `case/in (Ruby 3.x) deeply destructures hashes and arrays with type checks and variable binding. With no matching in clause and no else, NoMatchingPatternError is raised (NoMatchingPatternKeyError is a more specific case, for a required hash key missing during deconstruct).`,
+          },
+        },
+      ],
+    },
+    {
+      id: 'ruby-bp',
+      title: { fr: 'Bonnes pratiques', en: 'Best practices' },
+      items: [
+        {
+          id: 'ruby-bp-bundler-lockfile',
+          title: { fr: 'Commiter Gemfile.lock', en: 'Commit Gemfile.lock' },
+          code: `bundle install
+bundle exec rspec        # utilise les versions verrouillées`,
+          note: {
+            fr: `Gemfile.lock fige les versions exactes résolues par Bundler : sans le committer, deux machines peuvent installer des versions de gems différentes et reproduire des bugs impossibles à tracer.`,
+            en: `Gemfile.lock pins the exact versions Bundler resolved: without committing it, two machines can install different gem versions and reproduce untraceable bugs.`,
+          },
+        },
+        {
+          id: 'ruby-bp-keyword-args',
+          title: { fr: 'Arguments nommés au-delà de 2 paramètres', en: 'Keyword args past 2 parameters' },
+          code: `def creer_utilisateur(nom:, email:, admin: false)
+  # ...
+end
+creer_utilisateur(nom: "Ada", email: "ada@ex.com")`,
+          note: {
+            fr: `Au-delà de deux paramètres, les arguments positionnels obligent à mémoriser l'ordre : les kwargs rendent l'appel auto-documenté et permettent de réordonner sans casser les appelants.`,
+            en: `Past two parameters, positional arguments force you to remember the order: kwargs make the call self-documenting and let you reorder without breaking callers.`,
+          },
+        },
+        {
+          id: 'ruby-bp-rubocop',
+          title: { fr: 'RuboCop en CI', en: 'RuboCop in CI' },
+          code: `rubocop --auto-correct     # corrige ce qui est sûr
+rubocop -a                 # alias`,
+          note: {
+            fr: `Un style imposé par un linter (indentation, longueur de méthode, complexité) évite les débats en revue de code et attrape des anti-patterns avant qu'ils n'arrivent en prod.`,
+            en: `A linter-enforced style (indentation, method length, complexity) avoids code-review debates and catches anti-patterns before they reach prod.`,
+          },
+        },
+        {
+          id: 'ruby-bp-avoid-monkeypatch',
+          title: { fr: 'Éviter le monkey-patching des classes core', en: 'Avoid monkey-patching core classes' },
+          code: `# Éviter :
+class String
+  def cri = upcase + "!"
+end
+# Préférer une méthode dédiée :
+def crier(texte) = texte.upcase + "!"`,
+          note: {
+            fr: `Rouvrir String ou Array modifie un comportement global partagé par toutes les gems chargées : un monkey-patch discret peut casser une lib tierce de façon incompréhensible.`,
+            en: `Reopening String or Array changes global behavior shared by every loaded gem: a quiet monkey-patch can break a third-party lib in confusing ways.`,
+          },
+        },
+        {
+          id: 'ruby-bp-rspec-aaa',
+          title: { fr: 'Tests en Arrange-Act-Assert', en: 'Arrange-Act-Assert tests' },
+          code: `it "retire le montant du solde" do
+  compte = Compte.new(100)        # Arrange
+  compte.retirer(30)              # Act
+  expect(compte.solde).to eq(70)  # Assert
+end`,
+          note: {
+            fr: `Séparer clairement préparation, action et vérification rend un test lisible en un coup d'œil et facilite le diagnostic quand il échoue.`,
+            en: `Clearly separating setup, action and verification makes a test readable at a glance and eases diagnosis when it fails.`,
           },
         },
       ],

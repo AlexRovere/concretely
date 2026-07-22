@@ -31,7 +31,7 @@ export default {
         {
           id: 'js-truthy-falsy',
           title: { fr: 'Truthy / falsy : la liste', en: 'Truthy / falsy: the list' },
-          code: `// Les 7 valeurs falsy — tout le reste est truthy :\n// false, 0, -0, 0n, '', null, undefined, NaN\nif ([])   console.log('truthy')  // tableau vide = truthy (!)\nif ({})   console.log('truthy')  // objet vide = truthy (!)\nif ('0')  console.log('truthy')  // chaîne non vide = truthy`,
+          code: `// Les 7 valeurs falsy — tout le reste est truthy :\n// false, 0, 0n, '', null, undefined, NaN\nif ([])   console.log('truthy')  // tableau vide = truthy (!)\nif ({})   console.log('truthy')  // objet vide = truthy (!)\nif ('0')  console.log('truthy')  // chaîne non vide = truthy`,
           note: {
             fr: `Apprendre la liste des falsy par cœur évite 90 % des surprises : [] et {} sont truthy, '0' aussi.`,
             en: `Learning the falsy list by heart avoids 90% of surprises: [] and {} are truthy, so is '0'.`,
@@ -213,8 +213,8 @@ export default {
           title: { fr: 'structuredClone vs spread', en: 'structuredClone vs spread' },
           code: `const orig = { nom: 'Ada', adresse: { ville: 'Paris' } };\nconst shallow = { ...orig };          // copie SUPERFICIELLE\nshallow.adresse.ville = 'Lyon';\norig.adresse.ville                    // 'Lyon' (!) objet partagé\nconst deep = structuredClone(orig);   // copie PROFONDE\ndeep.adresse.ville = 'Tokyo';\norig.adresse.ville                    // 'Lyon' — indépendant`,
           note: {
-            fr: `Le spread ne copie que le premier niveau : les objets imbriqués restent partagés. structuredClone clone en profondeur (mais ignore les fonctions).`,
-            en: `Spread only copies the first level: nested objects stay shared. structuredClone deep-clones (but cannot clone functions).`,
+            fr: `Le spread ne copie que le premier niveau : les objets imbriqués restent partagés. structuredClone clone en profondeur, mais lève une DataCloneError si l'objet contient une fonction (il ne l'ignore pas silencieusement).`,
+            en: `Spread only copies the first level: nested objects stay shared. structuredClone deep-clones, but throws a DataCloneError if the object contains a function (it does not silently ignore it).`,
           },
         },
       ],
@@ -359,6 +359,57 @@ export default {
           note: {
             fr: `Le débounce n'exécute fn qu'après un silence de N ms — indispensable pour les champs de recherche ou le resize. La closure sur timer garde l'état entre les appels.`,
             en: `Debounce only runs fn after N ms of silence — essential for search inputs or resize. The closure over timer keeps state between calls.`,
+          },
+        },
+      ],
+    },
+    {
+      id: 'js-bp',
+      title: { fr: 'Bonnes pratiques', en: 'Best practices' },
+      items: [
+        {
+          id: 'js-bp-const-let',
+          title: { fr: 'const par défaut, let si réassignation, jamais var', en: 'const by default, let when reassigning, never var' },
+          code: `const utilisateurs = []        // jamais réassigné → const\nlet compteur = 0                // sera réassigné → let\nfor (let i = 0; i < 3; i++) {}  // let : scope de bloc, var fuit hors du for`,
+          note: {
+            fr: `var a une portée fonction et est hoisté sans TDZ, source de bugs classiques (fuite hors des boucles/blocs). const/let sont scoped au bloc et bien plus prévisibles.`,
+            en: `var is function-scoped and hoisted without a TDZ, a classic bug source (leaking out of loops/blocks). const/let are block-scoped and far more predictable.`,
+          },
+        },
+        {
+          id: 'js-bp-immutability',
+          title: { fr: 'Ne pas muter, retourner une copie', en: "Don't mutate, return a copy" },
+          code: `function ajouterItem(liste, item) {\n  return [...liste, item]        // copie, jamais liste.push(item)\n}\nconst maj = { ...user, age: 37 } // jamais user.age = 37`,
+          note: {
+            fr: `Muter un tableau/objet partagé (props, state, cache) crée des bugs difficiles à tracer : d'autres parties du code gardent une référence à une valeur qu'elles croyaient stable.`,
+            en: `Mutating a shared array/object (props, state, cache) creates hard-to-trace bugs: other code holding a reference expects that value to stay stable.`,
+          },
+        },
+        {
+          id: 'js-bp-error-handling',
+          title: { fr: 'Ne jamais avaler une erreur silencieusement', en: 'Never swallow an error silently' },
+          code: `try {\n  await sauvegarder(data)\n} catch (err) {\n  logger.error('sauvegarde échouée', err)\n  throw err   // ou notifier l'utilisateur — jamais un catch vide\n}`,
+          note: {
+            fr: `Un catch {} vide masque l'échec : l'appelant croit que tout s'est bien passé alors que l'opération a réellement échoué, ce qui corrompt l'état applicatif en silence.`,
+            en: `An empty catch {} hides the failure: the caller believes everything succeeded while the operation actually failed, silently corrupting application state.`,
+          },
+        },
+        {
+          id: 'js-bp-guard-clauses',
+          title: { fr: "Early return plutôt que l'imbrication", en: 'Early return over nesting' },
+          code: `function traiter(user) {\n  if (!user) return null            // sortie immédiate\n  if (!user.actif) return null\n  return formater(user)             // cas nominal en dernier, non imbriqué\n}`,
+          note: {
+            fr: `Les retours anticipés éliminent les niveaux d'imbrication et rendent le cas nominal visible en un coup d'œil, contrairement à des if/else empilés sur 4+ niveaux.`,
+            en: `Early returns remove nesting levels and make the happy path visible at a glance, unlike if/else stacked four levels deep.`,
+          },
+        },
+        {
+          id: 'js-bp-modules-scope',
+          title: { fr: 'Encapsuler avec des modules ES, pas de globales', en: 'Encapsulate with ES modules, no globals' },
+          code: `// utils.js\nexport function formaterPrix(n) { return \`\${n.toFixed(2)} €\` }\n// jamais : window.formaterPrix = ...`,
+          note: {
+            fr: `Chaque module a sa propre portée : exporter explicitement évite de polluer l'espace global et rend les dépendances traçables à l'import.`,
+            en: `Each module has its own scope: exporting explicitly avoids polluting the global namespace and keeps dependencies traceable at the import site.`,
           },
         },
       ],

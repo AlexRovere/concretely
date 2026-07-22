@@ -160,8 +160,8 @@ print(votes.most_common(2))   # [('a', 5), ('b', 2)]
 votes.update("aa")            # incrémente
 print(votes["z"])             # 0 — jamais de KeyError`,
           note: {
-            fr: `Comptage en une ligne au lieu d'une boucle + dict. most_common trie par fréquence, et les Counter s'additionnent entre eux (c1 + c2).`,
-            en: `Counting in one line instead of a loop + dict. most_common sorts by frequency, and Counters can be added together (c1 + c2).`,
+            fr: `Comptage en une ligne au lieu d'une boucle + dict. most_common trie par fréquence, et les Counter s'additionnent entre eux (c1 + c2) — les clés dont le total est ≤ 0 sont alors supprimées, contrairement à un merge de dict classique.`,
+            en: `Counting in one line instead of a loop + dict. most_common sorts by frequency, and Counters can be added together (c1 + c2) — keys whose total is ≤ 0 are then dropped, unlike a plain dict merge.`,
           },
         },
         {
@@ -830,6 +830,68 @@ async def bon():
           note: {
             fr: `Un seul appel bloquant (time.sleep, requests.get, gros calcul) gèle TOUTE la boucle d'événements et anéantit l'intérêt d'asyncio. Utilisez les équivalents async (asyncio.sleep, httpx/aiohttp) ou asyncio.to_thread pour le code bloquant ou CPU-bound.`,
             en: `A single blocking call (time.sleep, requests.get, heavy computation) freezes the WHOLE event loop and defeats the point of asyncio. Use the async equivalents (asyncio.sleep, httpx/aiohttp) or asyncio.to_thread for blocking or CPU-bound code.`,
+          },
+        },
+      ],
+    },
+    {
+      id: 'python-bp',
+      title: { fr: 'Bonnes pratiques', en: 'Best practices' },
+      items: [
+        {
+          id: 'python-bp-main-guard',
+          title: { fr: 'Garde if __name__', en: 'The __main__ guard' },
+          code: `def main():
+    print("démarrage de l'app")
+
+if __name__ == "__main__":
+    main()`,
+          note: {
+            fr: `Empêche le code d'entrée de s'exécuter à l'import du module (tests, réutilisation) : sans cette garde, importer le fichier ailleurs relance tout le script.`,
+            en: `Prevents entry-point code from running on import (tests, reuse): without this guard, importing the file elsewhere reruns the whole script.`,
+          },
+        },
+        {
+          id: 'python-bp-no-assert-validation',
+          title: { fr: "assert n'est pas de la validation", en: 'assert is not validation' },
+          code: `def retirer(solde, montant):
+    if montant > solde:          # validation réelle
+        raise ValueError("solde insuffisant")
+    return solde - montant`,
+          note: {
+            fr: `python -O supprime tous les assert à l'exécution : les utiliser pour valider une entrée utilisateur ou une règle métier crée un trou de sécurité silencieux. Réservez assert aux invariants internes et aux tests.`,
+            en: `python -O strips every assert at runtime: using them to validate user input or a business rule creates a silent security hole. Reserve assert for internal invariants and tests.`,
+          },
+        },
+        {
+          id: 'python-bp-pin-lockfile',
+          title: { fr: 'Verrouiller les dépendances', en: 'Pin dependencies with a lockfile' },
+          code: `uv lock                  # ou : poetry lock
+uv pip sync uv.lock       # installation reproductible en CI`,
+          note: {
+            fr: `requirements.txt seul ne fige pas les sous-dépendances : un lockfile (uv.lock, poetry.lock) garantit que CI et prod installent EXACTEMENT les mêmes versions, évitant les "ça marche chez moi".`,
+            en: `requirements.txt alone doesn't pin sub-dependencies: a lockfile (uv.lock, poetry.lock) guarantees CI and prod install the EXACT same versions, avoiding "works on my machine".`,
+          },
+        },
+        {
+          id: 'python-bp-no-wildcard-import',
+          title: { fr: "Pas d'import wildcard", en: 'No wildcard imports' },
+          code: `from math import sqrt, pi   # explicite, traçable
+# from math import *        # à éviter : pollue le namespace`,
+          note: {
+            fr: `from module import * masque l'origine des noms, casse l'autocomplétion et peut silencieusement écraser des noms existants. Importez explicitement ce dont vous avez besoin.`,
+            en: `from module import * hides where names come from, breaks autocomplete and can silently shadow existing names. Import explicitly what you need.`,
+          },
+        },
+        {
+          id: 'python-bp-docstring-public-api',
+          title: { fr: 'Documenter les fonctions publiques', en: 'Document public functions' },
+          code: `def moyenne(notes: list[float]) -> float:
+    """Calcule la moyenne arithmétique d'une liste de notes non vide."""
+    return sum(notes) / len(notes)`,
+          note: {
+            fr: `Une docstring + des type hints valent une signature auto-documentée : IDE, pydoc et mypy n'ont pas besoin de lire le corps de la fonction pour l'utiliser correctement.`,
+            en: `A docstring + type hints amount to a self-documenting signature: IDEs, pydoc and mypy don't need to read the body to use it correctly.`,
           },
         },
       ],

@@ -329,8 +329,8 @@ catch (IOException e) { throw new UncheckedIOException(e); }`,
 var v = Objects.requireNonNullElse(param, "défaut"); // avec repli
 // le NPE pointe ICI, pas 3 couches plus loin au premier usage`,
           note: {
-            fr: `Valider les arguments à l'entrée fait éclater le NullPointerException au bon endroit, avec un message clair — au lieu d'un NPE mystérieux loin de la cause. Depuis Java 14, les « helpful NPE » indiquent aussi quelle variable était null.`,
-            en: `Validating arguments at the boundary makes the NullPointerException blow up in the right place, with a clear message — instead of a mysterious NPE far from the cause. Since Java 14, "helpful NPEs" also name the null variable.`,
+            fr: `Valider les arguments à l'entrée fait éclater le NullPointerException au bon endroit, avec un message clair — au lieu d'un NPE mystérieux loin de la cause. Les « helpful NPE » (JEP 358) sont apparues en Java 14 mais désactivées par défaut ; elles indiquent la variable null depuis Java 15, activées par défaut.`,
+            en: `Validating arguments at the boundary makes the NullPointerException blow up in the right place, with a clear message — instead of a mysterious NPE far from the cause. "Helpful NPEs" (JEP 358) landed in Java 14 but off by default; they name the null variable by default since Java 15.`,
           },
         },
         {
@@ -529,6 +529,66 @@ String out = mapper.writeValueAsString(u);
           note: {
             fr: `Depuis Jackson 2.12, les records se (dé)sérialisent nativement via leur constructeur canonique : zéro annotation pour le cas simple, des DTO immuables sans setters. @JsonProperty sur un composant gère les noms qui divergent du JSON.`,
             en: `Since Jackson 2.12, records (de)serialize natively through their canonical constructor: zero annotations for the simple case, immutable DTOs without setters. @JsonProperty on a component handles names that differ from the JSON.`,
+          },
+        },
+      ],
+    },
+    {
+      id: 'java-bp',
+      title: { fr: 'Bonnes pratiques', en: 'Best practices' },
+      items: [
+        {
+          id: 'java-bp-immutability',
+          title: { fr: "Favoriser l'immutabilité", en: 'Favor immutability' },
+          code: `public final class Money {
+    private final long cents;
+    public Money(long cents) { this.cents = cents; }
+}`,
+          note: {
+            fr: `Un objet immuable (final, pas de setters) est thread-safe par construction et élimine toute une classe de bugs liés à un état partagé modifié en douce.`,
+            en: `An immutable object (final, no setters) is thread-safe by construction and eliminates a whole class of bugs from quietly shared mutable state.`,
+          },
+        },
+        {
+          id: 'java-bp-composition',
+          title: { fr: "Composition plutôt qu'héritage", en: 'Favor composition over inheritance' },
+          code: `class OrderService {
+    private final PaymentGateway gateway;
+    OrderService(PaymentGateway gateway) { this.gateway = gateway; }
+}`,
+          note: {
+            fr: `Hériter d'une classe expose son implémentation interne et se casse si la classe mère change ; composer via une interface injectée reste stable et testable.`,
+            en: `Inheriting from a class exposes its internals and breaks if the parent changes; composing via an injected interface stays stable and testable.`,
+          },
+        },
+        {
+          id: 'java-bp-logging',
+          title: { fr: 'Utiliser un logger, jamais System.out', en: 'Use a logger, never System.out' },
+          code: `private static final Logger log = LoggerFactory.getLogger(OrderService.class);
+log.error("échec de paiement pour {}", orderId, e);`,
+          note: {
+            fr: `System.out.println/e.printStackTrace ne peuvent pas être filtrés, routés ou désactivés en prod ; un logger (SLF4J) gère niveaux, format et destination.`,
+            en: `System.out.println/e.printStackTrace can't be filtered, routed, or disabled in prod; a logger (SLF4J) handles levels, formatting, and destinations.`,
+          },
+        },
+        {
+          id: 'java-bp-custom-exceptions',
+          title: { fr: 'Exceptions métier spécifiques', en: 'Specific domain exceptions' },
+          code: `public class OrderNotFoundException extends RuntimeException {
+    public OrderNotFoundException(String id) { super("Commande introuvable : " + id); }
+}`,
+          note: {
+            fr: `throw new RuntimeException("...") oblige l'appelant à parser un message pour savoir quoi faire ; un type dédié permet un catch ciblé et un traitement adapté.`,
+            en: `throw new RuntimeException("...") forces the caller to parse a message to know what happened; a dedicated type enables targeted catches and proper handling.`,
+          },
+        },
+        {
+          id: 'java-bp-builder',
+          title: { fr: 'Builder pour les constructeurs à nombreux paramètres', en: 'Builder for constructors with many parameters' },
+          code: `var req = HttpRequest.newBuilder(uri).timeout(d).GET().build();`,
+          note: {
+            fr: `Au-delà de 3-4 paramètres, un constructeur devient ambigu (ordre, types identiques) ; un builder nomme chaque valeur et permet des défauts clairs.`,
+            en: `Beyond 3-4 parameters, a constructor becomes ambiguous (order, identical types); a builder names each value and allows clear defaults.`,
           },
         },
       ],

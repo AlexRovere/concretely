@@ -380,7 +380,7 @@ X-Powered-By: PHP/7.2.1          # idem
 curl -I https://exemple.fr        # requête HEAD : headers seuls
 # Premier réflexe : statut ? Content-Type ? Cache-Control ?`,
           note: {
-            fr: `-I envoie un vrai HEAD : certains serveurs y répondent différemment d'un GET (voire 405). Pour voir les headers d'un vrai GET sans le body : curl -sI peut mentir, préférez -s -D - -o NUL.`,
+            fr: `-I envoie un vrai HEAD : certains serveurs y répondent différemment d'un GET (voire 405). Pour voir les headers d'un vrai GET sans le body : curl -sI peut mentir, préférez -s -D - -o /dev/null.`,
             en: `-I sends an actual HEAD: some servers answer it differently from a GET (even 405). To see the headers of a real GET without the body: -I can lie, prefer -s -D - -o /dev/null.`,
           },
         },
@@ -433,6 +433,71 @@ curl -v https://exemple.fr 2>&1 | grep -E "subject|expire|SSL|TLS"
           note: {
             fr: `--resolve est indispensable avant une migration DNS : on vérifie SNI, vhost et certificat sans toucher au DNS public. -v est l'outil de diagnostic des erreurs de certificat (expiré, mauvais CN, chaîne incomplète).`,
             en: `--resolve is essential before a DNS migration: verify SNI, vhost and certificate without touching public DNS. -v is the diagnostic tool for certificate errors (expired, wrong CN, incomplete chain).`,
+          },
+        },
+      ],
+    },
+    {
+      id: 'web-bp',
+      title: { fr: 'Bonnes pratiques', en: 'Best practices' },
+      items: [
+        {
+          id: 'web-bp-https-hsts-preload',
+          title: { fr: 'HTTPS forcé + HSTS preload', en: 'Forced HTTPS + HSTS preload' },
+          code: `# 1. Rediriger TOUT http:// vers https:// (301) au niveau du edge/LB
+# 2. Puis activer HSTS pour éliminer la fenêtre de clair restante
+Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+# 3. Soumettre le domaine sur hstspreload.org une fois stable`,
+          note: {
+            fr: `Le couple redirection + HSTS laisse encore un premier hit en clair possible avant la 1re visite HSTS. preload inscrit le domaine directement dans les navigateurs, supprimant même ce premier risque. Quasi irréversible : testez sans includeSubDomains d'abord.`,
+            en: `Redirect + HSTS alone still leaves a gap before the first HSTS-aware visit. preload bakes the domain into browsers themselves, closing even that first risk. Practically irreversible: test without includeSubDomains first.`,
+          },
+        },
+        {
+          id: 'web-bp-cors-strict-allowlist',
+          title: { fr: 'CORS : allowlist stricte, jamais de wildcard + credentials', en: 'CORS: strict allowlist, never wildcard + credentials' },
+          code: `# Ne JAMAIS refléter l'Origin sans le vérifier contre une liste explicite
+# allowed = ["https://app.exemple.fr", "https://admin.exemple.fr"]
+Access-Control-Allow-Origin: https://app.exemple.fr   # seulement si origin dans allowed
+Vary: Origin`,
+          note: {
+            fr: `Access-Control-Allow-Origin: * combiné à Allow-Credentials est de toute façon rejeté par les navigateurs, mais réfléchir l'Origin sans vérifier une liste ouvre le CORS à n'importe quel site. Vary: Origin évite qu'un cache partagé serve la réponse d'un domaine à un autre.`,
+            en: `Access-Control-Allow-Origin: * combined with Allow-Credentials is rejected by browsers anyway, but reflecting Origin without checking an allowlist opens CORS to any site. Vary: Origin stops a shared cache from serving one domain's response to another.`,
+          },
+        },
+        {
+          id: 'web-bp-security-headers-baseline',
+          title: { fr: 'Socle de headers de sécurité par défaut', en: 'Default security headers baseline' },
+          code: `Strict-Transport-Security: max-age=63072000
+X-Content-Type-Options: nosniff
+Referrer-Policy: strict-origin-when-cross-origin
+Permissions-Policy: geolocation=(), camera=()
+Content-Security-Policy: default-src 'self'; frame-ancestors 'self'`,
+          note: {
+            fr: `Ces headers coûtent zéro logique métier et ferment des classes entières d'attaques : frame-ancestors bloque le clickjacking, nosniff le MIME sniffing, Referrer-Policy limite la fuite d'URL, Permissions-Policy désactive les API inutilisées. À appliquer une fois au niveau du reverse proxy pour toutes les routes.`,
+            en: `These headers cost zero business logic and close entire attack classes: frame-ancestors blocks clickjacking, nosniff blocks MIME sniffing, Referrer-Policy limits URL leakage, Permissions-Policy disables unused browser APIs. Apply them once at the reverse proxy level for every route.`,
+          },
+        },
+        {
+          id: 'web-bp-timeout-retry-budget',
+          title: { fr: 'Timeouts + retries avec backoff, jamais en boucle infinie', en: 'Timeouts + retries with backoff, never an infinite loop' },
+          code: `# --max-time : timeout total ; --retry : backoff exponentiel intégré (1s, 2s, 4s...)
+curl --max-time 3 --retry 3 --retry-all-errors https://api.exemple.fr/ping`,
+          note: {
+            fr: `Sans timeout, un appel bloqué peut geler toute une requête entrante ; --retry de curl retente automatiquement avec un délai croissant sur les erreurs réseau et les 5xx. Ne retryez que 5xx/429/timeouts, jamais un 4xx tel quel — gardez un budget total (--retry-max-time) pour ne pas bloquer indéfiniment.`,
+            en: `Without a timeout, a stuck call can freeze an entire incoming request; curl's --retry automatically retries with a growing delay on network errors and 5xx. Only retry 5xx/429/timeouts, never a 4xx as-is — keep a total budget (--retry-max-time) to avoid blocking forever.`,
+          },
+        },
+        {
+          id: 'web-bp-no-secrets-in-url-or-referer',
+          title: { fr: 'Jamais de secret dans une URL (token, clé, session)', en: 'Never a secret in a URL (token, key, session)' },
+          code: `# Mauvais : le token finit dans les logs serveur, l'historique, le Referer
+GET /api/data?api_key=sk_live_abc123
+# Bon : le secret voyage dans un header, jamais loggé par défaut
+Authorization: Bearer sk_live_abc123`,
+          note: {
+            fr: `Une URL avec un secret est copiée dans les logs d'accès, l'historique navigateur, les proxys intermédiaires, et surtout le header Referer envoyé à un lien externe cliqué depuis cette page. Un header dédié n'a aucune de ces fuites par défaut.`,
+            en: `A URL carrying a secret gets copied into access logs, browser history, intermediate proxies, and critically into the Referer header sent to any external link clicked from that page. A dedicated header has none of these leaks by default.`,
           },
         },
       ],

@@ -180,7 +180,7 @@ println(ada)                           // User(nom=Ada, âge=36)`,
           id: 'kotlin-sealed',
           title: { fr: 'sealed class + when exhaustif', en: 'sealed class + exhaustive when' },
           code: `sealed interface UiState {
-    object Loading : UiState
+    data object Loading : UiState
     data class Success(val data: List<String>) : UiState
     data class Error(val message: String) : UiState
 }
@@ -190,8 +190,8 @@ val texte = when (state) {             // exhaustif : pas de else requis
     is UiState.Error -> state.message
 }`,
           note: {
-            fr: `Hiérarchie fermée connue à la compilation : le when est exhaustif sans else, et ajouter un cas force la mise à jour de tous les when. Le pattern de référence pour les états UI.`,
-            en: `Closed hierarchy known at compile time: when is exhaustive without else, and adding a case forces updating every when. The go-to pattern for UI states.`,
+            fr: `Hiérarchie fermée connue à la compilation : le when est exhaustif sans else, et ajouter un cas force la mise à jour de tous les when. Le pattern de référence pour les états UI. Depuis Kotlin 1.9, préférez data object à object pour un cas sans donnée : toString/equals corrects, précieux en test.`,
+            en: `Closed hierarchy known at compile time: when is exhaustive without else, and adding a case forces updating every when. The go-to pattern for UI states. Since Kotlin 1.9, prefer data object over object for a dataless case: correct toString/equals, valuable in tests.`,
           },
         },
         {
@@ -332,8 +332,8 @@ val a = scope.async { chargerA() }     // retourne Deferred<T>
 val b = scope.async { chargerB() }     // les deux partent en parallèle
 val total = a.await() + b.await()      // attend les résultats`,
           note: {
-            fr: `launch quand on n'attend pas de résultat, async/await pour en récupérer un — surtout pour paralléliser plusieurs appels. Un async jamais await peut avaler son exception.`,
-            en: `launch when no result is expected, async/await to get one — mainly to parallelize several calls. An async never awaited can swallow its exception.`,
+            fr: `launch quand on n'attend pas de résultat, async/await pour en récupérer un — surtout pour paralléliser plusieurs appels. Dans un scope structuré classique (viewModelScope...), une exception dans async se propage immédiatement même sans await ; elle n'est vraiment "avalée" que sous un SupervisorJob ou un async racine (GlobalScope) jamais awaité.`,
+            en: `launch when no result is expected, async/await to get one — mainly to parallelize several calls. In a regular structured scope (viewModelScope...), an exception inside async propagates immediately even without await; it is only truly "swallowed" under a SupervisorJob or a never-awaited root async (GlobalScope).`,
           },
         },
         {
@@ -578,6 +578,61 @@ val ui = combine(users, filtre) { u, f ->  // recombine à chaque émission
           note: {
             fr: `debounce + distinctUntilChanged + flatMapLatest est le trio classique de la barre de recherche. combine fusionne plusieurs flows et réémet dès que l'un d'eux change.`,
             en: `debounce + distinctUntilChanged + flatMapLatest is the classic search-bar trio. combine merges several flows and re-emits whenever any of them changes.`,
+          },
+        },
+      ],
+    },
+    {
+      id: 'kotlin-bp',
+      title: { fr: 'Bonnes pratiques', en: 'Best practices' },
+      items: [
+        {
+          id: 'kotlin-bp-visibility',
+          title: { fr: 'Visibilité restreinte par défaut', en: 'Restrict visibility by default' },
+          code: `class UserRepository internal constructor(
+    private val api: Api,
+)`,
+          note: {
+            fr: `Kotlin est public par défaut : déclarez private/internal explicitement pour limiter la surface d'API d'un module et éviter les couplages non voulus.`,
+            en: `Kotlin defaults to public: declare private/internal explicitly to limit a module's API surface and avoid unwanted coupling.`,
+          },
+        },
+        {
+          id: 'kotlin-bp-di',
+          title: { fr: 'Injection de dépendances plutôt que singleton', en: 'Dependency injection over singletons' },
+          code: `class UserRepository @Inject constructor(private val api: Api)`,
+          note: {
+            fr: `Un object singleton fige une dépendance globale difficile à mocker ; l'injection (Hilt/Koin) permet de substituer une implémentation de test.`,
+            en: `A singleton object hardcodes a global dependency that's hard to mock; DI (Hilt/Koin) lets you swap in a test implementation.`,
+          },
+        },
+        {
+          id: 'kotlin-bp-exception-handler',
+          title: { fr: 'CoroutineExceptionHandler pour les exceptions non gérées', en: 'CoroutineExceptionHandler for uncaught exceptions' },
+          code: `val handler = CoroutineExceptionHandler { _, e -> Log.e("TAG", "crash", e) }
+scope.launch(handler) { risky() }`,
+          note: {
+            fr: `Un try/catch autour de launch ne rattrape rien (le bloc s'exécute plus tard) : le handler capte les exceptions non gérées au niveau du scope pour logger sans crasher.`,
+            en: `A try/catch around launch catches nothing (the block runs later): the handler captures uncaught exceptions at the scope level to log without crashing.`,
+          },
+        },
+        {
+          id: 'kotlin-bp-not-null-assertion',
+          title: { fr: 'Éviter !! hors tests', en: 'Avoid !! outside tests' },
+          code: `val id = requireNotNull(user.id) { "user.id ne doit pas être null ici" }`,
+          note: {
+            fr: `!! lance une NPE sans message utile ; requireNotNull permet un message explicite qui accélère le diagnostic en prod.`,
+            en: `!! throws an NPE with no useful message; requireNotNull lets you add an explicit message that speeds up production diagnosis.`,
+          },
+        },
+        {
+          id: 'kotlin-bp-immutable-state',
+          title: { fr: 'État UI immuable exposé en lecture seule', en: 'Immutable UI state exposed read-only' },
+          code: `private val _state = MutableStateFlow(UiState())
+val state: StateFlow<UiState> = _state.asStateFlow()`,
+          note: {
+            fr: `N'exposez jamais un Mutable*Flow ou une MutableList à l'extérieur : le consommateur pourrait muter l'état en dehors du flux de données prévu.`,
+            en: `Never expose a Mutable*Flow or a MutableList externally: the consumer could mutate state outside the intended data flow.`,
           },
         },
       ],

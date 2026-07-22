@@ -219,8 +219,9 @@ let n: i32 = "oops".parse().unwrap_or_default(); // 0 pour i32`,
           id: 'rust-result-combinators',
           title: { fr: 'map, and_then, ok_or', en: 'map, and_then, ok_or' },
           code: `let r: Result<i32, _> = "5".parse::<i32>().map(|x| x * 10); // Ok(50)
-let chaine = "8".parse::<i32>()
-    .and_then(|x| u8::try_from(x).map_err(|_| "trop grand".parse::<i32>().unwrap_err()));
+let carre_pair: Result<i32, String> = "4".parse::<i32>()
+    .map_err(|_| "entrée invalide".to_string())
+    .and_then(|x| if x % 2 == 0 { Ok(x * x) } else { Err("nombre impair".to_string()) });
 let opt = Some(3);
 let res: Result<i32, &str> = opt.ok_or("valeur manquante"); // Option -> Result
 let retour = res.ok();                                      // Result -> Option`,
@@ -583,6 +584,68 @@ json = ["dep:serde_json"] # active une dépendance optionnelle`,
           note: {
             fr: `Les features activent du code conditionnel (#[cfg(feature = "json")]) et des dépendances optionnelles : moins de features = compilation plus rapide. Elles sont additives : jamais de feature qui désactive du code.`,
             en: `Features enable conditional code (#[cfg(feature = "json")]) and optional dependencies: fewer features = faster builds. They are additive: never write a feature that disables code.`,
+          },
+        },
+      ],
+    },
+    {
+      id: 'rust-bp',
+      title: { fr: 'Bonnes pratiques', en: 'Best practices' },
+      items: [
+        {
+          id: 'rust-bp-avoid-unwrap-prod',
+          title: { fr: "Pas d'unwrap/expect sur le chemin critique", en: 'No unwrap/expect on the critical path' },
+          code: `let port: u16 = std::env::var("PORT")
+    .map_err(|_| "PORT manquant")?
+    .parse()
+    .map_err(|_| "PORT invalide")?;`,
+          note: {
+            fr: `unwrap()/expect() transforment une erreur récupérable en crash du process : réservez-les aux invariants prouvés (tests, prototypes) et propagez avec ? en production.`,
+            en: `unwrap()/expect() turn a recoverable error into a process crash: reserve them for proven invariants (tests, prototypes) and propagate with ? in production.`,
+          },
+        },
+        {
+          id: 'rust-bp-newtype-pattern',
+          title: { fr: 'Newtype pour les types métier', en: 'Newtype for domain types' },
+          code: `struct UserId(u64);
+struct OrderId(u64);
+fn charger(id: UserId) { /* ... */ }
+// charger(OrderId(3)) // ne compile pas : bonne chose`,
+          note: {
+            fr: `Deux u64 qui représentent des concepts différents se mélangent silencieusement ; un newtype fait du compilateur un garde-fou contre l'inversion d'arguments de même type primitif.`,
+            en: `Two u64s representing different concepts mix silently; a newtype turns the compiler into a guard against swapping same-primitive-type arguments.`,
+          },
+        },
+        {
+          id: 'rust-bp-error-crates',
+          title: { fr: 'thiserror pour les libs, anyhow pour les apps', en: 'thiserror for libraries, anyhow for apps' },
+          code: `#[derive(thiserror::Error, Debug)]
+enum ConfigError {
+    #[error("fichier introuvable: {0}")]
+    NotFound(String),
+}`,
+          note: {
+            fr: `thiserror génère des types d'erreur précis et stables pour une API de bibliothèque ; anyhow simplifie la propagation d'erreurs hétérogènes dans une application où seul l'humain lit le message.`,
+            en: `thiserror generates precise, stable error types for a library API; anyhow simplifies propagating heterogeneous errors in an app where only a human reads the message.`,
+          },
+        },
+        {
+          id: 'rust-bp-prefer-iterators',
+          title: { fr: 'Itérateurs plutôt que boucles indexées', en: 'Iterators over indexed loops' },
+          code: `let total: i32 = prices.iter().filter(|&&p| p > 0).sum();
+// plutôt que : for i in 0..prices.len() { ... prices[i] ... }`,
+          note: {
+            fr: `Les chaînes d'itérateurs évitent les erreurs d'index hors-borne et se compilent souvent aussi vite qu'une boucle manuelle grâce au monomorphisme — plus sûr sans coût caché.`,
+            en: `Iterator chains avoid out-of-bounds index errors and often compile as fast as a manual loop thanks to monomorphization — safer with no hidden cost.`,
+          },
+        },
+        {
+          id: 'rust-bp-clippy-ci-gate',
+          title: { fr: 'clippy -D warnings comme porte CI', en: 'clippy -D warnings as a CI gate' },
+          code: `cargo clippy --all-targets --all-features -- -D warnings`,
+          note: {
+            fr: `Sans ce flag, les warnings clippy s'accumulent sans jamais être corrigés : en faire une erreur bloquante en CI garde la base de code idiomatique dans la durée.`,
+            en: `Without this flag, clippy warnings pile up and never get fixed: making them a hard CI failure keeps the codebase idiomatic over time.`,
           },
         },
       ],

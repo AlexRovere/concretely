@@ -235,7 +235,7 @@ const g = new Map([
 // Bubble    | O(n)       | O(n²)      | O(n²)      | oui    | oui
 // Insertion | O(n)       | O(n²)      | O(n²)      | oui    | oui
 // Merge     | O(n log n) | O(n log n) | O(n log n) | oui    | non (O(n) espace)
-// Quick     | O(n log n) | O(n log n) | O(n²)      | non    | oui (pile O(log n))
+// Quick     | O(n log n) | O(n log n) | O(n²)      | non    | oui (pile O(log n) en moyenne, O(n) au pire)
 // Stable = conserve l'ordre relatif des éléments égaux`,
           note: {
             fr: `Merge sort garantit n log n et la stabilité au prix de O(n) mémoire ; quicksort est souvent plus rapide en pratique mais instable et O(n²) au pire.`,
@@ -514,6 +514,60 @@ function permutations(reste, courant = [], res = []) {
           note: {
             fr: `Le backtracking explore l'arbre des choix en profondeur et défait chaque choix en remontant ; on élague les branches invalides au plus tôt pour limiter l'explosion.`,
             en: `Backtracking explores the choice tree depth-first and undoes each choice on the way back; prune invalid branches early to limit the blowup.`,
+          },
+        },
+      ],
+    },
+    {
+      id: 'gen-bp',
+      title: { fr: 'Bonnes pratiques', en: 'Best practices' },
+      items: [
+        {
+          id: 'gen-bp-complexity-first',
+          title: { fr: 'Estimer la complexité avant de coder', en: 'Estimate complexity before coding' },
+          code: `// Avant d'écrire une ligne : quelle est la taille de n en prod ?
+// n ~ 100 -> O(n²) ok. n ~ 10^6 -> il faut O(n log n) ou mieux.`,
+          note: {
+            fr: `Coder d'abord et mesurer ensuite mène souvent à réécrire une solution O(n²) qui explose en prod ; estimer sur papier évite ce coût de réécriture.`,
+            en: `Coding first and measuring later often means rewriting an O(n²) solution that blows up in prod; a paper estimate avoids that rewrite cost.`,
+          },
+        },
+        {
+          id: 'gen-bp-edge-cases',
+          title: { fr: 'Toujours tester les cas limites', en: 'Always test edge cases' },
+          code: `// tableau vide, un seul élément, doublons, valeurs négatives, n=0`,
+          note: {
+            fr: `Les bugs d'algo se cachent presque toujours aux bornes (vide, unique, dupliqué) plutôt que dans le cas général — les tester en premier révèle l'essentiel des erreurs.`,
+            en: `Algorithm bugs almost always hide at the boundaries (empty, single, duplicate) rather than in the general case — testing them first catches most errors.`,
+          },
+        },
+        {
+          id: 'gen-bp-choose-structure',
+          title: { fr: "Choisir la structure selon l'opération dominante", en: 'Pick the structure by dominant operation' },
+          code: `// Beaucoup de recherches -> Set/Map. Beaucoup d'insertions triées -> heap.
+// Accès aléatoire fréquent -> tableau, pas liste chaînée.`,
+          note: {
+            fr: `Il n'existe pas de structure universellement optimale : le bon choix dépend de l'opération répétée le plus souvent, pas de l'habitude ou de la familiarité.`,
+            en: `No structure is universally optimal: the right choice depends on the operation repeated most often, not habit or familiarity.`,
+          },
+        },
+        {
+          id: 'gen-bp-profile-dont-guess',
+          title: { fr: "Profiler avant d'optimiser", en: 'Profile before optimizing' },
+          code: `console.time('etape'); run(); console.timeEnd('etape');
+// ou un vrai profiler (Chrome DevTools, --prof Node)`,
+          note: {
+            fr: `L'intuition sur le goulot d'étranglement est souvent fausse ; mesurer avant d'optimiser évite de complexifier une partie du code qui n'était pas le problème.`,
+            en: `Intuition about the bottleneck is often wrong; measuring before optimizing avoids complicating code that was never the actual problem.`,
+          },
+        },
+        {
+          id: 'gen-bp-readable-first',
+          title: { fr: "Correct et lisible d'abord, rapide ensuite", en: 'Correct and readable first, fast second' },
+          code: `// v1: boucle simple, claire, testée -> v2: optimisée SEULEMENT si mesurée trop lente`,
+          note: {
+            fr: `"Premature optimization is the root of all evil" (Knuth) : une version lisible qui marche vaut mieux qu'une version rapide et illisible qui cache des bugs.`,
+            en: `"Premature optimization is the root of all evil" (Knuth): a readable working version beats a fast, unreadable one that hides bugs.`,
           },
         },
       ],

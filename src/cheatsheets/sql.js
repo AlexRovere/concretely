@@ -193,8 +193,8 @@ FROM users
 GROUP BY pays;
 -- règle : toute colonne du SELECT hors agrégat DOIT être dans le GROUP BY`,
           note: {
-            fr: `GROUP BY réduit chaque groupe à une seule ligne : on ne peut plus accéder aux lignes individuelles, seulement aux agrégats. Oublier une colonne dans le GROUP BY est une erreur de compilation (sauf MySQL en mode laxiste).`,
-            en: `GROUP BY collapses each group into a single row: individual rows are no longer reachable, only aggregates. Omitting a column from GROUP BY is a compile error (except MySQL in lax mode).`,
+            fr: `GROUP BY réduit chaque groupe à une seule ligne : on ne peut plus accéder aux lignes individuelles, seulement aux agrégats. Oublier une colonne dans le GROUP BY est une erreur de compilation — y compris sur MySQL, où ONLY_FULL_GROUP_BY est activé par défaut depuis la version 5.7.`,
+            en: `GROUP BY collapses each group into a single row: individual rows are no longer reachable, only aggregates. Omitting a column from GROUP BY is a compile error — including on MySQL, where ONLY_FULL_GROUP_BY has been enabled by default since version 5.7.`,
           },
         },
         {
@@ -479,6 +479,73 @@ VACUUM commandes;         -- récupère l'espace des lignes mortes (PostgreSQL)
           note: {
             fr: `Spécifique à PostgreSQL : UPDATE/DELETE laissent des lignes « mortes » que VACUUM nettoie, et le planificateur choisit ses plans d'après les statistiques d'ANALYZE. Des stats périmées après un gros import expliquent souvent un plan soudainement lent.`,
             en: `PostgreSQL-specific: UPDATE/DELETE leave "dead" rows that VACUUM cleans up, and the planner picks plans based on ANALYZE statistics. Stale stats after a big import often explain a suddenly slow plan.`,
+          },
+        },
+      ],
+    },
+    {
+      id: 'sql-bp',
+      title: { fr: 'Bonnes pratiques', en: 'Best practices' },
+      items: [
+        {
+          id: 'sql-bp-parameterized-queries',
+          title: { fr: 'Requêtes paramétrées (jamais de concaténation)', en: 'Parameterized queries (never concatenate)' },
+          code: `-- ❌ vulnérable à l'injection SQL :
+-- "SELECT * FROM users WHERE email = '" + input + "'"
+-- ✅ requête préparée avec paramètre :
+SELECT * FROM users WHERE email = $1;   -- $1 lié via le driver, jamais interpolé`,
+          note: {
+            fr: `Concaténer une valeur utilisateur dans le SQL ouvre la porte à l'injection SQL — la faille la plus classique et la plus dangereuse des applications web. Les requêtes préparées séparent le code SQL des données : le driver échappe et type la valeur, elle ne peut jamais devenir du SQL exécutable.`,
+            en: `Concatenating a user value into SQL opens the door to SQL injection — the most classic and dangerous web app flaw. Prepared queries separate SQL code from data: the driver escapes and types the value, so it can never become executable SQL.`,
+          },
+        },
+        {
+          id: 'sql-bp-explicit-columns',
+          title: { fr: 'Toujours lister les colonnes explicitement', en: 'Always list columns explicitly' },
+          code: `-- ❌ fragile : dépend de l'ordre des colonnes de la table
+INSERT INTO users VALUES (1, 'Ada', 'ada@ex.com');
+-- ✅ explicite : résiste à un ALTER TABLE qui ajoute une colonne
+INSERT INTO users (id, nom, email) VALUES (1, 'Ada', 'ada@ex.com');`,
+          note: {
+            fr: `SELECT * et INSERT sans colonnes explicites cassent silencieusement dès qu'une colonne est ajoutée, supprimée ou réordonnée dans le schéma. Nommer les colonnes rend le code résistant aux évolutions du schéma.`,
+            en: `SELECT * and column-less INSERT silently break the moment a column is added, dropped, or reordered. Naming columns explicitly makes code resilient to schema changes.`,
+          },
+        },
+        {
+          id: 'sql-bp-schema-constraints',
+          title: { fr: 'Contraintes au niveau schéma, pas seulement applicatif', en: 'Schema-level constraints, not just app-level' },
+          code: `CREATE TABLE commandes (
+  id SERIAL PRIMARY KEY,
+  user_id INT NOT NULL REFERENCES users(id),
+  montant NUMERIC(10,2) NOT NULL CHECK (montant >= 0),
+  UNIQUE (user_id, reference)
+);`,
+          note: {
+            fr: `La validation côté application peut être contournée (bug, script, autre service) ; la base reste le dernier rempart contre les données incohérentes. NOT NULL, CHECK, UNIQUE et FOREIGN KEY garantissent l'intégrité même si le code appelant se trompe.`,
+            en: `App-side validation can be bypassed (bug, script, another service); the database is the last line of defense. NOT NULL, CHECK, UNIQUE and FOREIGN KEY guarantee integrity even when calling code gets it wrong.`,
+          },
+        },
+        {
+          id: 'sql-bp-short-transactions',
+          title: { fr: "Transactions courtes, jamais d'attente utilisateur dedans", en: 'Short transactions, never wait on user input inside' },
+          code: `BEGIN;
+UPDATE stock SET quantite = quantite - 1 WHERE id = 42;
+INSERT INTO commandes (produit_id) VALUES (42);
+COMMIT;   -- fermé en quelques millisecondes, jamais en attente d'un clic`,
+          note: {
+            fr: `Une transaction ouverte tient des verrous : plus elle dure, plus elle bloque les autres écritures. Ne jamais laisser une transaction ouverte en attendant un appel réseau ou une action utilisateur.`,
+            en: `An open transaction holds locks: the longer it lasts, the more it blocks other writes. Never leave a transaction open while waiting on a network call or user action.`,
+          },
+        },
+        {
+          id: 'sql-bp-migrations',
+          title: { fr: 'Migrations versionnées, jamais de DDL manuel en prod', en: 'Versioned migrations, never manual DDL in prod' },
+          code: `-- migrations/2026_07_20_add_users_phone.sql
+ALTER TABLE users ADD COLUMN phone TEXT;
+-- appliqué via un outil (Flyway, Alembic, Prisma Migrate…), jamais à la main`,
+          note: {
+            fr: `Un ALTER TABLE tapé à la main en prod n'est ni rejouable, ni traçable, ni réversible facilement. Un outil de migration versionne le schéma comme le code et permet le rollback.`,
+            en: `An ALTER TABLE typed by hand in prod is neither replayable, nor traceable, nor easily reversible. A migration tool versions the schema like code and enables rollback.`,
           },
         },
       ],

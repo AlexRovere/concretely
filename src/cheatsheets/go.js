@@ -605,5 +605,74 @@ go env GOOS GOARCH   # voir la cible courante`,
         },
       ],
     },
+    {
+      id: 'go-bp',
+      title: { fr: 'Bonnes pratiques', en: 'Best practices' },
+      items: [
+        {
+          id: 'go-bp-small-interfaces',
+          title: { fr: 'Petites interfaces, côté consommateur', en: 'Small consumer-side interfaces' },
+          code: `type Reader interface {
+    Read(p []byte) (n int, err error) // une seule méthode
+}`,
+          note: {
+            fr: `Plus une interface a de méthodes, plus elle est difficile à implémenter et à mocker : le style Go privilégie 1-2 méthodes, déclarées là où elles sont consommées.`,
+            en: `The more methods an interface has, the harder it is to implement and mock: Go style favors 1-2 methods, declared where they are consumed.`,
+          },
+        },
+        {
+          id: 'go-bp-wrap-errors-context',
+          title: { fr: 'Toujours contextualiser une erreur', en: 'Always add context to an error' },
+          code: `if err != nil {
+    return fmt.Errorf("lecture config %q: %w", path, err)
+}`,
+          note: {
+            fr: `Une erreur brute remontée sans contexte oblige à deviner où ça a cassé dans une pile d'appels profonde ; %w garde la cause exploitable par errors.Is/As.`,
+            en: `A bare error propagated with no context forces guessing where it broke deep in a call stack; %w keeps the cause usable by errors.Is/As.`,
+          },
+        },
+        {
+          id: 'go-bp-typed-nil-gotcha',
+          title: { fr: 'Le nil typé dans une interface error', en: 'Typed nil inside an error interface' },
+          code: `func check() error {
+    var e *MonErreur = nil
+    return e            // interface NON nil, piège !
+}
+if err := check(); err != nil { // toujours vrai
+    fmt.Println("erreur alors qu'il n'y en a pas")
+}`,
+          note: {
+            fr: `Une interface error contenant un pointeur nil typé n'est PAS égale à nil : elle porte un type. Retournez explicitement nil, pas une variable pointeur potentiellement nil.`,
+            en: `An error interface holding a typed nil pointer is NOT equal to nil: it still carries a type. Return an explicit nil, not a possibly-nil pointer variable.`,
+          },
+        },
+        {
+          id: 'go-bp-defer-close-check',
+          title: { fr: "Vérifier l'erreur de Close quand elle compte", en: 'Check the Close error when it matters' },
+          code: `f, err := os.Create("out.txt")
+if err != nil { return err }
+defer func() {
+    if cerr := f.Close(); cerr != nil && err == nil {
+        err = cerr
+    }
+}()`,
+          note: {
+            fr: `defer f.Close() seul avale silencieusement une erreur d'écriture différée (buffer non flushé, disque plein) : capturez-la quand c'est critique.`,
+            en: `A bare defer f.Close() silently swallows a deferred write error (unflushed buffer, full disk): capture it when it matters.`,
+          },
+        },
+        {
+          id: 'go-bp-goroutine-lifecycle',
+          title: { fr: 'Toute goroutine a un propriétaire et une sortie', en: 'Every goroutine has an owner and an exit' },
+          code: `ctx, cancel := context.WithCancel(context.Background())
+go worker(ctx)     // sait s'arrêter via ctx.Done()
+defer cancel()     // le propriétaire décide de la fin`,
+          note: {
+            fr: `Une goroutine lancée sans mécanisme d'arrêt (context, channel, WaitGroup) devient impossible à stopper proprement et fuit à chaque appel.`,
+            en: `A goroutine started with no stop mechanism (context, channel, WaitGroup) becomes impossible to stop cleanly and leaks on every call.`,
+          },
+        },
+      ],
+    },
   ],
 };

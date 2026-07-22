@@ -201,11 +201,11 @@ ps aux --sort=-rss | head -5   # les vrais gros consommateurs`,
           title: { fr: "L'OOM killer", en: 'The OOM killer' },
           code: `dmesg -T | grep -i 'killed process'  # qui a été sacrifié ?
 cat /proc/1234/oom_score             # score actuel (haut = visé)
-# Protéger un processus critique (root) :
-echo -1000 > /proc/1234/oom_score_adj`,
+# Protéger un processus critique (nécessite root si ce n'est pas le vôtre) :
+sudo sh -c 'echo -1000 > /proc/1234/oom_score_adj'`,
           note: {
-            fr: `Quand la RAM est épuisée, le noyau tue le processus au meilleur score (gros, récent, peu prioritaire). Un service qui « disparaît » sans log : vérifier dmesg avant tout.`,
-            en: `When RAM runs out, the kernel kills the highest-scoring process (big, recent, low priority). A service that "vanishes" with no log: check dmesg first.`,
+            fr: `Quand la RAM est épuisée, le noyau tue le processus au meilleur score (gros, récent, peu prioritaire). Un service qui « disparaît » sans log : vérifier dmesg avant tout. Écrire dans oom_score_adj d'un processus qui n'est pas le vôtre exige sudo (ou d'être root) — sans quoi c'est un simple « Permission denied ».`,
+            en: `When RAM runs out, the kernel kills the highest-scoring process (big, recent, low priority). A service that "vanishes" with no log: check dmesg first. Writing to oom_score_adj for a process you don't own requires sudo (or root) — otherwise it's a plain "Permission denied".`,
           },
         },
         {
@@ -378,6 +378,67 @@ systemd-run --scope -p MemoryMax=512M ./gourmand.sh`,
           note: {
             fr: `Les cgroups limitent CPU, mémoire et I/O par groupe de processus : c'est la mécanique sous Docker, Kubernetes et systemd. Un conteneur « OOMKilled » a juste touché son memory.max.`,
             en: `cgroups cap CPU, memory and I/O per process group: the machinery under Docker, Kubernetes and systemd. An "OOMKilled" container simply hit its memory.max.`,
+          },
+        },
+      ],
+    },
+    {
+      id: 'os-bp',
+      title: { fr: 'Bonnes pratiques', en: 'Best practices' },
+      items: [
+        {
+          id: 'os-bp-graceful-shutdown',
+          title: { fr: 'Intercepter SIGTERM pour un arrêt propre', en: 'Trap SIGTERM for a clean shutdown' },
+          code: `trap 'echo "arrêt en cours..."; cleanup; exit 0' TERM
+# dans une app : fermer les connexions DB, finir les requêtes en vol,
+# puis quitter — Docker/Kubernetes envoient TERM avant KILL`,
+          note: {
+            fr: `Docker et Kubernetes envoient SIGTERM puis SIGKILL après un délai (souvent 10-30s) : une appli qui ignore TERM se fait tuer sauvagement à chaque déploiement, avec requêtes coupées et données perdues. Gérer TERM proprement transforme chaque redémarrage en non-événement.`,
+            en: `Docker and Kubernetes send SIGTERM then SIGKILL after a grace period (often 10-30s): an app that ignores TERM gets brutally killed on every deploy, dropping requests and losing data. Handling TERM cleanly turns every restart into a non-event.`,
+          },
+        },
+        {
+          id: 'os-bp-explicit-resource-limits',
+          title: { fr: 'Fixer des limites de ressources explicites par service', en: 'Set explicit per-service resource limits' },
+          code: `systemd-run --scope -p MemoryMax=512M -p CPUQuota=50% ./app
+# ou dans un unit systemd : MemoryMax=, CPUQuota=
+# ou en conteneur : --memory=512m --cpus=0.5`,
+          note: {
+            fr: `Sans limite, un service qui fuit la mémoire ou boucle en CPU peut affamer toute la machine et déclencher l'OOM killer sur un processus innocent à côté. Des limites explicites (cgroups) contiennent la casse à un seul service.`,
+            en: `Without a limit, a service leaking memory or spinning the CPU can starve the whole machine and trigger the OOM killer on an innocent process nearby. Explicit limits (cgroups) contain the damage to a single service.`,
+          },
+        },
+        {
+          id: 'os-bp-persistent-journal',
+          title: { fr: "Activer les logs noyau persistants avant d'en avoir besoin", en: 'Enable persistent kernel logs before you need them' },
+          code: `sudo mkdir -p /var/log/journal
+sudo systemctl restart systemd-journald
+journalctl --disk-usage    # vérifier que ça persiste bien au reboot`,
+          note: {
+            fr: `Par défaut sur beaucoup de distributions, le journal systemd est en mémoire seule et disparaît au reboot — exactement quand on en a besoin après un crash. L'activer en persistant rend chaque incident post-mortem-able.`,
+            en: `By default on many distros, the systemd journal lives in memory only and vanishes on reboot — exactly when you need it after a crash. Making it persistent turns every incident into something you can post-mortem.`,
+          },
+        },
+        {
+          id: 'os-bp-cross-check-metrics',
+          title: { fr: 'Ne jamais conclure sur une seule métrique', en: 'Never conclude from a single metric' },
+          code: `uptime                # load élevé...
+vmstat 1 5             # ...CPU plein (us/sy) ou en attente I/O (wa) ?
+iostat -xz 1 3         # confirme si un disque sature (%util, await)`,
+          note: {
+            fr: `Un load élevé peut venir du CPU ou de processus bloqués en I/O (état D) — la même valeur cache deux diagnostics opposés. Croiser load, vmstat et iostat évite d'optimiser la mauvaise ressource.`,
+            en: `A high load can come from the CPU or from processes stuck in I/O (state D) — the same number hides two opposite diagnoses. Cross-checking load, vmstat and iostat stops you from optimizing the wrong resource.`,
+          },
+        },
+        {
+          id: 'os-bp-core-dumps-controlled',
+          title: { fr: 'Contrôler les core dumps : utiles en dev, maîtrisés en prod', en: 'Control core dumps: useful in dev, tamed in prod' },
+          code: `ulimit -c unlimited                       # dev : capturer le crash pour debug
+cat /proc/sys/kernel/core_pattern         # prod : rediriger/limiter la taille
+# ex. core_pattern vers /var/crash/%e.%p pour ne pas remplir /`,
+          note: {
+            fr: `Un core dump non maîtrisé en prod peut remplir le disque à chaque crash ou exposer des secrets tenus en mémoire. En dev, l'activer donne un post-mortem exact ; en prod, taille et destination doivent être choisies volontairement.`,
+            en: `An unmanaged core dump in prod can fill the disk on every crash or leak secrets held in memory. In dev, enabling it gives an exact post-mortem; in prod, size and destination must be chosen deliberately.`,
           },
         },
       ],

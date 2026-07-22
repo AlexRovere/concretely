@@ -319,7 +319,7 @@ steps:
           },
         },
         {
-          id: 'cc-oidc',
+          id: 'cc-predefined-vars',
           title: { fr: 'Contexte & prédéfinies', en: 'Context & predefined' },
           code: `# --- GitLab : variables CI_* prédéfinies ---
 job:
@@ -412,6 +412,93 @@ jobs:
           note: {
             fr: `Éviter le copier-coller : extends: (héritage de job) + include: (fichiers importés) sur GitLab ; workflows réutilisables (on: workflow_call + uses:) et actions composites sur GitHub. Piège : un job « caché » GitLab commence par un point (.base) et ne s'exécute jamais seul — il sert uniquement de modèle.`,
             en: `Avoid copy-paste: extends: (job inheritance) + include: (imported files) on GitLab; reusable workflows (on: workflow_call + uses:) and composite actions on GitHub. Gotcha: a "hidden" GitLab job starts with a dot (.base) and never runs on its own — it's only a template.`,
+          },
+        },
+      ],
+    },
+    {
+      id: 'cicd-bp',
+      title: { fr: 'Bonnes pratiques', en: 'Best practices' },
+      items: [
+        {
+          id: 'cicd-bp-least-privilege-tokens',
+          title: { fr: 'Permissions minimales du token CI par défaut', en: 'Least-privilege default CI token permissions' },
+          code: `# --- GitHub : restreindre GITHUB_TOKEN au strict nécessaire ---
+permissions:
+  contents: read
+jobs:
+  deploy:
+    permissions:
+      contents: read
+      id-token: write   # seulement le job qui en a besoin
+
+# --- GitLab : restreindre la portée du CI_JOB_TOKEN ---
+# Settings > CI/CD > Token Access > Limit access via allowlist`,
+          note: {
+            fr: `Par défaut, GITHUB_TOKEN a souvent des droits d'écriture larges même pour un job qui ne fait que lancer des tests. Un pipeline compromis (dépendance malveillante, action piégée) hérite de ces droits — limitez au niveau workflow ET par job.`,
+            en: `By default GITHUB_TOKEN often has broad write access even for a job that only runs tests. A compromised pipeline (malicious dependency, trojaned action) inherits those rights — restrict at both workflow and job level.`,
+          },
+        },
+        {
+          id: 'cicd-bp-pin-actions-by-sha',
+          title: { fr: 'Épingler les actions/images tierces par SHA, pas par tag flottant', en: 'Pin third-party actions/images by SHA, not a floating tag' },
+          code: `# --- GitHub : le tag @v4 peut être réécrit, le SHA jamais ---
+- uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0a  # v4.1.7
+
+# --- GitLab : même logique pour une image de base ---
+image: node:22-alpine@sha256:9d7f1b6c2e5a4f0b8c3d2e1a9f8b7c6d`,
+          note: {
+            fr: `Un tag comme @v4 peut être déplacé vers un nouveau commit (par l'auteur ou après compromission du repo de l'action) sans que vous le sachiez — plusieurs incidents de supply chain récents sont passés par là. Le SHA de commit est immuable, l'ancrage réel de confiance.`,
+            en: `A tag like @v4 can be moved to a new commit (by the author, or after the action repo is compromised) without your knowledge — several recent supply-chain incidents went through exactly this. The commit SHA is immutable, the real anchor of trust.`,
+          },
+        },
+        {
+          id: 'cicd-bp-oidc-short-lived-creds',
+          title: { fr: 'OIDC pour le cloud : credentials éphémères, pas de secret statique', en: 'OIDC for cloud: ephemeral credentials, no static secret' },
+          code: `# --- GitHub : fédération OIDC vers un rôle IAM ---
+permissions: { id-token: write, contents: read }
+steps:
+  - uses: aws-actions/configure-aws-credentials@v4
+    with: { role-to-assume: arn:aws:iam::123456789012:role/ci, aws-region: eu-west-1 }
+
+# --- GitLab : id_tokens + fédération équivalente ---
+id_tokens:
+  AWS_ID_TOKEN: { aud: sts.amazonaws.com }`,
+          note: {
+            fr: `Une clé cloud statique stockée en secret CI ne périme jamais toute seule et fuite facilement (log mal masqué, fork de repo). L'OIDC échange un jeton signé de courte durée vérifié par le cloud : rien à stocker, rien à faire tourner, rien à révoquer en urgence.`,
+            en: `A static cloud key stored as a CI secret never expires on its own and leaks easily (unmasked log, forked repo). OIDC exchanges a short-lived signed token verified by the cloud provider: nothing to store, rotate, or urgently revoke.`,
+          },
+        },
+        {
+          id: 'cicd-bp-concurrency-guard-deploy',
+          title: { fr: 'Verrou de concurrence sur les jobs de déploiement', en: 'Concurrency guard on deployment jobs' },
+          code: `# --- GitHub : une seule exécution à la fois pour cet environnement ---
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+# --- GitLab : équivalent avec resource_group ---
+deploy_prod:
+  resource_group: production`,
+          note: {
+            fr: `Deux pipelines déclenchés à quelques secondes d'intervalle peuvent déployer en parallèle sur le même environnement et se marcher dessus (migration DB concurrente, rollback écrasé). Le verrou sérialise : un déploiement à la fois, dans l'ordre.`,
+            en: `Two pipelines triggered seconds apart can deploy to the same environment in parallel and step on each other (concurrent DB migration, an overwritten rollback). The guard serializes: one deployment at a time, in order.`,
+          },
+        },
+        {
+          id: 'cicd-bp-cold-cache-and-timeouts',
+          title: { fr: 'Pipeline valide à froid + timeout explicite sur chaque job', en: 'Pipeline valid on a cold cache + explicit timeout per job' },
+          code: `# --- GitHub : timeout par job ---
+jobs:
+  test:
+    timeout-minutes: 15
+
+# --- GitLab : timeout par job ---
+test:
+  timeout: 15 minutes`,
+          note: {
+            fr: `Un cache peut être évincé à tout moment (quota, changement d'infra) : si le build ne réussit qu'AVEC le cache, une éviction cassera la prod sans prévenir. Un timeout par job évite qu'un test bloqué consomme des minutes CI ou bloque un déploiement pendant des heures.`,
+            en: `A cache can be evicted at any time (quota, infra change): if the build only succeeds WITH the cache, an eviction silently breaks things. A per-job timeout stops a stuck test from burning CI minutes or blocking a deploy for hours.`,
           },
         },
       ],

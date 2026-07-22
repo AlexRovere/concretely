@@ -584,5 +584,66 @@ const vrai = Number("42");                // number, pour de vrai`,
         },
       ],
     },
+    {
+      id: 'ts-bp',
+      title: { fr: 'Bonnes pratiques', en: 'Best practices' },
+      items: [
+        {
+          id: 'ts-bp-no-i-prefix',
+          title: { fr: 'Pas de préfixe I pour les interfaces', en: 'No I prefix for interfaces' },
+          code: `interface User { id: string; name: string }   // ✓
+interface IUser { id: string; name: string }  // ✗ convention C#/Java`,
+          note: {
+            fr: `Le préfixe I vient de C#/Java ; en TS l'outillage (hover, autocomplete) distingue déjà types et valeurs, le préfixe n'ajoute que du bruit visuel.`,
+            en: `The I prefix comes from C#/Java; TS tooling (hover, autocomplete) already distinguishes types from values, so the prefix only adds visual noise.`,
+          },
+        },
+        {
+          id: 'ts-bp-assert-never-helper',
+          title: { fr: "Centraliser les vérifications d'exhaustivité", en: 'Centralize exhaustiveness checks' },
+          code: `function assertNever(x: never): never {
+  throw new Error(\`Cas non géré: \${JSON.stringify(x)}\`);
+}
+// switch (f.type) { ... default: return assertNever(f) }`,
+          note: {
+            fr: `Une fonction assertNever réutilisable évite de retaper le piège 'never' dans chaque switch et donne un message d'erreur utile si un cas est oublié à l'exécution.`,
+            en: `A reusable assertNever function avoids retyping the never trick in every switch and gives a useful runtime error message when a case is missed.`,
+          },
+        },
+        {
+          id: 'ts-bp-readonly-by-default',
+          title: { fr: 'readonly par défaut sur les structures de données', en: 'readonly by default on data structures' },
+          code: `interface Config {
+  readonly apiUrl: string;
+  readonly retries: readonly number[];
+}`,
+          note: {
+            fr: `readonly documente l'intention et bloque les réassignations accidentelles à la compilation ; le retirer explicitement signale clairement qu'une mutation est voulue.`,
+            en: `readonly documents intent and blocks accidental reassignment at compile time; explicitly removing it clearly signals that mutation is intended.`,
+          },
+        },
+        {
+          id: 'ts-bp-derive-dont-duplicate',
+          title: { fr: 'Dériver les types plutôt que les dupliquer', en: 'Derive types instead of duplicating them' },
+          code: `type UserPatch = Partial<Pick<User, "name" | "email">>;
+// jamais : interface UserPatch { name?: string; email?: string }`,
+          note: {
+            fr: `Dupliquer manuellement une interface partielle se désynchronise silencieusement du type source au premier renommage ; dériver via Pick/Partial garde un lien vivant.`,
+            en: `Manually duplicating a partial interface silently drifts from the source type on the first rename; deriving via Pick/Partial keeps a live link.`,
+          },
+        },
+        {
+          id: 'ts-bp-validate-external-data',
+          title: { fr: 'Valider les données aux frontières', en: 'Validate data at runtime boundaries' },
+          code: `import { z } from "zod";
+const UserSchema = z.object({ id: z.string(), age: z.number() });
+const user = UserSchema.parse(await res.json()); // valide vraiment`,
+          note: {
+            fr: `Un type TS décrit une intention de compilation, pas une garantie d'exécution : sans validation réelle (zod, valibot), une API qui change de forme corrompt silencieusement l'app.`,
+            en: `A TS type expresses a compile-time intent, not a runtime guarantee: without real validation (zod, valibot), an API that changes shape silently corrupts the app.`,
+          },
+        },
+      ],
+    },
   ],
 };

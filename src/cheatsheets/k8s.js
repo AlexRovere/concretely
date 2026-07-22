@@ -283,7 +283,7 @@ kubectl get hpa                               # cible vs actuel`,
 # NodePort     : ouvre un port (30000-32767) sur CHAQUE nœud
 # LoadBalancer : demande un LB au cloud (IP publique)
 # ExternalName : simple alias DNS vers un nom externe
-kubectl expose deploy/mon-app --port=80 --target-port=8080
+kubectl expose deploy/mon-app --port=80 --target-port=8080 --type=ClusterIP   # type déjà par défaut si omis
 kubectl get svc -o wide   # type, cluster-ip, external-ip, ports`,
           note: {
             fr: `ClusterIP suffit pour parler entre services. NodePort dépanne en local, LoadBalancer expose au monde via le cloud. Le port est celui du Service, targetPort celui du conteneur.`,
@@ -547,6 +547,79 @@ kubectl run test --rm -it --image=busybox -- wget -qO- http://mon-svc`,
           note: {
             fr: `Checklist dans l'ordre : endpoints vides → selector qui ne matche pas les labels, ou readiness probe en échec (READY 0/1). Le pod jetable confirme ensuite la joignabilité réelle.`,
             en: `Checklist in order: empty endpoints → selector not matching the labels, or failing readiness probe (READY 0/1). The throwaway pod then confirms actual reachability.`,
+          },
+        },
+      ],
+    },
+    {
+      id: 'k8s-bp',
+      title: { fr: 'Bonnes pratiques', en: 'Best practices' },
+      items: [
+        {
+          id: 'k8s-bp-security-context-hardening',
+          title: { fr: 'securityContext : non-root, capacités réduites, rootfs figé', en: 'securityContext: non-root, dropped caps, immutable rootfs' },
+          code: `securityContext:
+  runAsNonRoot: true
+  readOnlyRootFilesystem: true
+  allowPrivilegeEscalation: false
+  capabilities: { drop: [ALL] }`,
+          note: {
+            fr: `Ces quatre lignes ferment la majorité des scénarios d'évasion de conteneur : pas de root, pas d'écriture hors volumes déclarés, pas d'escalade de privilège, pas de capacités Linux superflues. Sans elles, une faille applicative se transforme facilement en compromission du nœud.`,
+            en: `These four lines close most container-escape scenarios: no root, no writes outside declared volumes, no privilege escalation, no leftover Linux capabilities. Without them, an app vulnerability easily turns into node compromise.`,
+          },
+        },
+        {
+          id: 'k8s-bp-poddisruptionbudget',
+          title: { fr: 'PodDisruptionBudget sur les workloads critiques', en: 'PodDisruptionBudget on critical workloads' },
+          code: `apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata: { name: mon-app-pdb }
+spec:
+  minAvailable: 2
+  selector: { matchLabels: { app: mon-app } }`,
+          note: {
+            fr: `Sans PDB, un drain de nœud (upgrade cluster, scale-down) peut évincer TOUS les pods d'un Deployment en même temps s'ils sont sur le même nœud. minAvailable force Kubernetes à respecter un plancher de disponibilité pendant toute opération volontaire.`,
+            en: `Without a PDB, a node drain (cluster upgrade, scale-down) can evict ALL of a Deployment's pods at once if they land on the same node. minAvailable forces Kubernetes to respect an availability floor during any voluntary disruption.`,
+          },
+        },
+        {
+          id: 'k8s-bp-mandatory-probes',
+          title: { fr: 'Readiness probe sans dépendance externe, jamais optionnelle', en: 'Readiness probe with no external dependency, never optional' },
+          code: `readinessProbe:
+  httpGet: { path: /ready, port: 8080 }
+  periodSeconds: 5
+  failureThreshold: 3`,
+          note: {
+            fr: `Un pod sans readinessProbe est considéré prêt dès son démarrage, avant même d'avoir chargé sa config : il reçoit du trafic et répond en erreur. Faites répondre /ready seulement quand l'app peut réellement servir, sans sonder une dépendance externe (sinon une panne de BDD tue tout le service).`,
+            en: `A pod with no readinessProbe is considered ready the moment it starts, before it even loaded config: it receives traffic and errors out. Make /ready answer only once the app can truly serve, without probing an external dependency (otherwise a DB outage takes down the whole service).`,
+          },
+        },
+        {
+          id: 'k8s-bp-resourcequota-limitrange',
+          title: { fr: 'LimitRange + ResourceQuota par namespace, pas seulement par pod', en: 'LimitRange + ResourceQuota per namespace, not just per pod' },
+          code: `apiVersion: v1
+kind: LimitRange
+metadata: { name: defaults }
+spec:
+  limits:
+    - default: { cpu: 500m, memory: 256Mi }
+      defaultRequest: { cpu: 100m, memory: 128Mi }
+      type: Container`,
+          note: {
+            fr: `Compter sur chaque équipe pour toujours déclarer requests/limits est fragile ; un LimitRange applique des valeurs par défaut à tout conteneur qui les omet, et un ResourceQuota plafonne la consommation totale du namespace.`,
+            en: `Relying on every team to always declare requests/limits is fragile; a LimitRange applies defaults to any container that omits them, and a ResourceQuota caps the namespace's total consumption.`,
+          },
+        },
+        {
+          id: 'k8s-bp-immutable-image-tags',
+          title: { fr: 'Tags d\'image immuables (SHA ou version figée), jamais latest en prod', en: 'Immutable image tags (SHA or pinned version), never latest in prod' },
+          code: `containers:
+  - name: web
+    image: registry.exemple.fr/mon-app@sha256:5f2c9e8a1b3d7c6e4f0a9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0c9d8e
+    imagePullPolicy: IfNotPresent`,
+          note: {
+            fr: `Avec :latest, un rollout ou un redémarrage de pod peut tirer une image différente de celle testée, sans trace dans l'historique du Deployment — un rollback devient impossible à garantir. Un digest fige exactement ce qui tourne.`,
+            en: `With :latest, a rollout or pod restart can pull a different image than the one tested, with no trace in the Deployment history — a rollback becomes impossible to guarantee. A digest pins exactly what runs.`,
           },
         },
       ],

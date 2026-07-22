@@ -180,8 +180,8 @@ export default {
           title: { fr: 'Reflog : le filet de sécurité', en: 'Reflog: the safety net' },
           code: `git reflog                # journal de TOUS les déplacements de HEAD\n# retrouver un commit "perdu" après un reset --hard ou un rebase raté :\ngit reset --hard HEAD@{2}   # revenir où on était il y a 2 mouvements`,
           note: {
-            fr: `Presque rien n'est vraiment perdu : tout commit référencé reste ~90 jours dans le reflog. Premier réflexe après une commande destructrice.`,
-            en: `Almost nothing is truly lost: any referenced commit stays ~90 days in the reflog. First reflex after a destructive command.`,
+            fr: `Presque rien n'est vraiment perdu : un commit encore atteignable reste ~90 jours dans le reflog, mais un commit devenu orphelin (après un reset --hard par exemple) n'a plus que ~30 jours (gc.reflogExpireUnreachable). Premier réflexe après une commande destructrice.`,
+            en: `Almost nothing is truly lost: a still-reachable commit stays ~90 days in the reflog, but a commit that became orphaned (e.g. after a reset --hard) only has ~30 days left (gc.reflogExpireUnreachable). First reflex after a destructive command.`,
           },
         },
         {
@@ -504,17 +504,17 @@ export default {
           title: { fr: 'Le detached HEAD démystifié', en: 'Detached HEAD demystified' },
           code: `git checkout abc1234          # HEAD pointe un commit, plus une branche → "detached"\n# explorer, compiler, tester : aucun risque tant qu'on ne commite pas\ngit switch -c fix/depuis-ici  # garder d'éventuels commits : créer une branche ICI\ngit switch -                  # ou repartir simplement sur la branche précédente`,
           note: {
-            fr: `Ce n'est pas une erreur : HEAD pointe directement un commit au lieu d'une branche, parfait pour inspecter le passé. Seul danger : commiter puis partir — ces commits sans branche finiront ramassés (le reflog les garde ~90 jours).`,
-            en: `It's not an error: HEAD points directly at a commit instead of a branch, perfect for inspecting the past. Only danger: committing then leaving — those branchless commits will get collected (the reflog keeps them ~90 days).`,
+            fr: `Ce n'est pas une erreur : HEAD pointe directement un commit au lieu d'une branche, parfait pour inspecter le passé. Seul danger : commiter puis partir — ces commits sans branche sont orphelins et finiront ramassés après ~30 jours (le reflog les garde ce temps-là, pas 90 jours comme les commits encore atteignables).`,
+            en: `It's not an error: HEAD points directly at a commit instead of a branch, perfect for inspecting the past. Only danger: committing then leaving — those branchless commits are orphaned and will get collected after ~30 days (the reflog keeps them that long, not 90 days like still-reachable commits).`,
           },
         },
         {
           id: 'git-gc-prune',
           title: { fr: 'Ce que ramasse le garbage collector', en: 'What the garbage collector reaps' },
-          code: `git gc                # compacte les objets en packfiles, nettoie le superflu\ngit count-objects -vH # combien d'objets, quelle taille\n# un objet n'est supprimé que s'il est ORPHELIN (aucune ref, aucun reflog)\n# ET expiré du reflog (~90 jours) — gc --aggressive : rarement utile, très lent`,
+          code: `git gc                # compacte les objets en packfiles, nettoie le superflu\ngit count-objects -vH # combien d'objets, quelle taille\n# un objet n'est supprimé que s'il est ORPHELIN (aucune ref, aucun reflog)\n# ET expiré du reflog (~30 jours pour un objet inatteignable, ~90 s'il l'est encore)`,
           note: {
-            fr: `gc tourne déjà tout seul lors des commandes courantes : le lancer à la main est rarement nécessaire. Tant qu'un commit est dans le reflog, il est protégé — c'est pour ça que reflog sauve des reset --hard.`,
-            en: `gc already runs by itself during common commands: running it manually is rarely needed. As long as a commit is in the reflog it's protected — that's why reflog rescues you from reset --hard.`,
+            fr: `gc tourne déjà tout seul lors des commandes courantes : le lancer à la main est rarement nécessaire. Tant qu'un commit est dans le reflog, il est protégé — c'est pour ça que reflog sauve des reset --hard, mais la fenêtre n'est que de ~30 jours (gc.reflogExpireUnreachable) une fois le commit orphelin.`,
+            en: `gc already runs by itself during common commands: running it manually is rarely needed. As long as a commit is in the reflog it's protected — that's why reflog rescues you from reset --hard, but the window is only ~30 days (gc.reflogExpireUnreachable) once the commit is orphaned.`,
           },
         },
         {
@@ -524,6 +524,72 @@ export default {
           note: {
             fr: `Sur les gros dépôts, log --graph et fetch deviennent lents. maintenance start (Git 2.31+) délègue l'optimisation au système : le prefetch horaire rend aussi les git fetch quasi instantanés.`,
             en: `On large repos, log --graph and fetch get slow. maintenance start (Git 2.31+) delegates optimization to the system: the hourly prefetch also makes git fetch nearly instant.`,
+          },
+        },
+      ],
+    },
+    {
+      id: 'git-bp',
+      title: { fr: 'Bonnes pratiques', en: 'Best practices' },
+      items: [
+        {
+          id: 'git-bp-atomic-commits',
+          title: { fr: 'Un commit = un changement logique', en: 'One commit = one logical change' },
+          code: `git add -p                     # stage seulement le changement A
+git commit -m "fix: corrige le calcul de TVA"
+git add -p                     # puis le changement B, séparément
+git commit -m "refactor: extrait calculTVA()"`,
+          note: {
+            fr: `Un commit qui mélange un fix et un refactor est impossible à reverter proprement et illisible en review. Des commits atomiques rendent bisect, revert et cherry-pick fiables.`,
+            en: `A commit mixing a fix and a refactor is impossible to revert cleanly and unreadable in review. Atomic commits make bisect, revert and cherry-pick reliable.`,
+          },
+        },
+        {
+          id: 'git-bp-no-secrets',
+          title: { fr: 'Jamais de secret commité (et rotation si ça arrive)', en: 'Never commit a secret (and rotate if it happens)' },
+          code: `echo ".env" >> .gitignore
+git rm --cached .env                     # si déjà suivi par erreur
+# secret déjà commité par le passé : le rotater IMMÉDIATEMENT
+# (retirer du dernier commit ne suffit pas : il reste dans l'historique)`,
+          note: {
+            fr: `Un secret dans l'historique Git reste récupérable même après suppression du fichier, tant que l'historique n'est pas réécrit (BFG, filter-repo) — et tout clone existant garde sa propre copie. La rotation immédiate est la seule protection fiable.`,
+            en: `A secret in Git history stays recoverable even after the file is removed, unless history itself is rewritten (BFG, filter-repo) — and any existing clone keeps its own copy. Immediate rotation is the only reliable protection.`,
+          },
+        },
+        {
+          id: 'git-bp-branch-protection',
+          title: { fr: 'Protéger main : review obligatoire, jamais de push direct', en: 'Protect main: required review, never push directly' },
+          code: `# GitHub/GitLab : règle de protection sur main
+# - require pull request before merging
+# - require 1+ approving review
+# - require status checks (CI) to pass`,
+          note: {
+            fr: `Un push direct sur main court-circuite la review et la CI : c'est le chemin le plus court vers une régression en production. La protection de branche force le passage par une PR.`,
+            en: `A direct push to main bypasses review and CI: it's the shortest path to a production regression. Branch protection forces every change through a PR.`,
+          },
+        },
+        {
+          id: 'git-bp-descriptive-messages',
+          title: { fr: 'Message de commit qui explique le pourquoi', en: 'Commit message that explains the why' },
+          code: `git commit -m "fix(cache): invalide le cache après un update
+
+Le cache gardait l'ancienne valeur car l'invalidation
+n'était déclenchée que sur delete, pas sur update."`,
+          note: {
+            fr: `Le diff dit déjà CE QUI a changé ; le message doit dire POURQUOI. Six mois plus tard, c'est ce message qui explique une décision qui semble bizarre a posteriori.`,
+            en: `The diff already shows WHAT changed; the message must say WHY. Six months later, that message is what explains a decision that otherwise looks strange in hindsight.`,
+          },
+        },
+        {
+          id: 'git-bp-small-prs',
+          title: { fr: 'PR petites et focalisées, pas un mega-diff', en: 'Small, focused PRs, not a mega-diff' },
+          code: `# ❌ une PR de 2000 lignes qui mélange refactor + feature + fix
+# ✅ 3 PR distinctes, chacune reviewable en < 15 minutes
+git switch -c refactor/extract-service
+git switch -c feat/add-endpoint`,
+          note: {
+            fr: `Une PR de 2000 lignes ne se review pas vraiment : le relecteur approuve par fatigue, pas par conviction. Des PR petites se relisent en profondeur et isolent les régressions.`,
+            en: `A 2000-line PR doesn't really get reviewed: the reviewer approves out of fatigue, not conviction. Small PRs get read in depth and isolate regressions.`,
           },
         },
       ],

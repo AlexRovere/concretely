@@ -592,5 +592,63 @@ let user = try result.get()        // pont vers le monde throws`,
     },
     compareSection('types', 'swift-types-compare', 'Types : struct / class / actor', 'Types: struct / class / actor'),
     compareSection('bindings', 'swift-bindings-compare', 'Bindings SwiftUI', 'SwiftUI bindings'),
+    {
+      id: 'swift-bp',
+      title: { fr: 'Bonnes pratiques', en: 'Best practices' },
+      items: [
+        {
+          id: 'swift-bp-access-control',
+          title: { fr: "Contrôle d'accès par défaut", en: 'Default access control' },
+          code: `private var cache: [String: User] = [:]
+private(set) var isLoading = false`,
+          note: {
+            fr: `Restreignez la visibilité au minimum nécessaire (private/fileprivate) : cela réduit la surface d'API, évite les dépendances cachées et facilite le refactoring.`,
+            en: `Restrict visibility to the minimum needed (private/fileprivate): it shrinks the API surface, avoids hidden coupling and eases refactoring.`,
+          },
+        },
+        {
+          id: 'swift-bp-composition',
+          title: { fr: "Composition & protocoles plutôt qu'héritage", en: 'Composition & protocols over inheritance' },
+          code: `protocol ImageLoading { func load(_ url: URL) async throws -> Data }
+struct RemoteLoader: ImageLoading { /* … */ }`,
+          note: {
+            fr: `Swift favorise le protocol-oriented programming : composer via protocoles évite les hiérarchies de classes rigides et facilite les mocks en test.`,
+            en: `Swift favors protocol-oriented programming: composing via protocols avoids rigid class hierarchies and makes mocking in tests easy.`,
+          },
+        },
+        {
+          id: 'swift-bp-dependency-injection',
+          title: { fr: 'Injection de dépendances via protocoles', en: 'Dependency injection via protocols' },
+          code: `final class ViewModel {
+  private let service: NetworkService
+  init(service: NetworkService = LiveService()) { self.service = service }
+}`,
+          note: {
+            fr: `Injecter les dépendances (au lieu de créer des singletons partout) rend le code testable : on substitue un mock en test sans toucher au code de prod.`,
+            en: `Injecting dependencies (instead of scattering singletons) makes code testable: swap in a mock for tests without touching production code.`,
+          },
+        },
+        {
+          id: 'swift-bp-tests',
+          title: { fr: 'Tester avec Swift Testing (@Test)', en: 'Test with Swift Testing (@Test)' },
+          code: `@Test func loginSucceeds() async throws {
+  #expect(try await auth.login(user) == .success)
+}`,
+          note: {
+            fr: `Le framework Swift Testing (@Test, #expect) remplace XCTest : syntaxe plus claire, tests paramétrés natifs, meilleure intégration Swift Concurrency.`,
+            en: `The Swift Testing framework (@Test, #expect) replaces XCTest: clearer syntax, native parameterized tests, better Swift Concurrency integration.`,
+          },
+        },
+        {
+          id: 'swift-bp-avoid-force-try',
+          title: { fr: 'Éviter try! et as! en production', en: 'Avoid try! and as! in production' },
+          code: `guard let url = URL(string: raw) else { throw AppError.invalidURL }`,
+          note: {
+            fr: `try!/as!/! crashent immédiatement sur une hypothèse fausse ; en production, préférez guard/if let et des erreurs explicites pour dégrader proprement.`,
+            en: `try!/as!/! crash instantly when an assumption is wrong; in production, prefer guard/if let and explicit errors to degrade gracefully.`,
+          },
+        },
+      ],
+    },
   ],
 };

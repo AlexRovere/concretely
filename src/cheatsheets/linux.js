@@ -582,5 +582,66 @@ sudo umount /mnt/usb           # démonter AVANT de débrancher
         },
       ],
     },
+    {
+      id: 'lx-bp',
+      title: { fr: 'Bonnes pratiques', en: 'Best practices' },
+      items: [
+        {
+          id: 'lx-bp-quote-variables',
+          title: { fr: 'Toujours guillemeter les variables', en: 'Always quote your variables' },
+          code: `rm -rf "$DIR/"          # ✅ sûr même si $DIR est vide ou contient des espaces
+rm -rf $DIR/            # ❌ si $DIR est vide : rm -rf /  (catastrophe)
+for f in "$@"; do echo "$f"; done   # idem pour les arguments de script`,
+          note: {
+            fr: `Une variable non guillemetée subit le word-splitting et le globbing du shell : un $DIR vide ou contenant un espace transforme une commande anodine en désastre. Guillemeter systématiquement élimine toute une classe de bugs shell.`,
+            en: `An unquoted variable is subject to word-splitting and globbing: an empty or space-containing $DIR turns a harmless command into a disaster. Quoting consistently eliminates an entire class of shell bugs.`,
+          },
+        },
+        {
+          id: 'lx-bp-set-euo-pipefail',
+          title: { fr: 'set -euo pipefail dans tout script', en: 'set -euo pipefail in every script' },
+          code: `#!/bin/bash
+set -euo pipefail
+# -e : arrête au 1er échec  -u : erreur si variable non définie
+# -o pipefail : un pipe échoue si UN SEUL maillon échoue`,
+          note: {
+            fr: `Sans ces options, un script bash continue après une erreur silencieuse et un pipe réussit même si la première commande a planté. C'est la ligne la plus rentable d'un script shell.`,
+            en: `Without these options, a bash script keeps going after a silent failure, and a pipe succeeds even if the first command crashed. It's the highest-ROI line in any shell script.`,
+          },
+        },
+        {
+          id: 'lx-bp-least-privilege',
+          title: { fr: 'sudo ciblé, jamais un shell root permanent', en: 'Targeted sudo, never a permanent root shell' },
+          code: `sudo systemctl restart nginx     # ✅ une commande précise, le temps qu'il faut
+sudo -i                          # ⚠️ shell root ouvert : à éviter en usage courant`,
+          note: {
+            fr: `Rester en root en permanence supprime le garde-fou qui empêche une faute de frappe (rm, mv) de toucher tout le système. Préférer sudo commande par commande.`,
+            en: `Staying root permanently removes the safety net that stops a typo (rm, mv) from touching the whole system. Prefer sudo per command.`,
+          },
+        },
+        {
+          id: 'lx-bp-dry-run-destructive',
+          title: { fr: 'Simuler avant toute commande destructive', en: 'Dry-run before any destructive command' },
+          code: `rsync -avzn src/ dest/     # -n : simulation, aucune écriture réelle
+git clean -nd               # -n : montre ce qui serait supprimé
+find . -name "*.bak" -print    # vérifier AVANT d'ajouter -delete`,
+          note: {
+            fr: `rm, rsync --delete, git clean, dd n'ont ni corbeille ni confirmation par défaut. Systématiser un passage en mode simulation avant la version destructive coûte 5 secondes et évite des heures de restauration.`,
+            en: `rm, rsync --delete, git clean, dd have no trash bin and no default confirmation. Making a dry-run pass a habit before the destructive version costs 5 seconds and saves hours of restoring backups.`,
+          },
+        },
+        {
+          id: 'lx-bp-modern-tools',
+          title: { fr: 'Préférer les outils modernes qui respectent .gitignore', en: 'Prefer modern tools that respect .gitignore' },
+          code: `rg "TODO" src/          # ripgrep : plus rapide que grep, ignore .gitignore
+fd "\\.log$"             # fd : plus rapide et lisible que find
+bat config.yml           # bat : cat avec coloration syntaxique`,
+          note: {
+            fr: `grep/find restent universels, mais rg et fd sont nettement plus rapides sur un gros repo et ignorent automatiquement node_modules/.git, évitant du bruit dans les résultats.`,
+            en: `grep/find remain universal, but rg and fd are noticeably faster on a large repo and automatically skip node_modules/.git, cutting noise out of results.`,
+          },
+        },
+      ],
+    },
   ],
 };
