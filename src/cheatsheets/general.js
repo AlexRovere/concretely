@@ -788,5 +788,178 @@ test.each([
         },
       ],
     },
+    {
+      id: 'security',
+      title: { fr: 'Sécurité', en: 'Security' },
+      items: [
+        {
+          id: 'gen-sec-injection',
+          title: { fr: 'Injection (SQL, commande)', en: 'Injection (SQL, command)' },
+          code: `// ✗ concaténer une entrée = injection SQL / commande
+db.query("SELECT * FROM users WHERE email = '" + input + "'")
+// ✓ requête paramétrée : la valeur ne devient jamais du code
+db.query('SELECT * FROM users WHERE email = ?', [input])`,
+          note: {
+            fr: `Toute donnée externe interpolée dans une requête SQL, une commande shell ou du HTML peut devenir du code exécutable. Les API paramétrées séparent le code des données.`,
+            en: `Any external data interpolated into a SQL query, a shell command or HTML can become executable code. Parameterized APIs keep code and data separate.`,
+          },
+        },
+        {
+          id: 'gen-sec-xss',
+          title: { fr: 'XSS : ne pas injecter de HTML brut', en: 'XSS: never inject raw HTML' },
+          code: `// ✗ HTML brut venant de l'utilisateur -> script exécuté
+el.innerHTML = commentaire
+// ✓ insérer comme texte (échappé par le navigateur)
+el.textContent = commentaire
+// ou un moteur de template qui échappe par défaut`,
+          note: {
+            fr: `Le XSS exécute du script fourni par un utilisateur dans le navigateur d'un autre. Insérez les données non fiables comme du texte, jamais comme du HTML, et laissez le templating échapper par défaut.`,
+            en: `XSS runs user-supplied script in another user's browser. Insert untrusted data as text, never as HTML, and let templating escape by default.`,
+          },
+        },
+        {
+          id: 'gen-sec-validation',
+          title: { fr: 'Valider au bord, en liste blanche', en: 'Validate at the boundary, allowlist' },
+          code: `function parseRole(v) {
+  const autorises = ['admin', 'user', 'guest']
+  if (!autorises.includes(v)) throw new Error('rôle invalide')
+  return v
+}
+// ne jamais faire confiance : body, query, headers, fichiers, réponses d'API`,
+          note: {
+            fr: `Validez toute entrée externe au plus tôt, par liste blanche (ce qui est autorisé) plutôt que liste noire (ce qui est interdit) : une liste noire oublie toujours un cas.`,
+            en: `Validate every external input as early as possible via an allowlist (what is permitted) rather than a denylist (what is forbidden): a denylist always misses a case.`,
+          },
+        },
+        {
+          id: 'gen-sec-secrets',
+          title: { fr: 'Ne jamais coder un secret en dur', en: 'Never hardcode a secret' },
+          code: `// ✗ secret en dur (fuite dans git, logs, bundle)
+const KEY = 'sk_live_abc123'
+// ✓ depuis l'environnement, présence validée au démarrage
+const KEY = process.env.STRIPE_KEY
+if (!KEY) throw new Error('STRIPE_KEY manquante')
+// secret exposé -> le RÉVOQUER, pas juste le retirer du code`,
+          note: {
+            fr: `Un secret commité reste dans l'historique git même après suppression. Chargez-le depuis l'environnement, validez sa présence au démarrage, et rotez immédiatement tout secret exposé.`,
+            en: `A committed secret stays in git history even after removal. Load it from the environment, verify its presence at startup, and immediately rotate any exposed secret.`,
+          },
+        },
+        {
+          id: 'gen-sec-passwords',
+          title: { fr: 'Hacher les mots de passe (lent + salé)', en: 'Hash passwords (slow + salted)' },
+          code: `// ✗ jamais en clair, jamais MD5/SHA (trop rapides à bruteforcer)
+// ✓ hachage lent et salé, conçu pour les mots de passe
+const hash = await bcrypt.hash(motDePasse, 12)   // ou argon2
+const ok = await bcrypt.compare(saisie, hash)`,
+          note: {
+            fr: `Stockez un hachage lent et salé (bcrypt, argon2, scrypt), jamais le mot de passe ni un hash rapide (MD5/SHA). Le sel casse les rainbow tables, la lenteur ralentit le bruteforce.`,
+            en: `Store a slow, salted hash (bcrypt, argon2, scrypt), never the password nor a fast hash (MD5/SHA). The salt defeats rainbow tables, the slowness throttles brute force.`,
+          },
+        },
+        {
+          id: 'gen-sec-least-privilege',
+          title: { fr: 'Moindre privilège, refuser par défaut', en: 'Least privilege, deny by default' },
+          code: `// accorder le strict nécessaire, refuser par défaut :
+// - token API en lecture seule si le job ne fait que lire
+// - compte DB sans DROP/ALTER pour l'app web
+// - conteneur non-root, système de fichiers en lecture seule`,
+          note: {
+            fr: `Si un composant est compromis, l'attaquant n'hérite que de ses droits. Accorder le minimum et refuser par défaut contient les dégâts au lieu de les propager à tout le système.`,
+            en: `If a component is compromised, the attacker only inherits its rights. Granting the minimum and denying by default contains the damage instead of spreading it system-wide.`,
+          },
+        },
+        {
+          id: 'gen-sec-crypto',
+          title: { fr: 'Ne pas réinventer la cryptographie', en: "Don't roll your own crypto" },
+          code: `// ✗ inventer son chiffrement ou son aléa
+const token = Math.random().toString(36)   // prévisible !
+// ✓ primitives éprouvées, générateur cryptographique
+const token = crypto.randomBytes(32).toString('hex')`,
+          note: {
+            fr: `Utilisez des primitives standard, auditées et à jour, jamais les vôtres. Pour tout aléa sensible (tokens, sels), un générateur cryptographique — jamais Math.random(), prévisible.`,
+            en: `Use standard, audited, up-to-date primitives, never your own. For any sensitive randomness (tokens, salts) use a cryptographic generator — never Math.random(), which is predictable.`,
+          },
+        },
+      ],
+    },
+    {
+      id: 'debugging',
+      title: { fr: 'Débogage', en: 'Debugging' },
+      items: [
+        {
+          id: 'gen-debug-reproduce',
+          title: { fr: "Reproduire d'abord", en: 'Reproduce first' },
+          code: `// un cas de repro FIABLE et minimal avant toute correction :
+// mêmes entrées, même environnement, même version
+// puis réduire au plus petit cas qui échoue encore
+test('repro bug #482', () => expect(() => parse('2024-13-01')).toThrow())`,
+          note: {
+            fr: `Un bug qu'on ne reproduit pas ne se corrige pas. Un repro fiable et minimal isole la cause et devient le test de non-régression une fois le bug corrigé.`,
+            en: `A bug you can't reproduce, you can't fix. A reliable, minimal repro isolates the cause and becomes the regression test once fixed.`,
+          },
+        },
+        {
+          id: 'gen-debug-bisect',
+          title: { fr: "Diviser l'espace de recherche (bisect)", en: 'Halve the search space (bisect)' },
+          code: `git bisect start
+git bisect bad             // version actuelle cassée
+git bisect good v1.2.0     // version connue OK
+// git teste le milieu ; répéter -> commit fautif en log2(n) étapes`,
+          note: {
+            fr: `Face à un grand espace (commits, lignes, données), coupez-le en deux à chaque étape au lieu de chercher linéairement. git bisect trouve le commit fautif en O(log n).`,
+            en: `Facing a large space (commits, lines, data), halve it at each step instead of searching linearly. git bisect finds the offending commit in O(log n).`,
+          },
+        },
+        {
+          id: 'gen-debug-stacktrace',
+          title: { fr: "Lire la trace d'appel", en: 'Read the stack trace' },
+          code: `// TypeError: Cannot read properties of undefined (reading 'nom')
+//     at formatUser (user.js:12)   <- 1re ligne de TON code : ici
+//     at render (app.js:44)
+// lire le message d'abord, puis la 1re ligne qui pointe vers ton code`,
+          note: {
+            fr: `La trace raconte le chemin jusqu'au crash : lisez le message d'erreur, puis la première ligne qui pointe vers votre code. Le type d'erreur (TypeError, undefined) dit déjà beaucoup.`,
+            en: `The trace tells the path to the crash: read the error message, then the first line pointing at your code. The error type (TypeError, undefined) already says a lot.`,
+          },
+        },
+        {
+          id: 'gen-debug-hypothesis',
+          title: { fr: 'Une hypothèse, un changement à la fois', en: 'One hypothesis, one change at a time' },
+          code: `// méthode scientifique :
+// 1. observer  : "le total est faux quand le panier est vide"
+// 2. hypothèse : "reduce sans valeur initiale sur []"
+// 3. tester    : total([]) -> TypeError -> confirmé
+// ✗ ne changez pas 5 choses au hasard : vous ne saurez pas ce qui a corrigé`,
+          note: {
+            fr: `Formulez une hypothèse précise et testez-la en changeant une seule variable à la fois. Modifier plusieurs choses ensemble masque quelle correction a réellement agi.`,
+            en: `Form a precise hypothesis and test it by changing one variable at a time. Changing several things at once hides which fix actually worked.`,
+          },
+        },
+        {
+          id: 'gen-debug-tools',
+          title: { fr: 'print vs debugger', en: 'print vs debugger' },
+          code: `console.log('avant', { user, total })   // rapide, mais devient du bruit
+debugger                                 // point d'arrêt : état complet, pas à pas
+// en prod : logs structurés (niveau, contexte), pas des console.log épars`,
+          note: {
+            fr: `console.log dépanne vite mais pollue ; un debugger inspecte tout l'état sans modifier le code. En production, préférez des logs structurés et nettoyez les traces temporaires.`,
+            en: `console.log is quick but clutters; a debugger inspects full state without editing code. In production prefer structured logs and clean up temporary traces.`,
+          },
+        },
+        {
+          id: 'gen-debug-assumptions',
+          title: { fr: 'Vérifier ses certitudes', en: 'Question your assumptions' },
+          code: `// le bug est souvent là où vous êtes SÛR qu'il n'est pas :
+// le bon code s'exécute-t-il ? avec les bonnes valeurs ?
+console.assert(user.id !== undefined, 'id manquant en amont')
+// classiques : off-by-one, null/undefined, fuseau horaire, race async, cache périmé`,
+          note: {
+            fr: `Remettez en cause vos évidences : vérifiez que le bon code tourne avec les bonnes valeurs avant de plonger dans la logique. Les bugs classiques se cachent dans ce qu'on croit acquis.`,
+            en: `Question the obvious: check the right code runs with the right values before diving into the logic. Classic bugs hide in what you take for granted.`,
+          },
+        },
+      ],
+    },
   ],
 };
