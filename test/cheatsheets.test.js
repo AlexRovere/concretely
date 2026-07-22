@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { CHEATSHEETS, cheatsheetFor, allCheatItems } from '../src/cheatsheets/index.js';
 import { buildSearchEntries, buildSearchIndex } from '../src/search.js';
 
-const CATS = ['general', 'js', 'ts', 'vue', 'swift', 'ruby', 'kotlin', 'go', 'rust', 'git', 'linux', 'sql', 'web', 'docker', 'python', 'c', 'os', 'k8s', 'java', 'patterns', 'ml', 'cicd'];
+const CATS = ['general', 'js', 'ts', 'vue', 'react', 'swift', 'ruby', 'kotlin', 'go', 'rust', 'git', 'linux', 'sql', 'web', 'docker', 'python', 'c', 'os', 'k8s', 'java', 'patterns', 'ml', 'cicd'];
 const LANGS = new Set(['js', 'ts', 'swift', 'ruby', 'kotlin', 'go', 'rust', 'git', 'bash', 'sql', 'python', 'yaml']);
 
 test('every filter category has its cheatsheet', () => {

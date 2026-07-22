@@ -18,6 +18,7 @@ export const CATEGORY_META = {
   ts: { icon: '🔷', group: 'languages', tagline: { fr: 'TypeScript & typage', en: 'TypeScript & typing' } },
   python: { icon: '🐍', group: 'languages', tagline: { fr: 'Python, du langage au ML', en: 'Python, language to ML' } },
   vue: { icon: '💚', group: 'languages', tagline: { fr: 'Réactivité & virtual DOM', en: 'Reactivity & virtual DOM' } },
+  react: { icon: '⚛️', group: 'languages', tagline: { fr: 'Hooks, rendu & réconciliation', en: 'Hooks, rendering & reconciliation' } },
   swift: { icon: '🦅', group: 'languages', tagline: { fr: 'Swift, ARC & concurrence', en: 'Swift, ARC & concurrency' } },
   ruby: { icon: '💎', group: 'languages', tagline: { fr: 'Ruby, blocks & GVL', en: 'Ruby, blocks & the GVL' } },
   kotlin: { icon: '🟪', group: 'languages', tagline: { fr: 'Kotlin, coroutines & Flow', en: 'Kotlin, coroutines & Flow' } },

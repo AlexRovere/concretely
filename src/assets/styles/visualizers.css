@@ -711,6 +711,32 @@ canvas {
 .vd-cell.insert { border-color: var(--info); color: var(--info); }
 .vd-label { font-size: 0.75rem; color: var(--muted); width: 4rem; }
 
+/* React — re-render tree (React.memo propagation) */
+.rrn-tree { display: flex; justify-content: center; overflow-x: auto; padding: 0.5rem 0; }
+.rrn-node { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
+.rrn-kids { display: flex; gap: 0.8rem; align-items: flex-start; }
+.rrn-box {
+  font-family: var(--mono); font-size: 0.85rem;
+  background: var(--chip); color: var(--ink-2); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 0.35rem 0.7rem; white-space: nowrap;
+  transition: color 0.15s, border-color 0.15s, background 0.15s, opacity 0.15s;
+}
+.rrn-box.rendered { border-color: var(--info); color: var(--info); background: color-mix(in srgb, var(--info) 12%, transparent); }
+.rrn-box.skipped { border-color: var(--border); color: var(--muted); opacity: 0.55; }
+.rrn-box.update { border-color: var(--accent); color: var(--accent-ink); box-shadow: 0 0 0 2px var(--accent-soft); }
+.rrn-badge { font-size: 0.65rem; color: var(--muted); border: 1px solid var(--border); border-radius: var(--radius-xs); padding: 0 0.3rem; margin-left: 0.3rem; }
+.rrn-legend { display: flex; gap: 0.6rem; flex-wrap: wrap; margin: 0.5rem 0; }
+.rrn-chip { font-size: 0.72rem; padding: 0.15rem 0.5rem; border-radius: var(--radius-pill); border: 1px solid var(--border); color: var(--muted); }
+.rrn-chip.rendered { border-color: var(--info); color: var(--info); }
+.rrn-chip.update { border-color: var(--accent); color: var(--accent-ink); }
+
+/* React — useEffect timeline */
+.rfx-timeline { display: flex; flex-direction: column; gap: 2px; font-family: var(--mono); font-size: 0.82rem; max-height: 16rem; overflow-y: auto; }
+.rfx-row { padding: 0.25rem 0.6rem; border-left: 3px solid var(--border); border-radius: var(--radius-xs); background: var(--inset); color: var(--ink-2); }
+.rfx-row.render { border-left-color: var(--muted); color: var(--muted); }
+.rfx-row.effect { border-left-color: var(--info); color: var(--info); }
+.rfx-row.cleanup { border-left-color: var(--warn); color: var(--warn); }
+
 /* Quiz */
 .qz-prompt { font-size: 0.95rem; color: var(--ink); margin: var(--space-1) 0 var(--space-3); }
 .qz-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin-top: 0.9rem; }

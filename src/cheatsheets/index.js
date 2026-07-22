@@ -20,12 +20,13 @@ import java from './java.js';
 import patterns from './patterns.js';
 import ml from './ml.js';
 import cicd from './cicd.js';
+import react from './react.js';
 
 /**
  * Cheatsheet registry — one sheet per filter category.
  * Sheet shape: { id, lang, sections: [{ id, title:{fr,en}, items:[{ id, title:{fr,en}, code, note:{fr,en} }] }] }
  */
-export const CHEATSHEETS = { general, js, ts, vue, swift, ruby, kotlin, go, rust, git, linux, sql, web, docker, python, c, os, k8s, java, patterns, ml, cicd };
+export const CHEATSHEETS = { general, js, ts, vue, react, swift, ruby, kotlin, go, rust, git, linux, sql, web, docker, python, c, os, k8s, java, patterns, ml, cicd };
 
 export function cheatsheetFor(cat) {
   return CHEATSHEETS[cat] ?? null;

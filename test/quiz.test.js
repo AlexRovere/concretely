@@ -40,6 +40,10 @@ import { summaryOf as k8Summary, k8sBasicsScenarioById } from '../src/k8sbasics.
 import { summaryOf as jvSummary, javaBasicsScenarioById } from '../src/javabasics.js';
 import { buildTree, traverse, BST_DEMO } from '../src/bst.js';
 import { SORTS } from '../src/sorting/algorithms.js';
+import { summaryOf as rcSummary, reactReconcileScenarioById } from '../src/react/reconcile.js';
+import { summaryOf as rhSummary, hooksScenarioById } from '../src/react/hooks.js';
+import { summaryOf as rrSummary, rerenderScenarioById } from '../src/react/rerender.js';
+import { summaryOf as rfSummary, effectsScenarioById } from '../src/react/effects.js';
 
 /* Every quiz answer is re-derived from the MODEL it quizzes about. */
 
@@ -378,6 +382,23 @@ test('gen-bogo: the registry confirms the factorial complexity', () => {
   assert.match(quizQuestionById('gen-bogo').choices[quizQuestionById('gen-bogo').answer], /!/);
 });
 
+test('rc-*: the React quiz answers match the react models', () => {
+  // rc-keys: index-key prepend = 2 rewrites + 1 insert, answer index 1
+  const { ops } = rcSummary(reactReconcileScenarioById('map-index-key'));
+  assert.equal(ops.patch, 2);
+  assert.equal(ops.insert, 1);
+  assert.equal(quizQuestionById('rc-keys').answer, 1);
+  // rc-batching: value-form setState nets to 1
+  assert.equal(rhSummary(hooksScenarioById('batching-value')).finalCount, 1);
+  assert.equal(quizQuestionById('rc-batching').choices[quizQuestionById('rc-batching').answer], '1');
+  // rc-memo: memo with unchanged props → exactly 3 re-render
+  assert.equal(rrSummary(rerenderScenarioById('memo-blocks')).rendered.length, 3);
+  assert.equal(quizQuestionById('rc-memo').answer, 0);
+  // rc-strict: StrictMode dev runs the setup twice on mount
+  assert.equal(rfSummary(effectsScenarioById('strict-mode')).runs, 2);
+  assert.equal(quizQuestionById('rc-strict').choices[quizQuestionById('rc-strict').answer], '2');
+});
+
 /* ------------------------------------------------------------- structure */
 
 test('every question is well-formed (choices, answer, code, goto)', () => {
@@ -396,7 +417,7 @@ test('every question is well-formed (choices, answer, code, goto)', () => {
 
 test('category filter returns the right subsets', () => {
   assert.equal(quizQuestions('all').length, QUIZ_QUESTIONS.length);
-  const cats = ['general', 'js', 'ts', 'vue', 'swift', 'ruby', 'kotlin', 'go', 'rust', 'git', 'linux', 'sql', 'web', 'docker', 'python', 'c', 'os', 'k8s', 'java'];
+  const cats = ['general', 'js', 'ts', 'vue', 'react', 'swift', 'ruby', 'kotlin', 'go', 'rust', 'git', 'linux', 'sql', 'web', 'docker', 'python', 'c', 'os', 'k8s', 'java'];
   let sum = 0;
   for (const c of cats) {
     const qs = quizQuestions(c);

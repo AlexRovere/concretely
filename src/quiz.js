@@ -33,6 +33,10 @@ import { rubyGvlScenarioById } from './rubygvl.js';
 import { vueReactivityScenarioById } from './vuereactivity.js';
 import { bubblingScenarioById } from './bubbling.js';
 import { swiftBasicsScenarioById } from './swiftbasics.js';
+import { reactReconcileScenarioById } from './react/reconcile.js';
+import { hooksScenarioById } from './react/hooks.js';
+import { rerenderScenarioById } from './react/rerender.js';
+import { effectsScenarioById } from './react/effects.js';
 
 export const localize = (v, locale) =>
   typeof v === 'object' && v !== null && ('fr' in v || 'en' in v) ? (v[locale] ?? v.fr ?? v.en) : v;
@@ -1218,6 +1222,66 @@ set.contains(p2)   // … ?`,
       en: 'n! possible permutations, ~one sorted: O(n × n!) on average — and the worst case never ends. Correct ≠ usable.',
     },
     goto: { mode: 'sorting', scenario: 'bogo' },
+  },
+
+  /* ------------------------------------------------------------- React */
+  {
+    id: 'rc-keys', cat: 'react', lang: 'js',
+    code: reactReconcileScenarioById('map-index-key').code,
+    question: { fr: 'Avec key={index}, quel travail DOM pour passer de [B, C] à [A, B, C] ?', en: 'With key={index}, what DOM work to go from [B, C] to [A, B, C]?' },
+    choices: [
+      { fr: '1 insertion seulement', en: '1 insert only' },
+      { fr: '2 nœuds réécrits + 1 insertion', en: '2 nodes rewritten + 1 insert' },
+      { fr: '3 nœuds conservés', en: '3 nodes kept' },
+      { fr: 'tout est détruit et recréé', en: 'everything destroyed and rebuilt' },
+    ],
+    answer: 1,
+    explain: {
+      fr: 'key=index équivaut à comparer PAR POSITION : Row0 B→A réécrit, Row1 C→B réécrit, Row2 inséré. Avec une key stable : 1 seule insertion.',
+      en: 'key=index means comparing BY POSITION: Row0 B→A rewritten, Row1 C→B rewritten, Row2 inserted. With a stable key: a single insert.',
+    },
+    goto: { mode: 'reactreconcile', scenario: 'map-index-key' },
+  },
+  {
+    id: 'rc-batching', cat: 'react', lang: 'js',
+    code: hooksScenarioById('batching-value').code,
+    question: { fr: 'count part de 0. Après les 3 setCount(count + 1), que vaut count ?', en: 'count starts at 0. After the three setCount(count + 1), what is count?' },
+    choices: ['1', '2', '3', '0'],
+    answer: 0,
+    explain: {
+      fr: 'count est figé à 0 pour tout le rendu : les 3 appels planifient tous « mettre à 1 ». Pour +3, il faut setCount(c => c + 1).',
+      en: 'count is frozen at 0 for the whole render: all three calls schedule "set to 1". For +3, use setCount(c => c + 1).',
+    },
+    goto: { mode: 'reacthooks', scenario: 'batching-value' },
+  },
+  {
+    id: 'rc-memo', cat: 'react', lang: 'js',
+    code: rerenderScenarioById('memo-blocks').code,
+    question: { fr: 'App re-render, Content est en React.memo (props inchangées). Combien de composants re-render ?', en: 'App re-renders, Content is React.memo (props unchanged). How many components re-render?' },
+    choices: [
+      { fr: '3 (App, Toolbar, StatusBar)', en: '3 (App, Toolbar, StatusBar)' },
+      { fr: '6 (tout l’arbre)', en: '6 (the whole tree)' },
+      { fr: '1 (App seul)', en: '1 (App only)' },
+      { fr: '4', en: '4' },
+    ],
+    answer: 0,
+    explain: {
+      fr: 'Content reçoit les mêmes props → lui et son sous-arbre (Sidebar, Article) sont sautés. Restent App, Toolbar, StatusBar.',
+      en: 'Content gets the same props → it and its subtree (Sidebar, Article) are skipped. App, Toolbar and StatusBar remain.',
+    },
+    goto: { mode: 'reactrerender', scenario: 'memo-blocks' },
+  },
+  {
+    id: 'rc-strict', cat: 'react', lang: 'js',
+    code: effectsScenarioById('strict-mode').code,
+    question: { fr: 'En StrictMode (dev), combien de fois le setup de useEffect([]) s’exécute-t-il au montage ?', en: 'In StrictMode (dev), how many times does the useEffect([]) setup run on mount?' },
+    choices: ['1', '2', '0', '3'],
+    answer: 1,
+    explain: {
+      fr: 'StrictMode monte deux fois en dev (setup → cleanup → setup) pour révéler les effets mal nettoyés. En prod : une seule fois.',
+      en: 'StrictMode mounts twice in dev (setup → cleanup → setup) to surface un-cleaned effects. In prod: once.',
+    },
+    goto: { mode: 'reacteffects', scenario: 'strict-mode' },
   },
 ];
 

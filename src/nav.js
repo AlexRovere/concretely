@@ -4,6 +4,6 @@
  * outils/infra.
  */
 export const CATEGORIES = [
-  'general', 'patterns', 'js', 'ts', 'python', 'vue', 'swift', 'ruby', 'kotlin', 'java', 'go', 'rust', 'c', 'ml',
+  'general', 'patterns', 'js', 'ts', 'python', 'vue', 'react', 'swift', 'ruby', 'kotlin', 'java', 'go', 'rust', 'c', 'ml',
   'sql', 'git', 'linux', 'os', 'web', 'docker', 'k8s', 'cicd',
 ];

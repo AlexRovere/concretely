@@ -34,6 +34,10 @@ import KtFlowPanel from '@/components/panels/KtFlowPanel.vue'
 import LifecyclePanel from '@/components/panels/LifecyclePanel.vue'
 import VueReactivityPanel from '@/components/panels/VueReactivityPanel.vue'
 import VdomPanel from '@/components/panels/VdomPanel.vue'
+import ReactReconcilePanel from '@/components/panels/ReactReconcilePanel.vue'
+import ReactHooksPanel from '@/components/panels/ReactHooksPanel.vue'
+import ReactRerenderPanel from '@/components/panels/ReactRerenderPanel.vue'
+import ReactEffectsPanel from '@/components/panels/ReactEffectsPanel.vue'
 import BubblingPanel from '@/components/panels/BubblingPanel.vue'
 import DebouncePanel from '@/components/panels/DebouncePanel.vue'
 import GitDagPanel from '@/components/panels/GitDagPanel.vue'
@@ -118,6 +122,10 @@ const TABS: { mode: string; key: string; cat: string; not?: string[] }[] = [
   { mode: 'vdom', key: 'tabs.vdom', cat: 'vue' },
   { mode: 'bubbling', key: 'tabs.bubbling', cat: 'vue' },
   { mode: 'debounce', key: 'tabs.debounce', cat: 'vue' },
+  { mode: 'reactreconcile', key: 'tabs.reactreconcile', cat: 'react' },
+  { mode: 'reacthooks', key: 'tabs.reacthooks', cat: 'react' },
+  { mode: 'reactrerender', key: 'tabs.reactrerender', cat: 'react' },
+  { mode: 'reacteffects', key: 'tabs.reacteffects', cat: 'react' },
   { mode: 'gitdag', key: 'tabs.gitdag', cat: 'git' },
   { mode: 'gitreset', key: 'tabs.gitreset', cat: 'git' },
   { mode: 'tsbasics', key: 'tabs.tsbasics', cat: 'ts' },
@@ -146,7 +154,7 @@ const TABS: { mode: string; key: string; cat: string; not?: string[] }[] = [
   { mode: 'cicdpipeline', key: 'tabs.cicdpipeline', cat: 'cicd' },
   { mode: 'cicdcompare', key: 'tabs.cicdcompare', cat: 'cicd' },
   { mode: 'cheatsheet', key: 'tabs.cheatsheet', cat: '*' },
-  { mode: 'playground', key: 'tabs.playground', cat: '*', not: ['swift', 'web', 'docker', 'os', 'k8s', 'patterns', 'cicd'] },
+  { mode: 'playground', key: 'tabs.playground', cat: '*', not: ['swift', 'web', 'docker', 'os', 'k8s', 'patterns', 'cicd', 'react'] },
   { mode: 'quiz', key: 'tabs.quiz', cat: '*' },
   { mode: 'bst', key: 'tabs.bst', cat: 'general' },
   { mode: 'dp', key: 'tabs.dp', cat: 'general' },
@@ -181,6 +189,10 @@ const panels: Record<string, unknown> = {
   lifecycle: LifecyclePanel,
   vuereactivity: VueReactivityPanel,
   vdom: VdomPanel,
+  reactreconcile: ReactReconcilePanel,
+  reacthooks: ReactHooksPanel,
+  reactrerender: ReactRerenderPanel,
+  reacteffects: ReactEffectsPanel,
   bubbling: BubblingPanel,
   debounce: DebouncePanel,
   gitdag: GitDagPanel,
