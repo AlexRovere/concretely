@@ -16,6 +16,7 @@ import { shell } from '@codemirror/legacy-modes/mode/shell';
 import { go } from '@codemirror/legacy-modes/mode/go';
 import { rust } from '@codemirror/legacy-modes/mode/rust';
 import { standardSQL } from '@codemirror/legacy-modes/mode/sql';
+import { yaml } from '@codemirror/legacy-modes/mode/yaml';
 import { tags } from '@lezer/highlight';
 
 const LANGS = {
@@ -27,6 +28,7 @@ const LANGS = {
   go: () => StreamLanguage.define(go),
   rust: () => StreamLanguage.define(rust),
   sql: () => StreamLanguage.define(standardSQL),
+  yaml: () => StreamLanguage.define(yaml),
   python: () => StreamLanguage.define(python),
   c: () => StreamLanguage.define(c),
   java: () => StreamLanguage.define(java),

@@ -65,6 +65,7 @@ import SchedulerPanel from '@/components/panels/SchedulerPanel.vue'
 import OsBasicsPanel from '@/components/panels/OsBasicsPanel.vue'
 import K8sBasicsPanel from '@/components/panels/K8sBasicsPanel.vue'
 import CicdComparePanel from '@/components/panels/CicdComparePanel.vue'
+import CicdPipelinePanel from '@/components/panels/CicdPipelinePanel.vue'
 import JavaBasicsPanel from '@/components/panels/JavaBasicsPanel.vue'
 import PatternsCreationalPanel from '@/components/panels/PatternsCreationalPanel.vue'
 import PatternsStructuralPanel from '@/components/panels/PatternsStructuralPanel.vue'
@@ -142,6 +143,7 @@ const TABS: { mode: string; key: string; cat: string; not?: string[] }[] = [
   { mode: 'osbasics', key: 'tabs.osbasics', cat: 'os' },
   { mode: 'k8sbasics', key: 'tabs.k8sbasics', cat: 'k8s' },
   { mode: 'javabasics', key: 'tabs.javabasics', cat: 'java' },
+  { mode: 'cicdpipeline', key: 'tabs.cicdpipeline', cat: 'cicd' },
   { mode: 'cicdcompare', key: 'tabs.cicdcompare', cat: 'cicd' },
   { mode: 'cheatsheet', key: 'tabs.cheatsheet', cat: '*' },
   { mode: 'playground', key: 'tabs.playground', cat: '*', not: ['swift', 'web', 'docker', 'os', 'k8s', 'patterns', 'cicd'] },
@@ -212,6 +214,7 @@ const panels: Record<string, unknown> = {
   osbasics: OsBasicsPanel,
   k8sbasics: K8sBasicsPanel,
   cicdcompare: CicdComparePanel,
+  cicdpipeline: CicdPipelinePanel,
   javabasics: JavaBasicsPanel,
   bst: BstPanel,
   dp: DpPanel,

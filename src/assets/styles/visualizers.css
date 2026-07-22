@@ -1426,3 +1426,53 @@ h1.brand:hover { opacity: 0.85; }
   background: #fff;
   margin: 0.3rem 0;
 }
+
+/* --- CI/CD pipeline editor ------------------------------------------- */
+.pl-toolbar { align-items: center; gap: var(--space-3); flex-wrap: wrap; }
+.pl-split {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  align-items: flex-start;
+}
+.pl-editor { flex: 1 1 340px; min-width: 280px; }
+.pl-graph {
+  flex: 1 1 360px;
+  min-width: 280px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--inset);
+  padding: var(--space-2);
+  overflow: auto;
+}
+.pl-graph-svg { overflow-x: auto; }
+.pl-err {
+  margin: 0 0 var(--space-2);
+  color: var(--ko);
+  font-size: 0.82rem;
+  font-family: var(--mono);
+}
+.pl-svg { display: block; }
+.pl-svg .pl-head {
+  fill: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.pl-svg .pl-node rect {
+  fill: var(--panel);
+  stroke: var(--accent);
+  stroke-width: 1.5;
+}
+.pl-svg .pl-node text {
+  fill: var(--ink);
+  font-size: 13px;
+  font-family: var(--mono);
+}
+.pl-svg .pl-edge {
+  fill: none;
+  stroke: var(--edge);
+  stroke-width: 1.5;
+}
+.pl-svg .pl-arrowhead { fill: var(--edge); }
