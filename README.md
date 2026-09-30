@@ -1,5 +1,7 @@
 # Concretely
 
+[![Build and Deploy](https://github.com/AlexRovere/concretely/actions/workflows/ci.yml/badge.svg)](https://github.com/AlexRovere/concretely/actions/workflows/ci.yml)
+
 Interactive visualizers that make **abstract programming concepts concrete** — to
 help developers build intuition for code they can't easily "see". Built with
 **Vue 3 + TypeScript + Vite + Tailwind**, bilingual (FR/EN).
